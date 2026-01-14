@@ -1,71 +1,60 @@
 # Middleware Library
 
-Application-specific middleware for Next.js applications.
+Application-specific middleware for Next.js applications, providing security, authentication, and request processing.
 
-## 🚀 **Quick Start**
+## **Available Middleware**
+
+### Security Middleware (`src/middleware/security/`)
+
+- **Security Headers** (`headers.ts`) - Security header management with CSP, HSTS, etc.
+- **Rate Limiting** (`rate-limit.ts`) - Configurable rate limiting for different endpoints
+- **CSRF Protection** (`csrf.ts`) - Cross-site request forgery protection
+- **Input Sanitization** (`sanitize.ts`) - XSS prevention and input validation
+- **Audit Logging** (`audit.ts`) - Security event logging
+
+### Application Middleware
+
+- `auth.ts` - Authentication and authorization middleware
+- `request-logger.ts` - Request logging middleware
+
+## 🔧 **Application Middleware Details**
+
+### Authentication Middleware (`auth.ts`)
+
+**NEW**: Comprehensive authentication and authorization system using centralized route configuration.
 
 ```typescript
-// middleware.ts (root level)
-import { NextRequest, NextResponse } from 'next/server'
-import { applySecurityHeaders } from '@/lib/security/headers'
-import { rateLimiters } from '@/lib/security/rate-limit'
-import { requestLoggerMiddleware } from '@/middleware/request-logger'
-import { requireVerifiedEmail } from '@/middleware/require-verified-email'
-import { updateSession } from '@/lib/supabase/middleware'
+import { requireAuth } from '@/middleware/auth'
 
-export async function middleware(request: NextRequest): Promise<NextResponse> {
-  let response = NextResponse.next()
-
-  // Apply centralized security headers
-  response = applySecurityHeaders(response, {
-    generateNonce: true,
-    strictCSP: process.env.NODE_ENV === 'production',
-  })
-
-  // Apply rate limiting for auth endpoints
-  if (request.nextUrl.pathname.startsWith('/api/auth/')) {
-    response = await rateLimiters.auth(request, response)
-  }
-
-  // Update Supabase session
-  response = await updateSession(request, response)
-
-  // Apply email verification for protected routes
-  response = await requireVerifiedEmail(request, response)
-
-  // Apply request logging (non-blocking)
-  requestLoggerMiddleware(request, response).catch(console.error)
-
-  return response
-}
-
-export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
+// Apply authentication checks
+const authResponse = await requireAuth(request)
+if (authResponse.status >= 300 && authResponse.status < 400) {
+  return authResponse // Handle redirects
 }
 ```
 
-## 📚 **Available Middleware**
+**Features:**
 
-### Centralized Security System
+- **Centralized Route Protection**: Uses `@/config/routes.ts` for single source of truth
+- **Authentication Checks**: Validates user sessions for protected routes
+- **Email Verification**: Enforces email verification where required
+- **Auth Route Redirects**: Redirects authenticated users from auth pages
+- **Type Safety**: Full TypeScript support with proper type guards
+- **Server-Side Only**: All protection happens before client code execution
 
-Security middleware is provided by `src/lib/security/`:
+**Protected Routes:**
 
-- **Security Headers** (`@/lib/security/headers`) - Security header management
-- **Rate Limiting** (`@/lib/security/rate-limit`) - Configurable rate limiting
-- **CSRF Protection** (`@/lib/security/csrf`) - Cross-site request forgery protection
-- **Input Sanitization** (`@/lib/security/sanitize`) - XSS prevention and validation
-- **Security Audit** (`@/lib/security/audit`) - Security event logging
+- `/profile` - Requires authentication and email verification
+- `/dashboard` - Requires authentication and email verification
+- `/account` - Requires authentication and email verification
+- `/settings` - Requires authentication and email verification
+- `/admin` - Requires authentication (admin role - all users treated as admin until RBAC)
 
-See `src/lib/security/README.md` for detailed documentation.
+**Auth Routes:**
 
-### Application Middleware (src/middleware/)
+- `/auth` - Redirects authenticated users to `/profile`
 
-The following middleware files provide application-specific functionality:
-
-- `request-logger.ts` - Request logging middleware
-- `require-verified-email.ts` - Email verification enforcement middleware
-
-## 🔧 **Application Middleware Details**
+**Note:** Email confirmation is handled by `/api/auth/confirm` API route, not a page route.
 
 ### Request Logger (`request-logger.ts`)
 
@@ -84,67 +73,34 @@ requestLoggerMiddleware(request, response).catch(console.error)
 - Non-blocking operation
 - Structured logging with context
 
-### Email Verification (`require-verified-email.ts`)
-
-Enforces email verification for protected routes.
-
-```typescript
-import { requireVerifiedEmail } from '@/middleware/require-verified-email'
-
-const response = await requireVerifiedEmail(request, NextResponse.next())
-```
-
-**Protected Routes:**
-
-- `/dashboard`
-- `/account`
-- `/profile`
-- `/settings`
-
-**Behavior:**
-
-- Checks user authentication status
-- Verifies email confirmation
-- Redirects unverified users with message
-- Skips non-protected routes automatically
-
 ## 📖 **Documentation**
 
 For detailed documentation on the security system, see:
 
-- `src/lib/security/README.md` - Complete security utilities documentation
+- `src/middleware/security/README.md` - Security middleware documentation
 - `docs/security.md` - Security architecture and best practices
 - `src/config/security.ts` - Security configuration
 
-## 🧪 **Testing**
-
-```typescript
-// __tests__/middleware.test.ts
-import { NextRequest, NextResponse } from 'next/server'
-import { requireVerifiedEmail } from '@/middleware/require-verified-email'
-
-describe('Email Verification Middleware', () => {
-  it('should allow access to non-protected routes', async () => {
-    const request = new NextRequest('http://localhost:3000/')
-    const response = NextResponse.next()
-
-    const result = await requireVerifiedEmail(request, response)
-    expect(result).toBe(response) // No redirect
-  })
-})
-```
-
 ## 🤝 **Contributing**
 
-When adding new application-specific middleware:
+When adding new middleware:
 
-1. **Focus on application logic** - Use `src/lib/security/` for security features
-2. **Type safety** - Use proper TypeScript types
-3. **Error handling** - Handle errors gracefully
-4. **Testing** - Include comprehensive tests
-5. **Documentation** - Add clear examples and JSDoc comments
+1. **Security First** - Place security-related middleware in `src/middleware/security/`
+2. **Type Safety** - Use proper TypeScript types and interfaces
+3. **Error Handling** - Implement comprehensive error handling and logging
+4. **Testing** - Include unit and integration tests
+5. **Documentation** - Update README and add JSDoc comments
+
+## 🔄 **Middleware Execution Order**
+
+1. Security Headers
+2. Session Management
+3. Rate Limiting
+4. CSRF Protection
+5. Authentication & Authorization
+6. Request Logging
 
 ---
 
 **Last Updated**: December 2025  
-**Version**: 1.0.0
+**Version**: 2.0.0

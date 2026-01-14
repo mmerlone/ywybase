@@ -1,7 +1,6 @@
 // src/middleware/request-logger.ts
 import { NextRequest, NextResponse } from 'next/server'
-
-import { buildLogger } from '@/lib/logger/server'
+import { buildLogger } from '@/lib/logger/client'
 
 const logger = buildLogger('request-logger')
 
