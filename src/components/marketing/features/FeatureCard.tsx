@@ -25,7 +25,7 @@ export function FeatureCard({ feature }: { feature: Feature }): JSX.Element {
             left: 0,
             right: 0,
             height: 4,
-            background: `linear-gradient(90deg, var(--mui-palette-primary-main), var(--mui-palette-secondary-main))`,
+            background: 'var(--gradient-primary-to-secondary)',
           },
         }),
       }}>

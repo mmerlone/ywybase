@@ -1,8 +1,8 @@
 /**
- * This is an auto-generated file. DO NOT EDIT DIRECTLY.
+ * Auto-generated file - DO NOT EDIT
  *
- * Generated: 2025-11-02T14:16:49.425Z
- * Project ID: frvujodbkfodtraxfcwa
+ * Generated: 2026-01-09T22:04:30.618Z
+ * Project ID: jbhkkxnssbivgznxdjyt
  *
  * To regenerate these types, run:
  *   pnpm run gen:types
@@ -17,7 +17,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: '13.0.5'
+    PostgrestVersion: '14.1'
   }
   public: {
     Tables: {

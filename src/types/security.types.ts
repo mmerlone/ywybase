@@ -26,6 +26,7 @@ export type SecurityEventType =
   | 'invalid_session'
   | 'privilege_escalation_attempt'
   | 'password_change'
+  | 'password_reset'
   | 'email_verification'
   | 'profile_update'
   | 'file_upload'
@@ -55,7 +56,6 @@ export interface SecurityEventContext {
 export interface AuditTrailEntry {
   id: string
   event: SecurityEventType
-  context: SecurityEventContext
   sanitizedContext: SecurityEventContext
   timestamp: string
   environment: string
@@ -98,7 +98,7 @@ export interface SecurityReport {
 export interface RateLimitStore {
   get(key: string): Promise<RateLimitEntry | null>
   set(key: string, value: RateLimitEntry, ttl: number): Promise<void>
-  increment(key: string): Promise<RateLimitEntry>
+  increment(key: string, windowMs?: number): Promise<RateLimitEntry>
   delete(key: string): Promise<void>
 }
 
@@ -140,6 +140,7 @@ export interface SecurityHeadersOptions {
   generateNonce?: boolean
   strictCSP?: boolean
   customHeaders?: Record<string, string>
+  nonce?: string
 }
 
 export interface SecurityHeadersReport {
@@ -221,7 +222,11 @@ export interface ValidationResult {
 /**
  * Security middleware types
  */
-export type SecurityMiddleware = (request: NextRequest, response: NextResponse) => Promise<NextResponse>
+export type SecurityMiddleware<TOptions = unknown> = (
+  request: NextRequest,
+  response: NextResponse,
+  options?: TOptions
+) => Promise<NextResponse>
 
 export type SecurityHandler<T extends unknown[] = unknown[]> = (...args: T) => Promise<NextResponse>
 
@@ -366,11 +371,7 @@ export type SecurityContextExtractor = (
 
 export type SecurityContextSanitizer = (context: SecurityEventContext) => SecurityEventContext
 
-export type AuditTrailCreator = (
-  event: SecurityEventType,
-  context: SecurityEventContext,
-  sanitizedContext: SecurityEventContext
-) => AuditTrailEntry
+export type AuditTrailCreator = (event: SecurityEventType, sanitizedContext: SecurityEventContext) => AuditTrailEntry
 
 export type UserActionAuditor = (
   userId: string,
@@ -401,6 +402,7 @@ export function isSecurityEventType(value: string): value is SecurityEventType {
     'invalid_session',
     'privilege_escalation_attempt',
     'password_change',
+    'password_reset',
     'email_verification',
     'profile_update',
     'file_upload',

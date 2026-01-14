@@ -15,12 +15,12 @@ import {
   LinearProgress,
   AlertTitle,
   Paper,
+  Skeleton,
 } from '@mui/material'
 import * as Sentry from '@sentry/nextjs'
 import { useState, useEffect } from 'react'
 
 import { useAuthContext } from '@/components/providers'
-import { PageSkeleton } from '../common/PageSkeleton'
 
 class SentryExampleFrontendError extends Error {
   constructor(message: string | undefined) {
@@ -29,7 +29,7 @@ class SentryExampleFrontendError extends Error {
   }
 }
 
-function SentryLogo() {
+function SentryLogo(): JSX.Element {
   return (
     <SvgIcon sx={{ fontSize: 40 }}>
       <path
@@ -68,10 +68,10 @@ export function SentryExampleView(): JSX.Element {
       setCooldownRemaining(remaining)
     }, 1000)
 
-    return () => clearInterval(interval)
+    return (): void => clearInterval(interval)
   }, [lastErrorTime])
 
-  const handleThrowError = async () => {
+  const handleThrowError = async (): Promise<void> => {
     const now = Date.now()
     const timeSinceLastError = now - lastErrorTime
 
@@ -83,7 +83,7 @@ export function SentryExampleView(): JSX.Element {
     setShowConfirmDialog(true)
   }
 
-  const confirmThrowError = async () => {
+  const confirmThrowError = async (): Promise<void> => {
     setShowConfirmDialog(false)
 
     try {
@@ -117,7 +117,7 @@ export function SentryExampleView(): JSX.Element {
         ? `Please wait ${Math.ceil(cooldownRemaining / 1000)} seconds before throwing another error.`
         : errorCount >= MAX_ERRORS_PER_SESSION
           ? 'Maximum error limit reached for this session.'
-          : 'Please sign in to throw an error.'
+          : 'Please login to throw an error.'
 
   return (
     <Container maxWidth="md">
@@ -227,7 +227,14 @@ export function SentryExampleView(): JSX.Element {
             </Dialog>
           </Paper>
         ) : (
-          <PageSkeleton />
+          <Box sx={{ py: 4 }}>
+            <Skeleton variant="text" width="40%" height={48} sx={{ mb: 2 }} />
+            <Skeleton variant="text" width="60%" height={24} sx={{ mb: 4 }} />
+            <Paper sx={{ p: 4 }}>
+              <Skeleton variant="text" width="80%" height={20} sx={{ mx: 'auto', mb: 2 }} />
+              <Skeleton variant="rectangular" width={200} height={50} sx={{ mx: 'auto', borderRadius: 1 }} />
+            </Paper>
+          </Box>
         )}
       </Box>
     </Container>

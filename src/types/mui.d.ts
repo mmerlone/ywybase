@@ -3,9 +3,33 @@ import '@mui/material/styles'
 declare module '@mui/material/styles' {
   interface Theme {
     backgroundOpacity: string
+    gradients?: {
+      primary?: string
+      primaryToSecondary?: string
+      fadeToBackground?: string
+      overlaySubtle?: string
+    }
+    effects?: {
+      textShadow?: {
+        strong?: string
+        medium?: string
+      }
+    }
   }
   interface ThemeOptions {
     backgroundOpacity?: string
+    gradients?: {
+      primary?: string
+      primaryToSecondary?: string
+      fadeToBackground?: string
+      overlaySubtle?: string
+    }
+    effects?: {
+      textShadow?: {
+        strong?: string
+        medium?: string
+      }
+    }
   }
   // If you want it under theme.vars.backgroundOpacity
   interface ThemeVars {

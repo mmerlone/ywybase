@@ -11,11 +11,7 @@ export function HeroSection(): JSX.Element {
       className="section-hero"
       sx={{
         position: 'relative',
-        width: '100vw',
-        left: '50%',
-        right: '50%',
-        marginLeft: '-50vw',
-        marginRight: '-50vw',
+        width: '100%',
         minHeight: '70vh',
         display: 'flex',
         alignItems: 'center',
@@ -32,11 +28,7 @@ export function HeroSection(): JSX.Element {
           right: 0,
           bottom: 0,
           height: '100px',
-          background: `linear-gradient(
-            to bottom, 
-            transparent,
-            var(--mui-palette-background-default)
-          )`,
+          background: 'linear-gradient(to bottom, transparent, var(--mui-palette-background-default))',
           zIndex: 2,
           pointerEvents: 'none',
         },
@@ -60,7 +52,7 @@ export function HeroSection(): JSX.Element {
             fontSize: { xs: '2.5rem', sm: '3rem', md: '3.75rem' },
             lineHeight: 1.2,
             mb: 4,
-            textShadow: '0 2px 4px rgba(0,0,0,0.3)',
+            textShadow: 'var(--text-shadow-strong)',
           }}>
           Welcome to {SITE_CONFIG.name}
         </Typography>
@@ -68,7 +60,7 @@ export function HeroSection(): JSX.Element {
           variant="h5"
           sx={{
             mb: 6,
-            textShadow: '0 1px 3px rgba(0,0,0,0.3)',
+            textShadow: 'var(--text-shadow-medium)',
             maxWidth: '800px',
             mx: 'auto',
           }}>
@@ -96,7 +88,7 @@ export function HeroSection(): JSX.Element {
           }}>
           <Button
             component={Link}
-            href="/register"
+            href="/auth?op=sign-up"
             variant="contained"
             color="primary"
             size="large"

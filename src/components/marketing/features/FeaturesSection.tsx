@@ -112,7 +112,7 @@ export function FeaturesSection(): JSX.Element {
             display: 'block',
             width: 80,
             height: 4,
-            background: 'linear-gradient(90deg, #1976d2, #9c27b0)',
+            background: 'var(--gradient-primary)',
             margin: '1.5rem auto 0',
             borderRadius: 2,
           },

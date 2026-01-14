@@ -45,7 +45,7 @@ export function LocationSelector({
   required = { country: true },
   disabled = false,
 }: LocationSelectorProps): JSX.Element {
-  const { watch, setValue } = useFormContext()
+  const { watch, setValue, formState } = useFormContext()
   const [userDetectedCountry, setUserDetectedCountry] = useState<string | null>(null)
 
   // Watch form values with proper typing
@@ -84,28 +84,29 @@ export function LocationSelector({
 
   // Load countries on component mount
   useEffect(() => {
-    let isMounted = true
+    // Only detect user's country if no country is currently selected
+    const detectCountry = async (): Promise<void> => {
+      // Wait for form to be initialized with default values
+      // Skip detection if country already exists in the form (including from profile data)
+      if (countryValue || !formState.isReady) {
+        return
+      }
 
-    // Detect user's country using the utility function
-    const detectCountry = async () => {
       try {
         const detectedCountry = await detectUserCountry()
-        if (isMounted && detectedCountry) {
+        if (detectedCountry) {
           setUserDetectedCountry(detectedCountry.isoCode)
         }
-      } catch (error) {
-        if (isMounted) {
-          logger.warn({ error }, 'Failed to detect user country in LocationSelector')
-        }
+      } catch (err: unknown) {
+        logger.warn(
+          { err: err instanceof Error ? err : new Error(String(err)) },
+          'Failed to detect user country in LocationSelector'
+        )
       }
     }
 
     detectCountry()
-
-    return () => {
-      isMounted = false
-    }
-  }, []) // Empty dependency array - only run once on mount
+  }, [countryValue, formState.defaultValues, formState.isSubmitting, countryName, formState.isReady])
 
   const handleCountryChange = (country: ICountry | null): void => {
     if (country) {

@@ -7,7 +7,11 @@ import { QUERY_CONFIG, QUERY_KEYS } from '@/config/query'
 import { ErrorCodes } from '@/lib/error/codes'
 import { BusinessError } from '@/lib/error/errors'
 import { logger } from '@/lib/logger/client'
-import { ProfileClientService } from '@/lib/supabase/services/database/profiles/profile.client'
+import {
+  getProfile,
+  updateProfile as updateProfileAction,
+  uploadAvatar as uploadAvatarAction,
+} from '@/lib/actions/profile'
 import type { Profile } from '@/types/database'
 import { ThemePreference } from '@/types/theme.types'
 
@@ -77,13 +81,26 @@ import { ThemePreference } from '@/types/theme.types'
  * }
  * ```
  */
-export function useProfile(userId?: string, initialData?: Profile | null) {
+export function useProfile(
+  userId?: string,
+  initialData?: Profile | null
+): {
+  profile: Profile | null
+  isLoading: boolean
+  isUpdating: boolean
+  isUploadingAvatar: boolean
+  error: Error | null
+  updateProfile: (updates: Partial<Profile>) => Promise<Profile>
+  updateThemePreference: (theme: ThemePreference) => Promise<void>
+  uploadAvatar: (file: File) => Promise<string>
+  refetch: () => void
+} {
   const queryClient = useQueryClient()
   const abortControllerRef = useRef<AbortController | null>(null)
 
   // Cleanup on unmount
   useEffect(() => {
-    return () => {
+    return (): void => {
       // Abort any pending requests when component unmounts
       if (abortControllerRef.current) {
         abortControllerRef.current.abort()
@@ -102,8 +119,11 @@ export function useProfile(userId?: string, initialData?: Profile | null) {
     queryFn: async () => {
       if (userId === null || userId === undefined) return null
       try {
-        const service = new ProfileClientService()
-        return await service.getProfile(userId)
+        const result = await getProfile(userId)
+        if (!result.success) {
+          throw new Error(typeof result.error === 'string' ? result.error : 'Failed to load profile')
+        }
+        return result.data ?? null
       } catch (error) {
         const errorContext = {
           userId,
@@ -132,7 +152,7 @@ export function useProfile(userId?: string, initialData?: Profile | null) {
         error instanceof BusinessError &&
         error.statusCode !== null &&
         error.statusCode !== undefined &&
-        QUERY_CONFIG.retry.nonRetryableStatusCodes.includes(error.statusCode)
+        QUERY_CONFIG.retry.nonRetryableStatusCodes.includes(error.statusCode as 400 | 401 | 403 | 404)
       ) {
         return false
       }
@@ -158,8 +178,25 @@ export function useProfile(userId?: string, initialData?: Profile | null) {
           context: { operation: 'updateProfile' },
         })
       }
-      const service = new ProfileClientService()
-      return await service.updateProfile(userId, updates)
+
+      // Cancel previous request if exists
+      abortControllerRef.current?.abort()
+      abortControllerRef.current = new AbortController()
+
+      try {
+        const result = await updateProfileAction(userId, updates)
+        if (!result.success || !result.data) {
+          throw new Error(typeof result.error === 'string' ? result.error : 'Failed to update profile')
+        }
+        return result.data
+      } catch (error) {
+        // Don't throw if aborted - this is expected behavior
+        if (error instanceof Error && error.name === 'AbortError') {
+          logger.debug({ userId, operation: 'updateProfile' }, 'Profile update aborted')
+          throw error
+        }
+        throw error
+      }
     },
     onMutate: async (updates) => {
       if (userId === null || userId === undefined) return
@@ -203,6 +240,9 @@ export function useProfile(userId?: string, initialData?: Profile | null) {
       }
     },
     onSettled: () => {
+      // Clear abort controller reference
+      abortControllerRef.current = null
+
       // Invalidate queries to trigger refetch, but use refetchType: 'active' to only refetch active queries
       // This prevents unnecessary refetches that could cause component remounts
       queryClient.invalidateQueries({
@@ -228,9 +268,11 @@ export function useProfile(userId?: string, initialData?: Profile | null) {
       abortControllerRef.current = new AbortController()
 
       try {
-        const service = new ProfileClientService()
-        const result = await service.uploadAvatar(userId, file)
-        return result
+        const result = await uploadAvatarAction(userId, file)
+        if (!result.success || !result.data) {
+          throw new Error(typeof result.error === 'string' ? result.error : 'Failed to upload avatar')
+        }
+        return result.data
       } finally {
         // Clear the abort controller after operation completes
         abortControllerRef.current = null
@@ -275,9 +317,10 @@ export function useProfile(userId?: string, initialData?: Profile | null) {
 
       try {
         await updateProfile({ theme })
-      } catch (error) {
-        logger.error({ error, userId, theme }, 'Failed to update theme preference')
-        throw error
+      } catch (err: unknown) {
+        const errorObj = err instanceof Error ? err : new Error(String(err))
+        logger.error({ err: errorObj, userId, theme }, 'Failed to update theme preference')
+        throw errorObj
       }
     },
     [userId, updateProfile]

@@ -52,6 +52,8 @@ type UseCookieConsentReturn = {
   preferences: CookiePreferences
   /** Whether the consent banner is currently visible */
   isBannerOpen: boolean
+  /** Whether preferences are currently loading from localStorage */
+  isLoading: boolean
   /** Accept all cookie types */
   acceptAll: () => Promise<void>
   /** Accept only selected cookie types */
@@ -127,15 +129,19 @@ type UseCookieConsentReturn = {
 export function useCookieConsent(): UseCookieConsentReturn {
   // Split state to avoid cyclic dependencies and complex updates
   const [isBannerOpen, setIsBannerOpen] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
 
   const [state, setState] = useState<CookieConsentState>(() => {
-    if (typeof window === 'undefined') {
-      return {
-        preferences: { ...defaultPreferences },
-        hasConsent: null,
-      }
+    // Always return default state on initial render (server and client)
+    // This ensures server and client produce identical output during SSR
+    return {
+      preferences: { ...defaultPreferences },
+      hasConsent: null,
     }
+  })
 
+  // Load actual values from localStorage after mount
+  useEffect(() => {
     try {
       const savedConsent = localStorage.getItem(COOKIE_CONSENT_KEY)
       const savedPrefs = localStorage.getItem(COOKIE_PREFERENCES_KEY)
@@ -153,50 +159,40 @@ export function useCookieConsent(): UseCookieConsentReturn {
         }
       })()
 
-      return {
+      // Syncing from external system (localStorage) to state
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setState({
         hasConsent,
         preferences: parsedPrefs,
-      }
-    } catch (error) {
-      logger.error({ error }, 'Error loading cookie preferences from localStorage')
-      return {
-        preferences: { ...defaultPreferences },
-        hasConsent: null,
-      }
+      })
+      // Reflect consent decision in banner visibility
+      setIsBannerOpen(hasConsent === null)
+      setIsLoading(false)
+    } catch (err) {
+      logger.error({ err }, 'Error loading cookie preferences from localStorage')
+      setIsLoading(false)
     }
-  })
-
-  // Initialize banner state based on consent status after mount
-  useEffect(() => {
-    // If no decision has been made yet, show banner
-    if (state.hasConsent === null) {
-      // Use setTimeout to avoid 'set-state-in-effect' lint error and ensure
-      // the update happens after the current render cycle.
-      const timer = setTimeout(() => setIsBannerOpen(true), 100)
-      return () => clearTimeout(timer)
-    }
-  }, [state.hasConsent])
+  }, [])
 
   const savePreferences = useCallback(async (preferences: CookiePreferences, consent: boolean) => {
     try {
       const validPrefs = ensureCookiePreferences(preferences)
 
-      if (typeof window !== 'undefined') {
-        localStorage.setItem(COOKIE_PREFERENCES_KEY, JSON.stringify(validPrefs))
-        localStorage.setItem(COOKIE_CONSENT_KEY, JSON.stringify(consent))
-      }
+      // Save to localStorage first (this is a client-only hook, so window is always available)
+      localStorage.setItem(COOKIE_PREFERENCES_KEY, JSON.stringify(validPrefs))
+      localStorage.setItem(COOKIE_CONSENT_KEY, JSON.stringify(consent))
 
-      setState((prev) => ({
-        ...prev,
+      // Then update state
+      setState({
         preferences: validPrefs,
         hasConsent: consent,
-      }))
+      })
       setIsBannerOpen(false)
 
       logger.debug({ preferences: validPrefs, consent }, 'Cookie preferences saved')
-    } catch (error) {
-      logger.error({ error }, 'Failed to save cookie preferences')
-      throw error
+    } catch (err) {
+      logger.error({ err }, 'Failed to save cookie preferences')
+      throw err
     }
   }, [])
 
@@ -247,6 +243,7 @@ export function useCookieConsent(): UseCookieConsentReturn {
   return {
     ...state,
     isBannerOpen,
+    isLoading,
     acceptAll,
     acceptSelected,
     decline,

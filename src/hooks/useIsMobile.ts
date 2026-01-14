@@ -66,5 +66,5 @@ export function useIsMobile(): boolean {
     return cleanup
   }, [])
 
-  return isMobile !== null && isMobile !== undefined
+  return !!isMobile
 }
