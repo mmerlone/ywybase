@@ -19,7 +19,7 @@
 
 ## Security Architecture Overview
 
-Structura implements a **defense-in-depth** security strategy with multiple layers of protection:
+YwyBase implements a **defense-in-depth** security strategy with multiple layers of protection:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -360,7 +360,7 @@ REDIS_PASSWORD=your_redis_password
 #### Implementation
 
 ```typescript
-import { rateLimiters } from '@/lib/security/rate-limit'
+import { rateLimiters } from '@/middleware/security/rate-limit'
 
 // Apply rate limiting in middleware
 export async function middleware(request: NextRequest) {
@@ -371,7 +371,7 @@ export async function middleware(request: NextRequest) {
 }
 
 // Apply to API routes
-import { withRateLimit } from '@/lib/security/rate-limit'
+import { withRateLimit } from '@/middleware/security/rate-limit'
 
 export const POST = withRateLimit('auth', async (request) => {
   // Your API logic
@@ -672,12 +672,10 @@ Required security-related environment variables:
 # Supabase Configuration
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+SUPABASE_SECRET_KEY=your-secret-key
 
 # Security Configuration
 NODE_ENV=production
-NEXTAUTH_SECRET=your-nextauth-secret
-NEXTAUTH_URL=https://yourdomain.com
 CSRF_SECRET=your-csrf-secret-32-chars-minimum
 
 # Rate Limiting Storage (Production - choose one)
@@ -687,7 +685,7 @@ KV_REST_API_TOKEN=your-vercel-kv-rest-api-token
 REDIS_URL=redis://your-redis-host:6379
 
 # Monitoring
-SENTRY_DSN=your-sentry-dsn
+NEXT_PUBLIC_SENTRY_DSN=your-sentry-dsn
 SENTRY_ORG=your-sentry-org
 SENTRY_PROJECT=your-sentry-project
 
@@ -701,12 +699,13 @@ SECURITY_HEADERS_STRICT=true
 
 ```typescript
 import { SECURITY_CONFIG } from '@/config/security'
+import { logger } from '@/lib/logger/server'
 
 // Validate configuration on startup
 const validation = SECURITY_CONFIG.validateSecurityConfig()
 
 if (!validation.isValid) {
-  console.error('Security configuration errors:', validation.errors)
+  logger.error({ errors: validation.errors }, 'Security configuration invalid')
   process.exit(1)
 }
 ```

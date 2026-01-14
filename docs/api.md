@@ -1,6 +1,6 @@
 # API Documentation
 
-This document provides comprehensive documentation for all API endpoints in the Structura application.
+This document provides comprehensive documentation for all API endpoints and Server Actions in the YwyBase application.
 
 ## Base URL
 
@@ -46,44 +46,485 @@ All API responses include comprehensive security headers:
 - `Cross-Origin-Opener-Policy: same-origin`
 - `Cross-Origin-Resource-Policy: same-site`
 
+## Server Actions
+
+This application uses Next.js Server Actions for secure, server-side data operations. Server Actions provide better security and performance compared to traditional API routes.
+
+### Authentication Server Actions
+
+Located in `/src/lib/actions/auth/server.ts`
+
+#### `loginWithEmail(credentials)`
+
+Signs in a user with email and password.
+
+```typescript
+import { loginWithEmail } from '@/lib/actions/auth/server'
+
+const result = await loginWithEmail({
+  email: 'user@example.com',
+  password: 'securePassword123',
+})
+
+if (result.success) {
+  const userId = result.data.userId
+  // Handle successful login
+}
+```
+
+#### `signUpWithEmail(credentials)`
+
+Signs up a new user with email and password.
+
+```typescript
+import { signUpWithEmail } from '@/lib/actions/auth/server'
+
+const result = await signUpWithEmail({
+  email: 'new@example.com',
+  password: 'securePassword123',
+  name: 'John Doe',
+  confirmPassword: 'securePassword123',
+  acceptTerms: true,
+})
+```
+
+#### `signOut()`
+
+Terminates the current user session.
+
+```typescript
+import { signOut } from '@/lib/actions/auth/server'
+
+const result = await signOut()
+if (result.success) {
+  // Redirect to login page
+}
+```
+
+#### `forgotPassword(data)`
+
+Initiates password reset flow by sending reset email.
+
+```typescript
+import { forgotPassword } from '@/lib/actions/auth/server'
+
+const result = await forgotPassword({
+  email: 'user@example.com',
+})
+```
+
+#### `completePasswordReset(data)`
+
+Completes password reset by setting new password.
+
+```typescript
+import { setPassword } from '@/lib/actions/auth/server'
+
+const result = await setPassword({
+  password: 'newSecurePassword123!',
+  confirmPassword: 'newSecurePassword123!',
+})
+```
+
+#### `updatePassword(data)`
+
+Updates user password (for logged-in users).
+
+```typescript
+import { updatePassword } from '@/lib/actions/auth/server'
+
+const result = await updatePassword({
+  currentPassword: 'oldPassword123',
+  newPassword: 'newSecurePassword123!',
+  confirmPassword: 'newSecurePassword123!',
+})
+```
+
+#### `resendVerification()`
+
+Resends verification email for current logged-in user.
+
+```typescript
+import { resendVerification } from '@/lib/actions/auth/server'
+
+const result = await resendVerification()
+```
+
+#### `checkVerificationStatus(userId)`
+
+Checks email verification status for a user.
+
+```typescript
+import { checkVerificationStatus } from '@/lib/actions/auth/server'
+
+const formData = new FormData()
+formData.append('userId', 'user-123')
+
+const result = await checkVerificationStatus(formData)
+```
+
+### Profile Server Actions
+
+Located in `/src/lib/actions/profile.ts`
+
+#### `getProfile(userId)`
+
+Retrieves user profile by ID.
+
+```typescript
+import { getProfile } from '@/lib/actions/profile'
+import { buildLogger } from '@/lib/logger/server'
+
+const logger = buildLogger('profile-handler')
+
+const result = await getProfile('user-123')
+if (result.success && result.data) {
+  logger.info({ displayName: result.data.display_name }, 'Profile retrieved')
+}
+```
+
+#### `createProfile(userId, profileData)`
+
+Creates a new profile for a user.
+
+```typescript
+import { createProfile } from '@/lib/actions/profile'
+
+const result = await createProfile('user-123', {
+  display_name: 'John Doe',
+  email: 'john@example.com',
+})
+```
+
+#### `updateProfile(userId, updates)`
+
+Updates existing user profile.
+
+```typescript
+import { updateProfile } from '@/lib/actions/profile'
+
+const result = await updateProfile('user-123', {
+  display_name: 'John Smith',
+  bio: 'Updated bio',
+})
+```
+
+#### `uploadAvatar(userId, file)`
+
+Uploads profile avatar image.
+
+```typescript
+import { uploadAvatar } from '@/lib/actions/profile'
+import { buildLogger } from '@/lib/logger/server'
+
+const logger = buildLogger('avatar-handler')
+
+const result = await uploadAvatar('user-123', file)
+if (result.success) {
+  logger.info({ avatarUrl: result.data }, 'Avatar uploaded successfully')
+}
+```
+
+#### `getOptimizedAvatarUrls(avatarUrl)`
+
+Gets optimized avatar URLs for different sizes.
+
+```typescript
+import { getOptimizedAvatarUrls } from '@/lib/actions/profile'
+import { buildLogger } from '@/lib/logger/server'
+
+const logger = buildLogger('avatar-urls')
+
+const urls = await getOptimizedAvatarUrls(profile.avatar_url)
+if (urls?.data) {
+  logger.debug(
+    {
+      thumbnail: urls.data.thumbnail,
+      medium: urls.data.medium,
+      large: urls.data.large,
+    },
+    'Optimized avatar URLs generated'
+  )
+}
+```
+
+### Location Server Actions
+
+Located in `/src/lib/actions/location.ts`
+
+#### `detectCountry(ipAddress?)`
+
+Detects user country from IP address with caching.
+
+```typescript
+import { detectCountry } from '@/lib/actions/location'
+
+const country = await detectCountry() // Auto-detect
+// or
+const country = await detectCountry('192.168.1.1')
+```
+
+**Features:**
+
+- 24-hour in-memory cache with LRU eviction
+- Automatic IP detection when no address provided
+- External API integration with ipgeolocation.io
+- Graceful error handling and timeouts
+
 ## Endpoints
 
 ### Authentication
 
-#### Email Verification
+The application uses Supabase Auth with PKCE (Proof Key for Code Exchange) for secure email-based authentication flows. All email verification and password reset operations use the shared `handleEmailAuthCode` utility located in `/src/lib/utils/email-auth-handler.ts`.
 
-Handles email verification for user registration and password reset flows.
+#### Complete Authentication Flows
+
+##### Email Verification Flow (Sign-Up)
+
+```
+┌─────────────┐
+│ User visits │
+│  /auth?op=  │
+│   sign-up   │
+└──────┬──────┘
+       │
+       ▼
+┌─────────────────────────────────────┐
+│ User fills sign-up form:            │
+│ - Email                             │
+│ - Password                          │
+│ - Name                              │
+│ - Accepts terms                     │
+└──────────┬──────────────────────────┘
+           │
+           ▼
+┌─────────────────────────────────────┐
+│ signUpWithEmail() server action     │
+│ - Validates form data               │
+│ - Creates Supabase account          │
+│ - Sends verification email          │
+└──────────┬──────────────────────────┘
+           │
+           ▼
+┌─────────────────────────────────────┐
+│ Supabase sends email with link:     │
+│ /api/auth/confirm?code={PKCE_CODE}  │
+└──────────┬──────────────────────────┘
+           │
+           ▼ User clicks link
+┌─────────────────────────────────────┐
+│ GET /api/auth/confirm               │
+│ - Rate limited (emailVerification)  │
+│ - Calls handleEmailAuthCode()       │
+│   with type: 'signup'               │
+└──────────┬──────────────────────────┘
+           │
+           ▼
+┌─────────────────────────────────────┐
+│ handleEmailAuthCode() utility       │
+│ 1. Validates PKCE code              │
+│ 2. exchangeCodeForSession()         │
+│ 3. Creates authenticated session    │
+│ 4. Logs security event              │
+│ 5. Sets flash message               │
+└──────────┬──────────────────────────┘
+           │
+           ▼
+┌─────────────────────────────────────┐
+│ ✅ User auto-logged in              │
+│ Redirects to: /profile              │
+│ Flash message: "Email verified      │
+│ successfully! Welcome to your       │
+│ profile."                           │
+└─────────────────────────────────────┘
+```
+
+##### Password Reset Flow (Forgot Password)
+
+```
+┌─────────────┐
+│ User visits │
+│  /auth?op=  │
+│forgot-pass  │
+└──────┬──────┘
+       │
+       ▼
+┌─────────────────────────────────────┐
+│ User enters email address           │
+└──────────┬──────────────────────────┘
+           │
+           ▼
+┌─────────────────────────────────────┐
+│ forgotPassword() server action      │
+│ - Validates email                   │
+│ - Sends reset email via Supabase    │
+│ - redirectTo: /auth/reset-password  │
+└──────────┬──────────────────────────┘
+           │
+           ▼
+┌─────────────────────────────────────┐
+│ Supabase sends email with link:     │
+│ /api/auth/reset-password?           │
+│ code={PKCE_CODE}                    │
+└──────────┬──────────────────────────┘
+           │
+           ▼ User clicks link
+┌─────────────────────────────────────┐
+│ GET /api/auth/reset-password        │
+│ - Rate limited (emailVerification)  │
+│ - Calls handleEmailAuthCode()       │
+│   with type: 'recovery'             │
+└──────────┬──────────────────────────┘
+           │
+           ▼
+┌─────────────────────────────────────┐
+│ handleEmailAuthCode() utility       │
+│ 1. Validates PKCE code              │
+│ 2. exchangeCodeForSession()         │
+│ 3. Creates authenticated session    │
+│ 4. Logs security event              │
+│ 5. Sets flash message               │
+└──────────┬──────────────────────────┘
+           │
+           ▼
+┌─────────────────────────────────────┐
+│ ✅ User auto-logged in              │
+│ Redirects to: /auth?op=set-password │
+│ Flash message: "Password reset      │
+│ verified. Please set your new       │
+│ password."                          │
+└──────────┬──────────────────────────┘
+           │
+           ▼
+┌─────────────────────────────────────┐
+│ User enters new password            │
+│ - Password                          │
+│ - Confirm password                  │
+└──────────┬──────────────────────────┘
+           │
+           ▼
+┌─────────────────────────────────────┐
+│ setPassword() server action         │
+│ - Validates password strength       │
+│ - Updates password via Supabase     │
+│ - Logs security event               │
+└──────────┬──────────────────────────┘
+           │
+           ▼
+┌─────────────────────────────────────┐
+│ ✅ Password updated                 │
+│ Redirects to: /profile              │
+│ Flash message: "Password updated    │
+│ successfully"                       │
+└─────────────────────────────────────┘
+```
+
+#### Shared Email Authentication Utility
+
+Both flows use the reusable `handleEmailAuthCode()` utility:
+
+**Location:** `/src/lib/utils/email-auth-handler.ts`
+
+**Features:**
+
+- Supports both `'signup'` and `'recovery'` auth types
+- PKCE code validation and exchange
+- Automatic session creation via `exchangeCodeForSession()`
+- Security event logging
+- Flash message integration
+- Centralized error handling
+- Configurable success messages and redirects
+
+**Usage:**
+
+```typescript
+import { handleEmailAuthCode } from '@/lib/utils/email-auth-handler'
+
+const result = await handleEmailAuthCode(request, supabase, {
+  type: 'signup', // or 'recovery'
+  successMessage: 'Email verified successfully!',
+  logContext: {
+    flow: 'email-verification',
+  },
+})
+
+return result.response // NextResponse with redirect
+```
+
+#### Email Verification Endpoint
+
+Handles email verification links from sign-up flow.
 
 **Endpoint:** `GET /api/auth/confirm`
 
 **Parameters:**
 
-- `token_hash` (string, required): The verification token from the email
-- `type` (string, required): The type of verification (`signup`, `recovery`, `email_change`)
-- `next` (string, optional): Redirect URL after successful verification (default: `/profile`)
+- `code` (string, required): The PKCE verification code from the email link
 
 **Response:**
 
-- **Success**: Redirects to the specified `next` URL with `verified=true` parameter
-- **Error**: Redirects to `/auth/auth-code-error` with error code
+- **Success**: Auto-logs in user, redirects to `/profile` with success flash message
+- **Error**: Redirects to `/error` with error code
 
 **Example Request:**
 
 ```
-GET /api/auth/confirm?token_hash=abc123&type=signup&next=/dashboard
+GET /api/auth/confirm?code=pkce-verification-code-here
 ```
 
 **Security Features:**
 
-- Comprehensive request logging with IP and User-Agent tracking
-- Token hash is removed from redirect URLs for security
-- Rate limiting and abuse prevention
-- Structured error logging for monitoring
+- Modern PKCE flow (Proof Key for Code Exchange)
+- Rate limiting (emailVerification)
+- Security audit logging
+- Flash messages via secure cookies
+- Automatic session creation
 
 **Error Codes:**
 
-- `invalid_verification_link`: Missing or invalid token/type parameters
-- Supabase auth errors are passed through with proper context
+- `verification_failed`: Invalid or expired code
+- `invalid_verification_link`: Missing code parameter
+
+#### Password Reset Endpoint
+
+Handles password reset links from forgot password flow.
+
+**Endpoint:** `GET /api/auth/reset-password`
+
+**Parameters:**
+
+- `code` (string, required): The PKCE recovery code from the email link
+
+**Response:**
+
+- **Success**: Auto-logs in user, redirects to `/auth?op=set-password` to enter new password
+- **Error**: Redirects to `/error` with error code
+
+**Example Request:**
+
+```
+GET /api/auth/reset-password?code=pkce-recovery-code-here
+```
+
+**Security Features:**
+
+- Modern PKCE flow (Proof Key for Code Exchange)
+- Rate limiting (emailVerification)
+- Security audit logging
+- Flash messages via secure cookies
+- Automatic session creation before password form
+
+**Error Codes:**
+
+- `verification_failed`: Invalid or expired code
+- `invalid_verification_link`: Missing code parameter
+
+**Notes:**
+
+- Uses PKCE flow exclusively (modern, recommended for SSR)
+- Legacy OTP flow (`token_hash`) is not supported
+- Auto-login happens **before** password form, allowing authenticated password update
+- Both endpoints share the same rate limit configuration for consistency
 
 ---
 

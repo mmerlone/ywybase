@@ -6,33 +6,27 @@ This directory contains custom React hooks that provide reusable stateful logic 
 
 ### Authentication Hooks
 
-- `useAuth` - Authentication state and methods
-- `useAuthForm` - Form handling for auth flows
-- `useSession` - Current user session
-- `useSignIn` - Sign in functionality
-- `useSignUp` - User registration
-- `useSignOut` - Sign out functionality
+- `useAuth` - Authentication state and methods (Compatibility layer)
+- `useAuthForm` - Form handling for auth flows with React Hook Form and Zod
 
 ### UI/UX Hooks
 
-- `useCookieConsent` - GDPR cookie management
-- `useIsMobile` - Viewport detection
-- `useProfile` - User profile data
-- `useTheme` - Theme management
-
-### Data Hooks
-
-- `useQuery` - Data fetching
-- `useMutation` - Data modification
+- `useCookieConsent` - GDPR cookie management and preferences
+- `useIsMobile` - Viewport detection for responsive design
+- `useProfile` - User profile data fetching and updates (via React Query)
+- `useOptimizedAvatar` - Helper for generating optimized Supabase image URLs
 
 ## 🚀 **Basic Usage**
 
 ```typescript
-import { useAuth, useProfile } from '@/hooks'
+import { useAuth } from '@/hooks/useAuth'
+import { useProfile } from '@/hooks/useProfile'
 
-function UserProfile() {
-  const { user } = useAuth()
-  const { profile } = useProfile(user?.id)
+function UserProfile({ userId }: { userId: string }) {
+  const { authUser } = useAuth()
+  const { profile, isLoading } = useProfile(userId)
+
+  if (isLoading) return <div>Loading...</div>
   // ...
 }
 ```
@@ -55,47 +49,33 @@ export function useFeature(initialValue = '') {
 2. **With Logging**:
 
 ```typescript
-import { createLogger } from '@/lib/logger'
-
-const logger = createLogger({ name: 'useFeature' })
+// Example: import client-side logger
+import { logger } from '@/lib/logger/client'
 
 export function useFeature(initialValue = '') {
   const [state, setState] = useState(initialValue)
   const update = useCallback((value: string) => {
-    logger.debug('Updating state', { value })
+    logger.debug({ value }, 'Feature updated')
     setState(value)
   }, [])
   return { state, update }
 }
 ```
 
-3. **Documentation Example**:
-
-```typescript
-/**
- * Manages feature state with logging
- * @param initialValue - Initial state value (default: '')
- * @returns State and update function
- *
- * @example
- * const { state, update } = useFeature('initial')
- */
-```
-
 ## 📚 **Hook Guides**
 
 ### **useAuth** (`useAuth.ts`)
 
-Manages authentication state and provides auth operations.
+Manages authentication state and provides auth operations via the client-side `authService`.
 
-**What it does**: Handles user sessions, sign in/out, password management
+**What it does**: Handles user sessions, login/logout, and auth state changes.
 
 **How to use**:
 
 ```typescript
 const { authUser, signIn, signOut, isLoading, error } = useAuth()
 
-// Sign in user
+// Login user
 await signIn('user@example.com', 'password')
 
 // Check authentication status
@@ -106,9 +86,9 @@ if (authUser) {
 
 ### **useAuthForm** (`useAuthForm.ts`)
 
-Form validation for authentication operations using React Hook Form.
+Form validation for authentication operations using React Hook Form and centralized Zod schemas.
 
-**What it does**: Integrates form validation with Zod schemas
+**What it does**: Provides type-safe form handling for Login, Sign Up, and Password Reset.
 
 **How to use**:
 
@@ -116,69 +96,25 @@ Form validation for authentication operations using React Hook Form.
 import { AuthOperationsEnum } from '@/types/enums'
 
 function LoginForm() {
-  const form = useAuthForm(AuthOperationsEnum.LOGIN)
-
-  const onSubmit = form.handleSubmit(async (data) => {
-    // data is typed as { email: string, password: string }
-    console.log('Login data:', data)
-  })
+  const { form, onSubmit, isLoading } = useAuthForm(AuthOperationsEnum.LOGIN)
 
   return (
-    <form onSubmit={onSubmit}>
+    <form onSubmit={form.handleSubmit(onSubmit)}>
       <input {...form.register('email')} />
       {form.formState.errors.email && (
         <span>{form.formState.errors.email.message}</span>
       )}
+      <button type="submit" disabled={isLoading}>Login</button>
     </form>
   )
 }
 ```
 
-### **useCookieConsent** (`useCookieConsent.ts`)
-
-Manages GDPR cookie consent state and preferences.
-
-**What it does**: Handles cookie banner, preferences, and localStorage
-
-**How to use**:
-
-```typescript
-const {
-  hasConsent,
-  preferences,
-  acceptAll,
-  decline
-} = useCookieConsent()
-
-// Show cookie banner
-if (hasConsent === null) {
-  return <CookieBanner onAccept={acceptAll} onDecline={decline} />
-}
-```
-
-### **useIsMobile** (`useIsMobile.ts`)
-
-Detects if the current viewport is mobile-sized.
-
-**What it does**: Responsive design helper with SSR safety
-
-**How to use**:
-
-```typescript
-const isMobile = useIsMobile()
-
-if (isMobile) {
-  return <MobileNavigation />
-} else {
-  return <DesktopNavigation />
-}
-```
-
 ### **useProfile** (`useProfile.ts`)
 
-Manages user profile data with React Query.
+Manages user profile data using TanStack Query for caching and synchronization.
 
-**What it does**: Fetches, updates, and caches profile data
+**What it does**: Fetches profile data, handles updates, and manages avatar uploads.
 
 **How to use**:
 
@@ -192,249 +128,70 @@ await updateProfile({ display_name: 'New Name' })
 await uploadAvatar(file)
 ```
 
-## 🛠️ **Development Patterns**
+### **useCookieConsent** (`useCookieConsent.ts`)
 
-### **Hook Structure**
+Manages GDPR cookie consent state and user preferences across the application.
 
-```typescript
-// Follow this pattern for new hooks
-import { useState, useCallback, useEffect } from 'react'
-import { createLogger } from '@/lib/logger'
+**What it does**: Tracks user consent status (accept/decline/not decided) and detailed category preferences (necessary, functional, analytics, marketing). It handles persistence in localStorage and provides methods to manage the consent banner.
 
-const logger = createLogger({ name: 'useYourHook' })
-
-export function useYourHook(param: string) {
-  const [state, setState] = useState(null)
-
-  // Use useCallback for stable references
-  const handleAction = useCallback(async (data: any) => {
-    try {
-      logger.debug({ data }, 'Performing action')
-      // Your logic here
-      setState(result)
-    } catch (error) {
-      logger.error({ error, data }, 'Action failed')
-      throw error
-    }
-  }, [])
-
-  // Use useEffect for side effects
-  useEffect(() => {
-    if (param) {
-      // Your effect logic
-    }
-  }, [param])
-
-  return {
-    state,
-    handleAction,
-  }
-}
-```
-
-### **Error Handling**
+**How to use**:
 
 ```typescript
-// Use proper error handling in hooks
-const [error, setError] = useState<Error | null>(null)
+const { preferences, hasConsent, isBannerOpen, acceptAll, acceptSelected, decline, showBanner } = useCookieConsent()
 
-const performAction = useCallback(async () => {
-  try {
-    setError(null)
-    // Your logic
-  } catch (err) {
-    const error = err instanceof Error ? err : new Error(String(err))
-    logger.error({ error }, 'Action failed')
-    setError(error)
-    throw error
-  }
-}, [])
+// Accept all cookie categories
+await acceptAll()
+
+// Decline all non-essential cookies
+await decline()
+
+// Accept only specific categories (necessary is always forced to true)
+await acceptSelected({ analytics: true, functional: false })
+
+// User preferences object structure:
+// { necessary: boolean, functional: boolean, analytics: boolean, marketing: boolean }
+console.log(preferences.analytics)
 ```
 
-### **Performance Optimization**
+### **useOptimizedAvatar** (`useOptimizedAvatar.ts`)
+
+Provides optimized avatar URLs using Supabase's image transformation API.
+
+**What it does**: Generates URLs for different avatar sizes (small, medium, large) with automatic optimization.
+
+**How to use**:
 
 ```typescript
-// Use useMemo for expensive calculations
-const expensiveValue = useMemo(() => {
-  return computeExpensiveValue(data)
-}, [data])
+import { AVATAR_SIZES } from '@/lib/utils/image-utils'
 
-// Use useCallback for stable function references
-const handleClick = useCallback(
-  (id: string) => {
-    onItemClick(id)
-  },
-  [onItemClick]
-)
+const { getUrl } = useOptimizedAvatar(profile.avatar_url)
+
+// Get a medium sized optimized URL (default)
+const avatarUrl = getUrl(AVATAR_SIZES.medium)
 ```
 
-## 🔧 **Common Hook Patterns**
+### **useIsMobile** (`useIsMobile.ts`)
 
-### **Data Fetching Hook**
+Viewport detection hook to determine if the user is on a mobile device.
 
-```typescript
-export function useData<T>(url: string) {
-  const [data, setData] = useState<T | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<Error | null>(null)
+**What it does**: Tracks window width and returns `true` if it's below the mobile breakpoint (768px). It is safe for SSR and handles hydration.
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true)
-        const response = await fetch(url)
-        const result = await response.json()
-        setData(result)
-      } catch (err) {
-        setError(err instanceof Error ? err : new Error(String(err)))
-      } finally {
-        setLoading(false)
-      }
-    }
+**How to use**:
 
-    fetchData()
-  }, [url])
+```tsx
+const isMobile = useIsMobile()
 
-  return { data, loading, error }
-}
+return <div>{isMobile ? <MobileView /> : <DesktopView />}</div>
 ```
 
-### **Local Storage Hook**
+## 🛠️ **Best Practices**
 
-```typescript
-export function useLocalStorage<T>(key: string, initialValue: T) {
-  const [storedValue, setStoredValue] = useState<T>(() => {
-    if (typeof window === 'undefined') return initialValue
-    try {
-      const item = window.localStorage.getItem(key)
-      return item ? JSON.parse(item) : initialValue
-    } catch (error) {
-      logger.error({ error, key }, 'Failed to read localStorage')
-      return initialValue
-    }
-  })
-
-  const setValue = useCallback(
-    (value: T | ((val: T) => T)) => {
-      try {
-        const valueToStore = value instanceof Function ? value(storedValue) : value
-        setStoredValue(valueToStore)
-        if (typeof window !== 'undefined') {
-          window.localStorage.setItem(key, JSON.stringify(valueToStore))
-        }
-      } catch (error) {
-        logger.error({ error, key }, 'Failed to set localStorage')
-      }
-    },
-    [key, storedValue]
-  )
-
-  return [storedValue, setValue] as const
-}
-```
-
-### **Debounce Hook**
-
-```typescript
-export function useDebounce<T>(value: T, delay: number): T {
-  const [debouncedValue, setDebouncedValue] = useState<T>(value)
-
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedValue(value)
-    }, delay)
-
-    return () => {
-      clearTimeout(handler)
-    }
-  }, [value, delay])
-
-  return debouncedValue
-}
-```
-
-## 📋 **Hook Development Checklist**
-
-- [ ] Start with `use` prefix
-- [ ] Add comprehensive JSDoc with examples
-- [ ] Use proper TypeScript types
-- [ ] Handle errors gracefully
-- [ ] Add logging for debugging
-- [ ] Optimize performance with useCallback/useMemo
-- [ ] Handle SSR edge cases
-- [ ] Write unit tests
-- [ ] Follow React hooks rules
-
-## 🔗 **Integration Examples**
-
-### **Combining Hooks**
-
-```typescript
-function UserProfile() {
-  const { authUser } = useAuth()
-  const { profile, updateProfile } = useProfile(authUser?.id)
-  const isMobile = useIsMobile()
-
-  if (!authUser || !profile) return <div>Loading...</div>
-
-  return (
-    <div>
-      <h1>{profile.display_name}</h1>
-      {isMobile ? <MobileProfile /> : <DesktopProfile />}
-      <button onClick={() => updateProfile({ bio: 'New bio' })}>
-        Update Bio
-      </button>
-    </div>
-  )
-}
-```
-
-### **Custom Hook with Existing Services**
-
-```typescript
-export function useNotifications(userId?: string) {
-  const [notifications, setNotifications] = useState([])
-  const { client } = useSupabase() // Assuming you have this hook
-
-  useEffect(() => {
-    if (!userId) return
-
-    const channel = client
-      .channel(`notifications:${userId}`)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications' }, (payload) => {
-        setNotifications((prev) => [payload.new, ...prev])
-      })
-      .subscribe()
-
-    return () => channel.unsubscribe()
-  }, [userId, client])
-
-  return notifications
-}
-```
-
-## 🚨 **Best Practices**
-
-### **Do's**
-
-- ✅ Start with `use` prefix
-- ✅ Add comprehensive JSDoc documentation
-- ✅ Use TypeScript properly
-- ✅ Handle loading and error states
-- ✅ Use useCallback for functions passed to children
-- ✅ Use useMemo for expensive calculations
-- ✅ Handle SSR edge cases
-- ✅ Follow React hooks rules
-
-### **Don'ts**
-
-- ❌ Call hooks conditionally
-- ❌ Use hooks in regular functions
-- ❌ Forget dependency arrays
-- ❌ Mutate props directly
-- ❌ Create hooks that return JSX
-- ❌ Ignore error handling
+1. **Follow Hook Rules** - Never call hooks conditionally.
+2. **Use Callbacks** - Wrap functions in `useCallback` for stable references.
+3. **Handle Loading/Error States** - Always expose loading and error states from data hooks.
+4. **Type Everything** - Use TypeScript for hook parameters and return values.
 
 ---
 
-**This is a starter template. Create hooks based on your application needs.**
+**Last Updated**: 2025-12-28  
+**Version**: 2.0.0

@@ -1,4 +1,4 @@
-# Structura
+# YwyBase
 
 [![Next.js](https://img.shields.io/badge/Next.js-15.5.6-000000?style=flat&logo=next.js)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-18.3.1-61DAFB?style=flat&logo=react)](https://react.dev/)
@@ -7,29 +7,24 @@
 [![Supabase](https://img.shields.io/badge/Supabase-0.7.0-3ECF8E?style=flat&logo=supabase)](https://supabase.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A production-ready Next.js 15 application template with **clean architecture**, authentication, Material UI, and TypeScript. Built for developers who want to ship fast with best practices.
-
-## TODO before launch:
-
-- Google Analytics
-- Google reCaptcha
-- Meta assets (og, etc from site.ts)
-- i18n
-- RBAC (https://www.npmjs.com/package/@rbac/rbac?)
-- Google Geolocation (https://developers.google.com/maps/documentation/geolocation/overview)
+YwyBase - A Solid Ground to Scale. A production-ready Next.js 15 application template with **clean architecture**, authentication, Material UI, and TypeScript. Built for developers who want to ship fast with best practices.
 
 ## 📑 **Table of Contents**
 
 - [Key Features](#-key-features)
 - [Quick Start](#-quick-start)
-- [Project Structure](#-project-structure)
 - [Documentation](#-documentation)
-- [Using Structure as a Starting Point](#-using-structure-as-a-starting-point)
+- [Using YwyBase as a Starting Point](#-using-ywybase-as-a-starting-point)
 - [Core Dependencies](#core-dependencies)
 - [Deployment](#-deployment)
 - [Available Scripts](#-available-scripts)
 - [Security Features](#️-security-features)
+- [Components](#-components)
+- [Responsive Design](#-responsive-design)
+- [Accessibility](#-accessibility)
 - [Contributing](#-contributing)
+- [License](#-license)
+- [Acknowledgments](#-acknowledgments)
 
 ## 🎯 **Key Features**
 
@@ -49,10 +44,11 @@ A production-ready Next.js 15 application template with **clean architecture**, 
 
 ### **🎨 UI/UX**
 
-- Material UI v7 with theming
-- Light/dark mode support
-- Responsive design
-- WCAG 2.1 accessibility
+- **Multi-theme Support** - Switch between `concrete` and `ywybase` themes, or add your own
+- **Material UI v7** - Modern component library with theming
+- **Light/Dark Mode** - Built-in support respecting system preferences or manual toggle
+- **Responsive Design** - Mobile-first approach
+- **WCAG 2.1 Accessibility** - Inclusive design principles
 
 ### **⚡ Performance**
 
@@ -76,54 +72,6 @@ A production-ready Next.js 15 application template with **clean architecture**, 
 - pnpm 8+
 - Supabase account
 
-### **Installation**
-
-```bash
-# 1. Clone the template
-git clone https://github.com/mmerlone/structura.git your-project
-cd your-project
-
-# 2. Install dependencies
-pnpm install
-
-# 3. Set up environment variables
-cp .env.sample .env.local
-# Edit .env.local with your API keys (see detailed setup below)
-
-# 4. Start development
-pnpm dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) → Your app is running!
-
-> **📋 Next Steps**: After cloning, follow the detailed environment setup guide below to configure your API keys.
-
-## 📁 **Project Structure**
-
-```
-/
-├── app/                    # Next.js App Router
-│   ├── (auth)/            # Auth routes
-│   ├── api/               # API endpoints
-│   └── [pages]/           # App pages
-├── src/
-│   ├── components/        # UI components
-│   ├── hooks/            # Custom React hooks with React Query
-│   ├── lib/              # Core libraries
-│   │   ├── supabase/     # Supabase integration
-│   │   │   ├── client.ts  # Browser client
-│   │   │   ├── server.ts  # Server client
-│   │   │   └── services/ # Service layer
-│   │   └── ...
-│   ├── middleware/       # Next.js middleware
-│   └── types/           # TypeScript types
-├── public/              # Static assets
-└── supabase/           # Database configuration
-    ├── init/          # Database initialization scripts
-    │   └── init.sql   # Bootstrap SQL script for fresh database
-    └── migrations/    # Database migrations
-```
-
 ### **🏗️ Architecture Pattern**
 
 ```
@@ -144,8 +92,13 @@ Components → Services → Database
 - **[Architecture Guide](./docs/architecture.md)** - Clean architecture patterns
 - **[Project Structure](./docs/structure.md)** - Directory layout and conventions
 - **[API Documentation](./docs/api.md)** - Complete API endpoint reference
+- **[Authentication Flows](./docs/authentication-flows.md)** - Email auth and verification flows
 - **[Library Architecture](./src/lib/README.md)** - Core libraries and utilities
 - **[Hooks Library](./src/hooks/README.md)** - Custom React hooks
+- **[Security Documentation](./docs/security.md)** - Security best practices and configuration
+- **[Rate Limiting](./docs/rate-limiting.md)** - API rate limiting and storage setup
+- **[Flash Messages](./docs/flash-messages.md)** - Temporary notifications system
+- **[Database Recreation](./docs/database-recreation.md)** - Guide for database wipe and restore
 
 ### **🔧 Library Documentation**
 
@@ -154,26 +107,31 @@ Components → Services → Database
 - **[Utils Library](./src/lib/utils/README.md)** - Common utility functions
 - **[Validators Library](./src/lib/validators/README.md)** - Zod validation schemas
 - **[Middleware Library](./src/middleware/README.md)** - Application middleware
+- **[Security Utilities](./src/middleware/security/README.md)** - Security middleware and utilities
+- **[Auth Actions](./src/lib/actions/auth/README.md)** - Authentication server actions
 
 ### **🛠️ Development Tools**
 
 - **[Scripts Directory](./scripts/README.md)** - Type generation and build scripts
 - **[Database Migrations](./supabase/README.md)** - Database schema migrations
 
-### **📋 Development Guides**
+### **📋 Project Management**
+
+- **[Roadmap](./ROADMAP.md)** - Development backlog and future features
+- **[Changelog](./CHANGELOG.md)** - Version history and changes
+
+### **📋 General Guides**
 
 - **[Contributing Guidelines](./CONTRIBUTING.md)** - How to contribute
 - **[Error Handling](./src/lib/error/README.md)** - Error management patterns
-- **[Database Recreation](./docs/DATABASE-RECREATION.md)** - Database recreation workflow
-- **[Rate Limiting Setup](./docs/rate-limiting.md)** - Production rate limiting configuration
 
-## 🎯 **Using Structure as a Starting Point**
+## 🎯 **Using YwyBase as a Starting Point**
 
 ### **1. Clone and Customize**
 
 ```bash
 # Clone the template
-git clone https://github.com/mmerlone/structura.git your-project
+git clone https://github.com/mmerlone/ywybase.git your-project
 cd your-project
 
 # Update package.json with your project info
@@ -221,7 +179,7 @@ nano .env.local  # or use your preferred editor
    npx @sentry/wizard@latest -i nextjs
    ```
 
-   This will create `.env.sentry-build-plugin` file and configure Sentry for your project.
+   This will create `.env.sentry-build-plugin` file and configure Sentry for your project. After running the wizard, ensure you set the `NEXT_PUBLIC_SENTRY_DSN` environment variable in your `.env.local` file.
 
 2. **Create Sentry Project**
    - Go to [sentry.io](https://sentry.io)
@@ -236,7 +194,7 @@ nano .env.local  # or use your preferred editor
    - Update your `.env.local`:
 
    ```env
-   SENTRY_DSN=your_sentry_dsn
+   NEXT_PUBLIC_SENTRY_DSN=your_sentry_dsn
    SENTRY_AUTH_TOKEN=your_sentry_auth_token
    ```
 
@@ -310,7 +268,7 @@ SUPABASE_PROJECT_ID=your_project_id
 
 # Optional
 NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL=http://localhost:3000
-SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+SUPABASE_SECRET_KEY=your_supabase_secret_key
 SENTRY_DSN=your_sentry_dsn
 SENTRY_AUTH_TOKEN=your_sentry_auth_token
 LOG_LEVEL=info
@@ -334,23 +292,54 @@ export const SITE_CONFIG = {
   name: 'Your App Name',
   description: 'Your app description',
   url: 'https://yourapp.com',
+  theme: 'concrete', // Options: 'concrete' | 'ywybase'
   // ... other config
 }
 ```
+
+#### **Theme Management**
+
+YwyBase supports multiple themes. The theming system is built on Material UI and allows for easy switching and expansion.
+
+**Adding a New Theme:**
+
+1. Create a new theme file in `src/themes/`:
+
+   ```typescript
+   // src/themes/my-theme.ts
+   import { createTheme } from '@mui/material/styles'
+
+   export const myTheme = createTheme({
+     // ... your theme customization
+   })
+   ```
+
+2. Run the theme generator script:
+
+   ```bash
+   pnpm gen:themes
+   ```
+
+3. Update `src/config/site.ts` to use your new theme:
+   ```typescript
+   export const SITE_CONFIG = {
+     // ...
+     theme: 'my-theme',
+   }
+   ```
 
 #### **Architecture Examples**
 
 **Server Components:**
 
 ```typescript
-import { createClient } from '@/lib/supabase/server'
-import { ProfileService } from '@/lib/supabase/services/database/profiles/profile.service'
+import { getProfile } from '@/lib/actions/profile'
 
 export default async function ProfileServerComponent({ userId }: { userId: string }) {
-  const profileServerService = await ProfileServerService.create()
-  const profile = await profileServerService.getProfile(userId)
+  const result = await getProfile(userId)
+  const profile = result.success ? result.data : null
 
-  return <div>{profile?.display_name}</div>
+  return <div>{profile?.display_name ?? 'No profile found'}</div>
 }
 ```
 
@@ -372,12 +361,25 @@ export default function ProfileClientComponent({ userId }: { userId: string }) {
 ```typescript
 'use server'
 import { createClient } from '@/lib/supabase/server'
-import { ProfileService } from '@/lib/supabase/services/database/profiles/profile.service'
+import { withServerActionErrorHandling, createServerActionSuccess } from '@/lib/error/server'
+import { profileUpdateSchema } from '@/lib/validators/profile'
+import type { AuthResponse } from '@/types/error.types'
+import type { Profile } from '@/types/database'
 
-export async function updateProfileAction(userId: string, updates: ProfileUpdate) {
-  const profileServerService = await ProfileServerService.create()
-  return await profileServerService.updateProfile(userId, updates)
-}
+export const updateProfile = withServerActionErrorHandling(
+  async (userId: string, updates: Partial<Profile>): Promise<AuthResponse<Profile>> => {
+    const validated = profileUpdateSchema.safeParse(updates)
+    if (!validated.success) {
+      return { success: false, error: 'Invalid profile data' }
+    }
+
+    const supabase = await createClient()
+    const { data, error } = await supabase.from('profiles').update(validated.data).eq('id', userId).select().single()
+
+    if (error) throw error
+    return createServerActionSuccess(data, 'Profile updated')
+  }
+)
 ```
 
 #### **Add Your Features**
@@ -481,8 +483,8 @@ CSRF_SECRET=your_csrf_secret_32_chars_minimum
 # KV_REST_API_TOKEN=your_vercel_kv_rest_api_token
 # REDIS_URL=redis://your-redis-host:6379
 
-# Supabase Service Role (Server-side only)
-SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+# Supabase Secret Key (Server-side only)
+SUPABASE_SECRET_KEY=your_supabase_secret_key
 ```
 
 > **🔧 Setup Guide**: See the detailed environment setup section above for step-by-step instructions on obtaining each API key.
@@ -494,25 +496,23 @@ SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 pnpm dev              # Start development server
 pnpm build            # Build for production
 pnpm start            # Start production server
+pnpm gen:themes       # Generates the theme index
 
 # Code Quality
 pnpm lint             # Run ESLint
 pnpm lint:fix         # Fix ESLint errors
 pnpm type-check       # Run TypeScript type checking
 pnpm format           # Format code with Prettier
+pnpm format:check     # Check code formatting without modifying files
 
 # Type Generation
-pnpm gen:types        # Generate Supabase database types
+pnpm gen:types        # Generate Supabase database types (auto-runs inside pnpm db:init)
 pnpm generate:i18n-types  # Generate i18n translation types
 pnpm watch:i18n       # Watch i18n files and auto-generate types
 
 # Database Management
-pnpm db:init              # Initialize database from bootstrap script
-pnpm db:backup:structure  # Backup database schema only
-pnpm db:backup:full       # Backup full database with data
-pnpm db:wipe              # Wipe database completely (with backup option)
-pnpm db:restore           # Restore from schema backup
-pnpm db:migrations:sync   # Sync migration history
+pnpm db:init              # Apply migrations to remote database
+pnpm db:init --status     # Check migration status
 ```
 
 ### **Type Generation Scripts**
@@ -528,6 +528,34 @@ Generates TypeScript types from your Supabase database schema. Run this after:
 - Creating new tables
 - Modifying table structures
 - Adding new columns
+
+#### **Theme Generation**
+
+```bash
+pnpm run gen:themes
+```
+
+Generates the theme index file that exports all available themes from `src/themes/`. Run this after:
+
+- Adding new theme files in `src/themes/`
+- Removing theme files
+- Renaming theme files
+
+**How it works**:
+
+- Scans the `src/themes/` directory for all `.ts` files (excluding `index.ts`)
+- Automatically generates `src/themes/index.ts` with exports for all themes
+- Ensures all themes are properly exported and accessible
+
+**Example**:
+
+```bash
+# After creating a new theme file: src/themes/my-custom-theme.ts
+pnpm run gen:themes
+
+# The generated index.ts will now include:
+# export { myCustomTheme } from './my-custom-theme'
+```
 
 #### **i18n Types**
 
@@ -557,133 +585,110 @@ Watches for changes in translation files and auto-generates types. Use during de
 
 ### **Database Initialization**
 
-#### **Initialize Database**
+#### **Apply Migrations**
 
 ```bash
 pnpm run db:init
 ```
 
-Initializes a fresh Supabase database with the schema defined in `supabase/init/init.sql`. This script:
+Applies pending migrations to your remote Supabase database using Supabase CLI. This script:
 
-- **Safe by default**: Will NOT overwrite existing data
-- **Checks for existing tables**: Prevents accidental data loss
-- **Uses bootstrap script**: Loads schema from `supabase/init/init.sql`
+- **Uses Supabase migrations**: Applies all pending migrations from `supabase/migrations/`
+- **Incremental and safe**: Only applies migrations that haven't been run yet
+- **Version controlled**: Migrations are tracked in your codebase
+- **Official tooling**: Uses `npx supabase db push` under the hood
 
-**Force Mode** (⚠️ **WARNING**: Will attempt to initialize even if tables exist):
+**Check Migration Status**:
 
 ```bash
-pnpm run db:init --force
+pnpm run db:init --status
 ```
 
-> **⚠️ Warning**: Force mode may overwrite existing data. Use with caution.
+Shows which migrations have been applied and which are pending.
+
+**Reset Database** (⚠️ **DANGER**: Drops all data):
+
+```bash
+pnpm run db:init --reset
+```
+
+> **⚠️ Warning**: This command shows instructions but requires manual confirmation for safety.
 
 **Requirements**:
 
-- PostgreSQL client tools (psql) compatible with your Supabase server version
+- Supabase CLI (installed automatically via npx)
 - Environment variables: `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_PROJECT_ID`, `SUPABASE_DB_PASSWORD`
-- Init script located at `supabase/init/init.sql`
+- Migration files in `supabase/migrations/`
 
 **Complete Setup Workflow**:
 
 ```bash
-# 1. Initialize database schema
+# 1. Apply migrations and regenerate types
 pnpm run db:init
 
-# 2. Sync migration history
-pnpm run db:migrations:sync
-
-# 3. Generate TypeScript types
-pnpm run gen:types
+# 2. Check migration status
+pnpm run db:init --status
 ```
 
-### **Database Backup Scripts**
-
-#### **Schema Backup**
+**Creating New Migrations**:
 
 ```bash
-pnpm run db:backup:structure
+# Create a new migration file
+npx supabase migration new add_user_preferences
+
+# Edit the generated file in supabase/migrations/
+# Then apply it
+pnpm run db:init
 ```
 
-Creates a backup of your database schema (tables, constraints, indexes) without data. Use before:
+### **Database Maintenance (Supabase CLI)**
 
-- Making schema changes
-- Running migrations
-- Major refactoring
+Custom backup/restore scripts have been removed in favor of Supabase's native tooling. Use the Supabase CLI or dashboard when you need to perform operations beyond migrations.
 
-**Requirements:**
-
-- PostgreSQL client tools (pg_dump) compatible with your Supabase server version
-- Environment variables: `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_PROJECT_ID`, `SUPABASE_DB_PASSWORD`
-- A valid `SUPABASE_DB_PASSWORD` environment variable must be set
-
-#### **Full Database Backup**
+#### **Build a Database URL**
 
 ```bash
-pnpm run db:backup:full
+export SUPABASE_DB_URL="postgresql://postgres:${SUPABASE_DB_PASSWORD}@db.${SUPABASE_PROJECT_ID}.supabase.co:5432/postgres"
 ```
 
-Creates a complete backup including all data. Use before:
-
-- Data migrations
-- Major data changes
-- Production deployments
-
-**Requirements:**
-
-- PostgreSQL client tools (pg_dump) compatible with your Supabase server version
-- Environment variables: `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_PROJECT_ID`, `SUPABASE_DB_PASSWORD`
-
-**⚠️ Version Compatibility Note**: Your pg_dump version must match your Supabase PostgreSQL server version. If you encounter version mismatch errors, use the Supabase Dashboard SQL Editor for manual backups.
-
-#### **Database Wipe & Restore**
+#### **Create a Schema Backup**
 
 ```bash
-# Complete database recreation workflow
-pnpm run db:wipe              # Wipe everything (offers backup first)
-pnpm run db:restore           # Restore from schema backup
-pnpm run db:migrations:sync   # Sync migration history
-pnpm run gen:types            # Regenerate TypeScript types
+# Dumps the public schema to a timestamped file
+mkdir -p backups
+npx supabase db dump --schema public --db-url "$SUPABASE_DB_URL" > backups/$(date +%Y%m%d%H%M%S)_schema.sql
 ```
 
-**Database Wipe (`db:wipe`)**
-
-Completely wipes all database objects with safety features:
-
-- **Confirmation Required**: Must type `WIPE_DATABASE_CONFIRM`
-- **Backup First**: Offers to create backup (defaults to Yes)
-- **Safe Operation**: Aborts if backup creation fails
-- **Complete Clean**: Drops all tables, functions, triggers, and migration history
-
-**Database Restore (`db:restore`)**
-
-Restores database from schema backup:
-
-- **Auto-Detect**: Finds latest schema backup if none specified
-- **Validation**: Checks backup file integrity
-- **Preparation**: Ensures clean database state
-- **Verification**: Confirms successful restoration
-
-**Migration Sync (`db:migrations:sync`)**
-
-Synchronizes migration history with codebase:
-
-- **After Restoration**: Essential after restoring from backup
-- **Clean State**: Ensures database matches migration files
-- **Verification**: Confirms sync status
-- **Error Handling**: Handles missing/outdated migrations
-
-**Complete Recreation Workflow**:
+#### **Create a Full Backup**
 
 ```bash
-# One-command complete database recreation
-pnpm run db:wipe && pnpm run db:restore && pnpm run db:migrations:sync && pnpm run gen:types
+npx supabase db dump --db-url "$SUPABASE_DB_URL" > backups/$(date +%Y%m%d%H%M%S)_full.sql
 ```
 
-**Requirements for All Database Scripts**:
+> Supabase CLI streams SQL to stdout. Redirect output to a file (as shown above) or pipe it to cloud storage. Refer to [Supabase db dump docs](https://supabase.com/docs/guides/cli/local-development#dump-the-database) for additional flags (e.g., excluding schemas or data-only dumps).
 
-- PostgreSQL client tools (psql, pg_dump) compatible with your Supabase server version
-- Environment variables: `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_PROJECT_ID`, `SUPABASE_DB_PASSWORD`
-- Valid Supabase project access
+#### **Resetting / Recreating the Database**
+
+```bash
+# Danger: drops all data in the remote database
+npx supabase db reset --db-url "$SUPABASE_DB_URL"
+
+# Re-apply your schema via migrations (automatically regenerates Supabase types)
+pnpm run db:init
+```
+
+> If your Supabase plan does not allow CLI resets, use the Supabase dashboard's "Reset Database" button and then re-run `pnpm run db:init`.
+
+#### **Restoring from a Backup**
+
+```bash
+psql "$SUPABASE_DB_URL" < backups/20250101000000_full.sql
+
+# After restoring manually, re-run migrations if needed
+pnpm run db:init --status
+```
+
+Manual restoration is rarely needed because your schema should be reproducible via migrations. Prefer wiping/resetting and re-applying migrations whenever possible.
 
 ### **PostgreSQL Client Installation (Ubuntu)**
 
@@ -781,20 +786,3 @@ This project is licensed under the MIT License - see the [LICENSE](./LICENSE) fi
 ---
 
 **🎉 Happy coding!**
-
-## 📚 Documentation
-
-For detailed documentation, see the [Documentation](/docs) directory.
-
-### Core Libraries
-
-- [@/lib](/src/lib/README.md) - Core utilities and shared functionality
-- [@/lib/auth](/src/lib/auth/README.md) - Authentication and authorization
-- [@/lib/supabase](/src/lib/supabase/README.md) - Supabase client and utilities
-- [@/lib/utils](/src/lib/utils/README.md) - Shared utility functions
-- [@/hooks](/src/hooks/README.md) - Custom React hooks for stateful logic
-
-### Library Documentation
-
-- [React Hook Form](https://react-hook-form.com/) - Form library
-- [Zod](https://zod.dev/) - Schema validation

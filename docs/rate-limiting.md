@@ -90,11 +90,12 @@ The rate limiting system protects against:
 The system automatically validates your rate limiting setup:
 
 ```typescript
-import { validateRateLimitConfig } from '@/lib/security/rate-limit'
+import { validateRateLimitConfig } from '@/middleware/security/rate-limit'
+import { logger } from '@/lib/logger/server'
 
 const validation = validateRateLimitConfig()
 if (!validation.isValid) {
-  console.error('Rate limiting issues:', validation.issues)
+  logger.error({ issues: validation.issues }, 'Rate limiting configuration invalid')
 }
 ```
 
@@ -110,7 +111,7 @@ if (!validation.isValid) {
 
 ```typescript
 // src/middleware.ts
-import { rateLimiters } from '@/lib/security/rate-limit'
+import { rateLimiters } from '@/middleware/security/rate-limit'
 
 export async function middleware(request: NextRequest) {
   // Apply rate limiting to auth endpoints
@@ -131,7 +132,7 @@ export async function middleware(request: NextRequest) {
 
 ```typescript
 // app/api/auth/login/route.ts
-import { withRateLimit } from '@/lib/security/rate-limit'
+import { withRateLimit } from '@/middleware/security/rate-limit'
 
 export const POST = withRateLimit('auth', async (request: NextRequest) => {
   // Your login logic here
@@ -142,7 +143,7 @@ export const POST = withRateLimit('auth', async (request: NextRequest) => {
 ### Custom Rate Limiting
 
 ```typescript
-import { createRateLimiter } from '@/lib/security/rate-limit'
+import { createRateLimiter } from '@/middleware/security/rate-limit'
 
 // Create custom rate limiter
 const customLimiter = createRateLimiter('api', {
@@ -198,14 +199,18 @@ logger.warn(
 ### Status Checking
 
 ```typescript
-import { getRateLimitStatus } from '@/lib/security/rate-limit'
+import { getRateLimitStatus } from '@/middleware/security/rate-limit'
+import { logger } from '@/lib/logger/server'
 
 const status = await getRateLimitStatus(request, 'auth')
-console.log({
-  success: status.success,
-  remaining: status.remaining,
-  resetTime: new Date(status.resetTime),
-})
+logger.info(
+  {
+    success: status.success,
+    remaining: status.remaining,
+    resetTime: new Date(status.resetTime),
+  },
+  'Rate limit status checked'
+)
 ```
 
 ## Troubleshooting

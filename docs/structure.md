@@ -19,70 +19,88 @@ Canonical structure for the Next.js 15.5.6 App Router application. Follow this s
 /
 ├── app/                         # Next.js App Router
 │   ├── (auth)/                  # Auth routes (grouped)
-│   │   ├── auth/                # Authentication pages
-│   │   └── confirm/             # Email confirmation
+│   │   └── auth/                # Authentication pages
 │   ├── api/                     # API routes
 │   │   ├── auth/                # Auth API endpoints
-│   │   └── location/            # Location API endpoints
+│   │   │   ├── confirm/         # Email confirmation handler
+│   │   │   └── reset-password/  # Password reset handler
+│   │   └── sentry-example-api/  # Sentry integration example
 │   ├── about/                   # About page
-│   ├── account/                 # User account management
 │   ├── cookies/                 # Cookie policy
+│   ├── copyright/               # Copyright page
+│   ├── error/                   # Error display page
 │   ├── privacy/                 # Privacy policy
+│   ├── profile/                 # Profile management
+│   ├── sentry-example-page/     # Sentry error testing page
 │   └── terms/                   # Terms of service
 │
 ├── src/
 │   ├── components/              # Reusable UI components
 │   │   ├── auth/                # Auth components
-│   │   ├── cookie/             # Cookie consent components
-│   │   ├── error/              # Error boundaries
-│   │   ├── forms/              # Form components
-│   │   ├── layout/             # Layout components
-│   │   ├── profile/            # Profile components
-│   │   └── providers/          # Context providers
+│   │   ├── cookie/              # Cookie consent components
+│   │   ├── error/               # Error boundaries
+│   │   ├── example/             # Example components
+│   │   ├── forms/               # Form components
+│   │   ├── icons/               # Icon components
+│   │   ├── layout/              # Layout components
+│   │   ├── marketing/           # Marketing components (CTA, features, etc.)
+│   │   ├── profile/             # Profile components
+│   │   └── providers/           # Context providers
 │   │
-│   ├── config/                 # App configuration
-│   ├── contexts/               # React contexts
-│   ├── hooks/                  # Custom React hooks
-│   ├── i18n/                   # Internationalization
-│   ├── lib/                    # Core libraries
-│   │   ├── auth/               # Auth utilities
-│   │   ├── error/              # Error handling
-│   │   ├── logger/             # Logging system
-│   │   ├── supabase/           # Database integration
-│   │   ├── utils/              # Utility functions
-│   │   └── validators/         # Validation schemas
+│   ├── config/                  # App configuration
+│   │   ├── query.ts             # React Query configuration
+│   │   ├── routes.ts            # Route definitions
+│   │   ├── security.ts          # Security configuration
+│   │   ├── site.ts              # Site metadata and configuration
+│   │   └── supabase.ts          # Supabase configuration
 │   │
-│   ├── middleware/             # Application middleware
-│   │   ├── request-logger.ts   # Request logging
-│   │   └── require-verified-email.ts # Email verification
+│   ├── contexts/                # React contexts
+│   │   ├── profile/             # Profile context and controller
+│   │   └── SnackbarContext.tsx  # Snackbar notifications
 │   │
-│   ├── lib/                    # Core libraries
-│   │   ├── auth/               # Authentication
-│   │   ├── error/              # Error handling
-│   │   ├── hooks/              # React hooks
-│   │   ├── logger/             # Logging system
-│   │   ├── security/           # Security utilities
-│   │   │   ├── audit.ts        # Security event logging
-│   │   │   ├── csrf.ts         # CSRF protection
-│   │   │   ├── headers.ts      # Security headers
-│   │   │   ├── rate-limit.ts   # Rate limiting
-│   │   │   └── sanitize.ts     # Input sanitization
-│   │   ├── supabase/           # Database integration
-│   │   ├── utils/              # Utility functions
-│   │   └── validators/         # Validation schemas
+│   ├── hooks/                   # Custom React hooks
+│   ├── i18n/                    # Internationalization
+│   ├── lib/                     # Core libraries
+│   │   ├── actions/             # Server Actions
+│   │   │   ├── auth/            # Auth server actions
+│   │   │   ├── account.ts       # Account management actions
+│   │   │   ├── location.ts      # Location detection actions
+│   │   │   └── profile.ts       # Profile actions
+│   │   ├── error/               # Error handling
+│   │   ├── logger/              # Logging system
+│   │   ├── supabase/            # Database integration & services
+│   │   ├── utils/               # Utility functions
+│   │   └── validators/          # Validation schemas
 │   │
-│   └── types/                  # TypeScript types
+│   ├── middleware/              # Application middleware
+│   │   ├── security/            # Security middleware (Headers, CSRF, etc.)
+│   │   ├── auth.ts              # Auth middleware
+│   │   ├── authorization.ts     # Authorization middleware
+│   │   ├── index.ts             # Middleware orchestration
+│   │   ├── request-logger.ts    # Request logging
+│   │   ├── session.ts           # Session management
+│   │   └── utils/               # Middleware utilities
+│   │
+│   ├── themes/                  # MUI theme definitions
+│   │   ├── concrete.ts          # Concrete theme
+│   │   ├── index.ts             # Theme exports
+│   │   ├── mui.ts               # MUI default theme
+│   │   └── ywybase.ts           # YwyBase theme
+│   │
+│   └── types/                   # TypeScript types
 │
-├── public/                     # Static assets
-├── scripts/                    # Build and utility scripts
-│   ├── generateSupabaseTypes.ts # Supabase type generation
-│   ├── generate-i18n-types.ts  # i18n type generation
-│   ├── watch-i18n.ts           # i18n file watcher
-│   ├── backup-database.ts      # Database backup utility
-│   └── README.md               # Scripts documentation
-└── supabase/                   # Database migrations
-    └── migrations/             # SQL migration files
-        └── README.md           # Migrations documentation
+├── public/                      # Static assets
+├── scripts/                     # Build and utility scripts
+│   ├── generate-supabase-types.ts # Supabase type generation
+│   ├── generate-i18n-types.ts   # i18n type generation
+│   ├── generate-themes.ts       # Theme generation
+│   ├── init-database.ts         # Database initialization
+│   ├── watch-i18n.ts            # i18n file watcher
+│   └── README.md                # Scripts documentation
+│
+└── supabase/                    # Database migrations
+    ├── migrations/              # SQL migration files
+    └── README.md                # Supabase documentation
 ```
 
 ## 📋 **File Naming Conventions**
@@ -106,7 +124,6 @@ Canonical structure for the Next.js 15.5.6 App Router application. Follow this s
 
 - **[Library Architecture](../src/lib/README.md)** - Core libraries overview
 - **[Logger System](../src/lib/logger/README.md)** - Structured logging
-- **[Security System](../src/lib/security/README.md)** - Security utilities
 - **[Supabase Integration](../src/lib/supabase/README.md)** - Database and auth
 - **[Utils Library](../src/lib/utils/README.md)** - Utility functions
 - **[Validators Library](../src/lib/validators/README.md)** - Zod validation
@@ -116,7 +133,7 @@ Canonical structure for the Next.js 15.5.6 App Router application. Follow this s
 ### **🛠️ Development Tools**
 
 - **[Scripts Directory](../scripts/README.md)** - Type generation and build scripts
-- **[Database Migrations](../supabase/migrations/README.md)** - Database schema migrations
+- **[Supabase Overview](../supabase/README.md)** - Database schema and migrations
 
 ## 🛠️ **Development Guidelines**
 
@@ -136,7 +153,7 @@ src/components/
 ├── auth/
 │   ├── AuthForm.tsx
 │   ├── LoginForm.tsx
-│   └── RegisterForm.tsx
+│   └── SignUpForm.tsx
 ├── profile/
 │   ├── ProfileCard.tsx
 │   ├── ProfileForm.tsx

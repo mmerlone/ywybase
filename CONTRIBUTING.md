@@ -1,6 +1,6 @@
-# Contributing to Structura
+# Contributing to YwyBase
 
-Thank you for considering contributing to Structura! This guide will help you get started with the project.
+Thank you for considering contributing to YwyBase! This guide will help you get started with the project.
 
 > **📋 Note**: For development setup instructions, please refer to the [Quick Start](./README.md#-quick-start) section in the main README.
 
@@ -60,8 +60,6 @@ For the best development experience, we recommend using VS Code with these exten
 
 - [ESLint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint)
 - [Prettier](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)
-- [TypeScript Vue Plugin (Volar)](https://marketplace.visualstudio.com/items?itemName=Vue.vscode-typescript-vue-plugin)
-- [Tailwind CSS IntelliSense](https://marketplace.visualstudio.com/items?itemName=bradlc.vscode-tailwindcss)
 
 ## Git Workflow
 

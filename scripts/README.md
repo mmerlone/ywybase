@@ -1,212 +1,60 @@
 # Scripts Directory
 
-Development and build scripts for the Structura project.
+Development and build scripts for the YwyBase project.
 
 ## 📁 **Available Scripts**
 
 ### **🔧 Type Generation Scripts**
 
-#### **generateSupabaseTypes.ts**
+#### **generate-supabase-types.ts**
 
 Generates TypeScript types from your Supabase database schema.
 
-```bash
-# Run via npm script
-pnpm run gen:types
-
-# Or run directly
-npx ts-node scripts/generateSupabaseTypes.ts
-```
-
-**What it does:**
-
-- Connects to your Supabase project using the project ID
-- Fetches the database schema for the 'public' schema
-- Generates TypeScript types matching your database structure
-- Writes types to `src/types/supabase.ts`
-
-**Requirements:**
-
-- `NEXT_PUBLIC_SUPABASE_PROJECT_ID` in `.env.local`
-- Supabase CLI installed globally (`npm install -g supabase`)
-
-**Output:**
-
-```
-src/types/supabase.ts
-├── Database interface
-├── Table types
-├── Function types
-└── Generated timestamp
-```
-
-#### **generate-i18n-types.ts**
-
-Generates TypeScript types from i18n translation files.
-
-```bash
-# Run via npm script
-pnpm run generate:i18n-types
-
-# Or run directly
-npx ts-node scripts/generate-i18n-types.ts
-```
-
-**What it does:**
-
-- Reads English translations as the source of truth
-- Converts JSON structure to TypeScript types
-- Formats output with Prettier
-- Writes types to `src/types/generated/i18n.types.ts`
-
-**Requirements:**
-
-- `src/locales/en/common.json` must exist
-- Prettier for formatting
-
-**Output:**
-
-```typescript
-// src/types/generated/i18n.types.ts
-export type CommonTranslations = {
-  welcome: string
-  navigation: {
-    home: string
-    about: string
-  }
-  // ... more types
-}
-```
-
-#### **watch-i18n.ts**
-
-Watches for changes in translation files and auto-regenerates types.
-
-```bash
-# Run via npm script
-pnpm run watch:i18n
-
-# Or run directly
-npx ts-node scripts/watch-i18n.ts
-```
-
-**What it does:**
-
-- Monitors all JSON files in `src/locales/`
-- Automatically regenerates types on file changes
-- Prevents process conflicts by killing previous builds
-- Provides real-time feedback
-
-**Features:**
-
-- 🔍 Watches for add, change, and unlink events
-- ⚡ Automatic type regeneration
-- 🛡️ Process conflict prevention
-- 📝 Detailed logging
-
-**Usage:**
-
-```bash
-# Start the watcher
-pnpm run watch:i18n
-
-# Make changes to any translation file
-# Types are automatically regenerated!
-```
-
+````bash
 ### **💾 Database Management Scripts**
 
-#### **backup-database.ts**
+#### **init-database.ts**
 
-Creates backups of your Supabase database schema and/or data.
+Applies Supabase migrations to your remote project using the Supabase CLI.
 
 ```bash
-# Backup schema only (structure)
-pnpm run db:backup:structure
+# Apply all pending migrations
+pnpm run db:init
 
-# Backup full database with data
-pnpm run db:backup:full
-
-# Or run directly
-npx ts-node scripts/backup-database.ts --schema-only
-npx ts-node scripts/backup-database.ts --with-data
-```
+# Check migration status
+pnpm run db:init --status
+````
 
 **What it does:**
 
-- Connects to your Supabase project using direct database connection
-- Uses pg_dump to create SQL backup files with proper filtering
-- Generates backup metadata and summaries
-- Stores backups in organized directory structure
+- Validates environment variables
+- Ensures the `supabase/migrations` directory exists
+- Delegates to `npx supabase db push` and `supabase migration list`
+- Provides helpful messaging for resets and linking new migrations
 
-**Requirements:**
+**Advanced Operations:**
 
-- `SUPABASE_PROJECT_ID` or `NEXT_PUBLIC_SUPABASE_PROJECT_ID` in `.env.local`
-- `NEXT_PUBLIC_SUPABASE_URL` in `.env.local
-- `SUPABASE_DB_PASSWORD` in `.env.local`
-- PostgreSQL client tools (pg_dump) compatible with your Supabase server version
-
-#### **wipe-database.ts**
-
-Completely wipes all database objects from your Supabase project.
+Backup, restore, and wipe functionality now rely on the Supabase CLI or dashboard directly. Recommended commands:
 
 ```bash
-# Wipe database completely (requires confirmation)
-pnpm run db:wipe
+# Build a reusable DB URL
+export SUPABASE_DB_URL="postgresql://postgres:${SUPABASE_DB_PASSWORD}@db.${SUPABASE_PROJECT_ID}.supabase.co:5432/postgres"
 
-# Or run directly
-npx ts-node scripts/wipe-database.ts
-```
+# Schema-only backup
+npx supabase db dump --schema public --db-url "$SUPABASE_DB_URL" > backups/$(date +%Y%m%d%H%M%S)_schema.sql
 
-**What it does:**
+# Full backup
+npx supabase db dump --db-url "$SUPABASE_DB_URL" > backups/$(date +%Y%m%d%H%M%S)_full.sql
 
-- Drops all tables in public schema
-- Drops all custom functions and triggers
-- Clears migration history
-- Resets sequences
-- Offers to create backup before wiping (default: Yes)
-
-**Safety Features:**
-
-- Requires `WIPE_DATABASE_CONFIRM` confirmation
-- Offers backup creation before wiping (defaults to Yes)
-- Aborts if backup creation fails
-- Comprehensive error handling
-
-**Requirements:**
-
-- Same as backup-database.ts
-- PostgreSQL client tools (psql)
-
-#### **restore-database.ts**
-
-Restores database from a schema backup file.
-
-```bash
-# Restore from latest schema backup (auto-detected)
-pnpm run db:restore
-
-# Restore from specific backup file
-pnpm run db:restore --backup-file backups/my_backup.sql
-
-# Or run directly
-npx ts-node scripts/restore-database.ts
-npx ts-node scripts/restore-database.ts --backup-file backups/my_backup.sql
-```
-
-**What it does:**
-
-- Validates backup file integrity
-- Prepares database for restoration
-- Executes schema restoration
-- Verifies restoration success
-- Auto-finds latest schema backup if none specified
-
-**Requirements:**
-
-- Same as backup-database.ts
-- PostgreSQL client tools (psql)
+# Reset database (DANGER)
 - Valid schema backup file in backups/ directory
+pnpm run db:init   # Automatically regenerates Supabase types
+
+# Manual restore
+psql "$SUPABASE_DB_URL" < backups/20250101000000_full.sql
+```
+
+Refer to the [Supabase CLI docs](https://supabase.com/docs/guides/cli) for option details and additional workflows.
 
 #### **sync-migrations.ts**
 
@@ -316,21 +164,23 @@ supabase db shell
    pnpm run gen:types
    ```
 
-3. **Database Management** (backup, restore, wipe)
+3. **Database Maintenance**
 
-   ```bash
-   # Create backups before major changes
-   pnpm run db:backup:structure  # Schema only
-   pnpm run db:backup:full       # With data
+> Use the Supabase CLI directly for backups, restores, and resets.
 
-   # Complete database recreation (advanced)
-   pnpm run db:wipe              # Wipe everything (with backup option)
-   pnpm run db:restore           # Restore from backup
-   pnpm run db:migrations:sync   # Sync migration history
+```bash
+export SUPABASE_DB_URL="postgresql://postgres:${SUPABASE_DB_PASSWORD}@db.${SUPABASE_PROJECT_ID}.supabase.co:5432/postgres"
 
-   # One-command recreation
-   pnpm run db:wipe && pnpm run db:restore && pnpm run db:migrations:sync && pnpm run gen:types
-   ```
+# Schema backup
+npx supabase db dump --schema public --db-url "$SUPABASE_DB_URL" > backups/$(date +%Y%m%d%H%M%S)_schema.sql
+
+# Full backup
+npx supabase db dump --db-url "$SUPABASE_DB_URL" > backups/$(date +%Y%m%d%H%M%S)_full.sql
+
+# Reset database (DANGER)
+npx supabase db reset --db-url "$SUPABASE_DB_URL"
+pnpm run db:init   # Automatically regenerates Supabase types
+```
 
 ### **Before Commit**
 
@@ -340,8 +190,8 @@ pnpm run gen:types
 pnpm run generate:i18n-types
 pnpm run type-check
 
-# Optional: Create backup before major changes
-pnpm run db:backup:structure
+# Optional: Create a schema backup before major changes
+npx supabase db dump --schema public --db-url "$SUPABASE_DB_URL" > backups/$(date +%Y%m%d%H%M%S)_schema.sql
 ```
 
 ## 📋 **Environment Requirements**
@@ -356,19 +206,19 @@ NEXT_PUBLIC_SUPABASE_PROJECT_ID=your_project_id
 npm install -g supabase
 ```
 
-### **Database Backup**
+### **Database Backups / Resets**
 
 ```bash
 # Required environment variables
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_PROJECT_ID=your_project_id
-# OR
-NEXT_PUBLIC_SUPABASE_PROJECT_ID=your_project_id
 SUPABASE_DB_PASSWORD=your_database_password
 
+# Build a DB URL
+echo "postgresql://postgres:${SUPABASE_DB_PASSWORD}@db.${SUPABASE_PROJECT_ID}.supabase.co:5432/postgres"
+
 # Required tools
-# PostgreSQL client tools compatible with your Supabase server version
-pg_dump --version  # Should match your Supabase PostgreSQL version
+npm install -g supabase  # or use npx supabase ...
+psql --version          # Needed only for manual restore commands
 ```
 
 ### **i18n Type Generation**
@@ -400,7 +250,7 @@ src/
  * pnpm run script-name
  * ```
  *
- * @author Structura Team
+ * @author YwyBase Team
  * @since 1.0.0
  */
 

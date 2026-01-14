@@ -1,6 +1,6 @@
-# Structura Documentation
+# YwyBase Documentation
 
-Welcome to the Structura documentation! This directory contains all the technical documentation for the project.
+Welcome to the YwyBase documentation! This directory contains all the technical documentation for the project.
 
 ## Core Documentation
 
@@ -8,6 +8,9 @@ Welcome to the Structura documentation! This directory contains all the technica
 - [Structure](./structure.md) - Project structure and organization
 - [API Documentation](./api.md) - Complete API endpoint documentation
 - [Security Documentation](./security.md) - Comprehensive security guide and best practices
+- [Rate Limiting](./rate-limiting.md) - API rate limiting and storage setup
+- [Authentication Flows](./authentication-flows.md) - Email authentication and verification flows
+- [Flash Messages](./flash-messages.md) - Temporary notifications system
 - [Database Recreation](./database-recreation.md) - Guide for recreating the database
 
 ## Supabase

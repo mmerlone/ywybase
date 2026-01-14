@@ -6,11 +6,12 @@ This directory contains the core library modules that power the application. Eac
 
 ```
 src/lib/
-├── auth/           # Authentication system
+├── actions/        # Server Actions (Auth, Profile, Location)
+├── auth/           # Auth client-side logic
 ├── error/          # Centralized error handling
 ├── logger/         # Logging utilities
 ├── security/       # Security utilities
-├── supabase/       # Database integration
+├── supabase/       # Database integration & services
 ├── utils/          # Utility functions
 ├── validators/     # Data validation schemas
 └── utils.ts        # General utilities
@@ -52,9 +53,9 @@ export * from './your-module'
 
 ```typescript
 // Import any module
-import { createLogger } from '@/lib/logger'
-import { ProfileService } from '@/lib/supabase'
-import { loginSchema } from '@/lib/validators'
+import { buildLogger } from '@/lib/logger/server'
+import { getProfile } from '@/lib/actions/profile'
+import { loginSchema } from '@/lib/validators/auth'
 ```
 
 ## 📚 **Module Guides**
@@ -81,13 +82,13 @@ Centralized error management with structured types.
 
 - Add new error types in `errors/`
 - Define error codes in `codes.ts`
-- Update the global handler in `handler.ts`
+- Update the handlers in `handlers/`
 
 ### **Logger** (`logger/`)
 
 Structured logging system with performance monitoring.
 
-**What's here**: Pino-based logging with context-first pattern
+**What's here**: Pino-based logging with context-first pattern (Server & Client)
 
 **How to extend**:
 
@@ -114,8 +115,8 @@ Database integration with service layer architecture.
 
 **How to extend**:
 
-- Create new services in `services/database/`
-- Extend the base service class
+- Create new actions in `actions/`
+- Extend the base service class in `supabase/services/`
 - Add new client/server utilities
 
 ### **Utils** (`utils/`)
@@ -167,9 +168,9 @@ throw new BusinessError({
 
 ```typescript
 // Follow the context-first pattern
-import { createLogger } from '@/lib/logger'
+import { buildLogger } from '@/lib/logger/server'
 
-const logger = createLogger({ name: 'YourModule' })
+const logger = buildLogger('YourModule')
 logger.info({ userId: '123' }, 'User action completed')
 ```
 
@@ -191,25 +192,22 @@ export type YourType = z.infer<typeof schema>
 ### **Adding a New Service**
 
 ```typescript
-// src/lib/supabase/services/database/your-service.ts
-import { BaseService } from '../../base.service'
+// src/lib/actions/your-action.ts
+'use server'
 
-export class YourService extends BaseService {
-  static create(client?: SupabaseClient) {
-    return new YourService(client || createClientClient())
-  }
+import { createClient } from '@/lib/supabase/server'
+import { withServerActionErrorHandling } from '@/lib/error/server'
 
-  async getData(id: string) {
-    try {
-      const { data, error } = await this.client.from('your_table').select('*').eq('id', id).single()
+export const getData = withServerActionErrorHandling(
+  async (id: string) => {
+    const supabase = await createClient()
+    const { data, error } = await supabase.from('your_table').select('*').eq('id', id).single()
 
-      if (error) throw error
-      return data
-    } catch (error) {
-      return this.handleError(error, 'fetch data', { id })
-    }
-  }
-}
+    if (error) throw error
+    return data
+  },
+  { operation: 'getData' }
+)
 ```
 
 ### **Adding a New Validator**
@@ -231,9 +229,9 @@ export type YourType = z.infer<typeof yourSchema>
 
 ```typescript
 // src/lib/utils/your-util.ts
-import { createLogger } from '@/lib/logger'
+import { buildLogger } from '@/lib/logger/server'
 
-const logger = createLogger({ name: 'your-util' })
+const logger = buildLogger('your-util')
 
 export function yourUtility(input: string): string {
   logger.debug({ input }, 'Processing utility')
@@ -256,7 +254,7 @@ export function yourUtility(input: string): string {
 
 - **Error Handling**: See `@/lib/error/README.md`
 - **Logging**: See `@/lib/logger/README.md`
-- **Security**: See `@/lib/security/README.md`
+- **Security**: See `@/middleware/security/README.md`
 - **Database**: See `@/lib/supabase/README.md`
 - **Validation**: See `@/lib/validators/README.md`
 - **Utilities**: See `@/lib/utils/README.md`

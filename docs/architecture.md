@@ -2,7 +2,7 @@
 
 ## Overview
 
-Structura follows a **clean, layered architecture** that prioritizes clarity and maintainability through explicit dependencies and clear separation of concerns.
+YwyBase follows a **clean, layered architecture** that prioritizes clarity and maintainability through explicit dependencies and clear separation of concerns.
 
 ## 🎯 **Core Principles**
 
@@ -18,7 +18,7 @@ Structura follows a **clean, layered architecture** that prioritizes clarity and
 - **UI Rendering** - JSX, styling, user interactions
 - **Event Handling** - User actions, form submissions
 - **State Consumption** - Consume data from hooks
-- **No Business Logic** - Delegate to hooks
+- **No Business Logic** - Delegate to hooks or actions
 
 ```typescript
 // Component example - focuses on UI and composition
@@ -41,7 +41,7 @@ function UserProfile({ userId }: { userId: string }) {
 
 - **State Management** - React Query for caching, optimistic updates
 - **Business Logic** - Data transformation, validation
-- **Service Coordination** - Call multiple services if needed
+- **Service Coordination** - Call multiple actions if needed
 - **Error Handling** - Transform errors for UI consumption
 
 ```typescript
@@ -49,188 +49,139 @@ function UserProfile({ userId }: { userId: string }) {
 function useProfile(userId: string) {
   return useQuery({
     queryKey: ['profile', userId],
-    queryFn: () => profileService.getProfile(userId),
+    queryFn: () => getProfile(userId),
   })
 }
 ```
 
-### **3. Service Layer**
+### **3. Server Actions Layer**
 
-- **Database Operations** - Direct Supabase client usage
-- **Data Validation** - Ensure data integrity
-- **Error Transformation** - Convert DB errors to domain errors
-- **Logging** - Consistent operation logging
+- **Server-Side Security** - All data operations run on server
+- **Direct Database Access** - Server-side Supabase client usage
+- **Input Validation** - Zod schemas for type-safe validation
+- **Error Handling** - Centralized error handling with proper context
+- **Type Safety** - End-to-end type safety from server to client
 
-#### **Base Service Architecture**
+#### **Server Actions Architecture**
 
-The service layer uses two base classes depending on the environment:
+The application uses Next.js Server Actions for secure data operations:
 
 ```typescript
-// Server-side service - extends BaseServerService
-class ProfileService extends BaseServerService {
-  constructor(client: SupabaseClient<Database>) {
-    super(client)
+// src/lib/actions/profile.ts
+export const updateProfile = withServerActionErrorHandling(
+  async (userId: string, updates: ProfileUpdateData): Promise<ProfileResponse<Profile>> => {
+    // Validate input
+    const validated = profileUpdateSchema.safeParse(updates)
+    const validationError = handleServerActionValidation<Profile>(validated, {
+      userId,
+      operation: 'updateProfile',
+    })
+    if (validationError) return validationError
+
+    // Server-side database operation
+    const supabase = await createClient()
+    const { data, error } = await supabase.from('profiles').update(validated.data).eq('id', userId).select().single()
+
+    if (error) throw error
+
+    return createServerActionSuccess(data, 'Profile updated successfully')
   }
+)
+```
 
-  async getProfile(userId: string): Promise<Profile | null> {
-    try {
-      const { data, error } = await this.client.from('profiles').select('*').eq('id', userId).single()
+#### **Hybrid Architecture Benefits**
 
-      if (error) throw error
-      return convertDbProfile(data)
-    } catch (error) {
-      return this.handleError(error, 'fetch profile', { userId })
+- **Server Actions** for security, validation, and data operations
+- **React Query** for caching, optimistic updates, and client state
+- **Best of both worlds**: Security + UX
+
+```typescript
+// Hook calls server action but manages client state
+const { mutateAsync: updateProfile } = useMutation({
+  mutationFn: async (updates: Partial<Profile>) => {
+    const result = await updateProfile(userId, updates)
+    if (!result.success || !result.data) {
+      throw new Error(result.error || 'Failed to update profile')
     }
+    return result.data
+  },
+  // React Query benefits: optimistic updates, caching, error handling
+})
+```
+
+#### **Server Actions Patterns**
+
+Server actions handle all CRUD operations with consistent patterns:
+
+```typescript
+// Authentication actions - src/lib/actions/auth.ts
+export const signInWithEmail = withServerActionErrorHandling(
+  async (credentials: LoginFormInput): Promise<AuthResponse<{ userId: string }>> => {
+    // Validation + server-side auth logic
   }
+)
+
+// Profile actions - src/lib/actions/profile.ts
+export const getProfile = withServerActionErrorHandling(async (userId: string): Promise<ProfileResponse<Profile>> => {
+  // Validation + server-side data fetching
+})
+
+// Location actions - src/lib/actions/location.ts
+export async function detectCountry(ipAddress?: string): Promise<string | null> {
+  // Server-side API calls with caching
 }
+```
 
-// Client-side service - extends BaseClientService
-class ProfileService extends BaseClientService {
-  constructor(client: SupabaseClient<Database>) {
-    super(client)
+#### **Authentication Patterns**
+
+Authentication is managed via Supabase Auth with server actions for sensitive operations and a client-side helper for UI state:
+
+```typescript
+// src/lib/actions/auth/client.ts
+export const authService = {
+  async getSession(): Promise<Session | null> {
+    const supabase = await createClient()
+    // ... logic
+  },
+  // ... other methods
+}
+```
+
+#### **Service Layer (Reference Implementation)**
+
+> **Note**: Service classes exist in `src/lib/supabase/services/` as reference implementations, but **are not actively used** in the application. The primary pattern is **Server Actions** directly accessing the database via Supabase client.
+
+**Current Pattern** (Server Actions - actively used):
+
+```typescript
+// src/lib/actions/profile.ts
+export const getProfile = withServerActionErrorHandling(
+  async (userId: string): Promise<AuthResponse<Profile | null>> => {
+    const supabase = await createClient()
+    const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single()
+    // ... error handling
   }
+)
+```
 
+**Alternative Pattern** (Service Layer - reference only):
+
+```typescript
+// src/lib/supabase/services/database/profiles/profile.service.ts
+export abstract class ProfileService extends BaseService {
   async getProfile(userId: string): Promise<Profile | null> {
-    try {
-      const { data, error } = await this.client.from('profiles').select('*').eq('id', userId).single()
-
-      if (error) throw error
-      return convertDbProfile(data)
-    } catch (error) {
-      return this.handleError(error, 'fetch profile', { userId })
-    }
+    // Shared business logic
   }
 }
 ```
 
-#### **Database Service Patterns**
+The service layer provides:
 
-Database services handle CRUD operations for specific entities:
+- Complete dependency injection (client, logger, error handler)
+- Maximum testability with mockable dependencies
+- Reusable business logic across client/server contexts
 
-```typescript
-// src/lib/supabase/services/database/profiles/profile.client.service.ts
-export class ProfileService extends BaseClientService {
-  async getProfile(userId: string): Promise<Profile | null> {
-    try {
-      const { data, error } = await this.client.from('profiles').select('*').eq('id', userId).single()
-
-      if (error) throw error
-      return convertDbProfile(data)
-    } catch (error) {
-      return this.handleError(error, 'fetch profile', { userId }))
-    }
-  }
-
-  async updateProfile(userId: string, updates: ProfileUpdate): Promise<Profile> {
-    try {
-      const dbData = convertAppProfileForUpdate(updates)
-
-      const { data, error } = await this.client.from('profiles').update(dbData).eq('id', userId).select().single()
-
-      if (error) throw error
-      return convertDbProfile(data)
-    } catch (error) {
-      return this.handleError(error, 'update profile', { userId, updates })
-    }
-  }
-
-  async createProfile(userId: string, profileData: Partial<Profile>): Promise<Profile> {
-    try {
-      const dbData = convertAppProfileForInsert(profileData)
-
-      const { data, error } = await this.client
-        .from('profiles')
-        .insert({ id: userId, ...dbData })
-        .select()
-        .single()
-
-      if (error) throw error
-      return convertDbProfile(data)
-    } catch (error) {
-      return this.handleError(error, 'create profile', { userId, profileData })
-    }
-  }
-}
-```
-
-#### **Authentication Service Patterns**
-
-Authentication services handle user authentication and session management:
-
-```typescript
-// src/lib/supabase/services/auth/auth.service.ts
-export class AuthService extends BaseClientService {
-  async signIn(email: string, password: string): Promise<AuthResponse> {
-    try {
-      const { data, error } = await this.client.auth.signInWithPassword({
-        email,
-        password,
-      })
-
-      if (error) throw error
-      return { user: data.user, session: data.session }
-    } catch (error) {
-      return this.handleError(error, 'sign in', { email })
-    }
-  }
-
-  async signUp(email: string, password: string): Promise<AuthResponse> {
-    try {
-      const { data, error } = await this.client.auth.signUp({
-        email,
-        password,
-      })
-
-      if (error) throw error
-      return { user: data.user, session: data.session }
-    } catch (error) {
-      return this.handleError(error, 'sign up', { email })
-    }
-  }
-
-  async signOut(): Promise<void> {
-    try {
-      const { error } = await this.client.auth.signOut()
-      if (error) throw error
-    } catch (error) {
-      return this.handleError(error, 'sign out')
-    }
-  }
-
-  async getCurrentUser(): Promise<User | null> {
-    try {
-      const {
-        data: { user },
-        error,
-      } = await this.client.auth.getUser()
-
-      if (error) throw error
-      return user
-    } catch (error) {
-      return this.handleError(error, 'get current user')
-    }
-  }
-}
-```
-
-#### **Service Best Practices**
-
-1. **Always extend the appropriate base service**
-   - Use `BaseServerService` for server-side code
-   - Use `BaseClientService` for client-side code
-
-2. **Consistent error handling**
-   - Use `this.handleError()` for all errors
-   - Include operation name and relevant context
-   - Never let raw Supabase errors bubble up
-
-3. **Data transformation**
-   - Convert database models to app models using utility functions
-   - Keep database-specific logic out of the UI layer
-
-4. **Type safety**
-   - Always use TypeScript types for parameters and return values
-   - Leverage the generated Database type for Supabase operations
+However, for most use cases, **Server Actions provide sufficient abstraction** with simpler implementation.
 
 ## 📊 **Architecture Diagram**
 
@@ -242,8 +193,9 @@ export class AuthService extends BaseClientService {
 │  │  Component   │  │  Component   │  │   Action     │     │
 │  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘     │
 │         │                  │                  │              │
-│         │ Direct Service   │ Custom Hook      │ Direct       │
-│         │ Usage            │ Usage            │ Service      │
+│         │ Direct Data      │ Custom Hook      │ Direct       │
+│         │ Access           │ Usage            │ Data         │
+│         │ (via Actions)    │                  │ Access       │
 └─────────┼──────────────────┼──────────────────┼──────────────┘
            │                  │                  │
            │                  │                  │
@@ -259,14 +211,14 @@ export class AuthService extends BaseClientService {
 │    │  └──────────────────────────────────────┘  │           │
 │    └──────────────────┬─────────────────────────┘           │
 │                        │                                       │
-│                        │ Service Calls                         │
+│                        │ Action Calls                          │
 │                        ▼                                       │
 │    ┌─────────────────────────────────────────────┐           │
-│    │         Service Layer                      │           │
+│    │         Action/Service Layer               │           │
 │    │  ┌──────────────────────────────────────┐  │           │
-│    │  │  ProfileService                      │  │           │
-│    │  │  AuthService                         │  │           │
-│    │  │  ... (other services)                │  │           │
+│    │  │  Profile Actions                     │  │           │
+│    │  │  Auth Actions                        │  │           │
+│    │  │  ... (other modules)                 │  │           │
 │    │  └──────────────────────────────────────┘  │           │
 │    └──────────────────┬─────────────────────────┘           │
 │                        │                                       │
@@ -279,28 +231,21 @@ export class AuthService extends BaseClientService {
 └───────────────────────────────────────────────────────────────┘
 
 Data Flow:
-  Server Component → Service → Database
-  Client Component → Hook → Service → Database
-  Server Action → Service → Database
+  Server Component → Action/Service → Database
+  Client Component → Hook → Action/Service → Database
+  Server Action → Database (via Supabase Client)
 ```
-
-> **💡 Diagram Tools**: This diagram was created using ASCII art. For visual diagrams, consider:
->
-> - **[Mermaid](https://mermaid.js.org/)** - Markdown-based diagram syntax (recommended for docs)
-> - **[Draw.io](https://app.diagrams.net/)** - Free online diagram tool
-> - **[Excalidraw](https://excalidraw.com/)** - Hand-drawn style diagrams
-> - **[PlantUML](https://plantuml.com/)** - Text-based UML diagrams
 
 ## 🔄 **Data Flow Patterns**
 
 ### **Server Components**
 
-Direct service usage for server-side rendering:
+Direct action/service usage for server-side rendering:
 
 ```typescript
 export default async function ProfileServerComponent({ userId }: { userId: string }) {
-  const profileServerService = await ProfileServerService.create()
-  const profile = await profileServerService.getProfile(userId)
+  const result = await getProfile(userId)
+  const profile = result.success ? result.data : null
 
   return <div>{profile?.display_name}</div>
 }
@@ -308,19 +253,13 @@ export default async function ProfileServerComponent({ userId }: { userId: strin
 
 ### **Client Components**
 
-Use custom hooks for stateful client components (optional pattern):
+Use custom hooks for stateful client components:
 
 ```typescript
 'use client'
-import type { JSX } from 'react'
+import { useProfile } from '@/hooks/useProfile'
 
-interface ProfileClientComponentProps {
-  userId: string
-}
-
-export default function ProfileClientComponent({
-  userId,
-}: ProfileClientComponentProps): JSX.Element {
+export default function ProfileClientComponent({ userId }: { userId: string }) {
   const { profile, isLoading, error } = useProfile(userId)
 
   if (isLoading) return <div>Loading...</div>
@@ -331,16 +270,16 @@ export default function ProfileClientComponent({
 
 ### **Server Actions**
 
-Direct service usage for server-side operations:
+Direct database access for server-side operations:
 
 ```typescript
 'use server'
-import type { Profile, ProfileUpdate } from '@/types/database'
+import { createClient } from '@/lib/supabase/server'
 
-export async function updateProfileAction(userId: string, updates: ProfileUpdate): Promise<Profile> {
-  const profileServerService = await ProfileServerService.create()
-  return await profileServerService.updateProfile(userId, updates)
-}
+export const updateProfile = withServerActionErrorHandling(async (userId: string, updates: ProfileUpdateData) => {
+  const supabase = await createClient()
+  return await supabase.from('profiles').update(updates).eq('id', userId).select().single()
+})
 ```
 
 ## 🎯 **Usage Guidelines**
@@ -349,20 +288,10 @@ export async function updateProfileAction(userId: string, updates: ProfileUpdate
 
 | **Scenario**         | **Pattern**    | **Why**                                       |
 | -------------------- | -------------- | --------------------------------------------- |
-| **Server Component** | Direct Service | No state, server-side rendering               |
+| **Server Component** | Direct Action  | No state, server-side rendering               |
 | **Client Component** | Hook           | State management, caching, optimistic updates |
-| **Server Action**    | Direct Service | Server-side operation, no state               |
-| **API Route**        | Direct Service | Server endpoint, no state                     |
-
-### **Service Instantiation**
-
-```typescript
-// Server-side - await ProfileServerService.create()
-const service = await ProfileServerService.create()
-
-// Client-side - new ProfileClientService()
-const service = new ProfileClientService()
-```
+| **Server Action**    | Direct DB/Serv | Server-side operation, no state               |
+| **API Route**        | Direct DB/Serv | Server endpoint, no state                     |
 
 ## 🔧 **Client Management**
 
@@ -389,14 +318,14 @@ export function createClient(): SupabaseClient<Database> {
 
 - **Server**: `await createClient()` - async due to cookies
 - **Client**: `createClient()` - sync, no cookies needed
-- **Explicit**: Always pass client to service constructor
+- **Explicit**: Always use the appropriate client for the environment
 - **No Magic**: No auto-detection or factory patterns
 
 ## 📈 **Benefits**
 
 ### **Simplicity**
 
-- **Clear Dependencies** - explicit client injection
+- **Clear File Structure** - logical organization
 - **No Hidden Magic** - everything is obvious
 
 ### **Performance**
@@ -407,80 +336,8 @@ export function createClient(): SupabaseClient<Database> {
 ### **Maintainability**
 
 - **Clear Boundaries** - each layer has single responsibility
-- **Type Safety** - explicit dependencies
-- **Easy Testing** - direct service mocking
-
-### **Developer Experience**
-
-- **Predictable** - same pattern everywhere
-- **Debuggable** - clear call stack
-- **Learnable** - simple concepts, no complex abstractions
-
-## 🚀 **Getting Started**
-
-### **1. Create a Service**
-
-```typescript
-// src/lib/supabase/services/database/posts/post.service.ts
-export class PostService extends BaseService {
-  constructor(client: SupabaseClient<Database>) {
-    super(client)
-  }
-
-  async getPost(id: string): Promise<Post | null> {
-    try {
-      const { data, error } = await this.client.from('posts').select('*').eq('id', id).single()
-
-      if (error) throw error
-      return data
-    } catch (error) {
-      return this.handleError(error, 'getPost', { id })
-    }
-  }
-}
-```
-
-### **2. Create a Hook**
-
-```typescript
-// src/hooks/usePost.ts
-import { useQuery, type UseQueryResult } from '@tanstack/react-query'
-import type { Post } from '@/types/database'
-import { createClient } from '@/lib/supabase/client'
-import { PostService } from '@/lib/supabase/services/database/posts/post.service'
-
-export function usePost(id: string): UseQueryResult<Post | null, Error> {
-  return useQuery<Post | null, Error>({
-    queryKey: ['post', id],
-    queryFn: async (): Promise<Post | null> => {
-      const client = createClient()
-      const service = new PostService(client)
-      return await service.getPost(id)
-    },
-  })
-}
-```
-
-### **3. Use in Component**
-
-```typescript
-// src/components/PostComponent.tsx
-import type { JSX } from 'react'
-import { usePost } from '@/hooks/usePost'
-
-interface PostComponentProps {
-  id: string
-}
-
-export default function PostComponent({ id }: PostComponentProps): JSX.Element {
-  const { post, isLoading, error } = usePost(id)
-
-  if (isLoading) return <div>Loading...</div>
-  if (error) return <div>Error: {error.message}</div>
-
-  return <div>{post?.title ?? 'No title'}</div>
-}
-```
+- **Type Safety** - explicit interfaces
+- **Easy Testing** - direct action/hook testing
 
 ## 🎉 **Conclusion**
 
@@ -493,5 +350,5 @@ This architecture provides:
 
 ---
 
-**Last Updated**: 2025-11-30  
-**Version**: 1.0.0
+**Last Updated**: 2025-12-28  
+**Version**: 2.0.0

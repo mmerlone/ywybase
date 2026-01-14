@@ -1,265 +1,206 @@
-# Structura Development Roadmap
+# YwyBase Development Backlog
 
-**Last Updated**: December 21, 2025  
-**Version**: 1.0  
+**Last Updated**: January 11, 2026  
+**Version**: 2.0  
 **Status**: Active Development
-
----
-
-## Overview
-
-This roadmap outlines the planned features and improvements for Structura, prioritized by business impact, compliance requirements, and user needs. Items are organized by priority and estimated development effort.
-
----
-
-## 🔴 **Critical Priority (Q1 2026)**
 
 ### **Compliance & Audit Infrastructure**
 
-**Status**: ❌ Not Started  
-**Effort**: 2-3 weeks  
-**Risk**: HIGH - Blocks regulated industry adoption
+#### Audit Trail Database Storage
 
-#### **Audit Trail Database Storage**
+**Story Points**: 8
 
-- **Description**: Implement persistent storage for security audit logs
-- **Requirements**:
-  - Create `audit_logs` table schema in Supabase
-  - Implement `AuditStorageService` for database operations
-  - Update audit trail creation to persist entries
-  - Add audit log querying capabilities
-- **Compliance Impact**: Required for GDPR, HIPAA, SOC 2
-- **Current Gap**: Audit logs only go to console/Datadog (ephemeral)
+- Create `audit_logs` table schema in Supabase
+- Implement `AuditStorageService` for database operations
+- Update audit trail creation to persist entries
+- Add audit log querying capabilities
+- **Gap**: Audit logs currently only go to console/New Relic (ephemeral)
 
-#### **Regulatory Compliance Features**
+#### Audit Report Generation
 
-- **Description**: Build compliance reporting and data export capabilities
-- **Requirements**:
-  - Audit report generation from database
-  - User data export for GDPR requests
-  - Automated log retention enforcement
-  - Compliance dashboard for administrators
-- **Business Impact**: Enables enterprise and regulated industry sales
-- **Dependencies**: Audit trail database storage
+**Story Points**: 5
 
-#### **Account Data Management**
+- Audit report generation from database
+- Automated log retention enforcement
+- Compliance dashboard for administrators
 
-- **Description**: GDPR-compliant user data download and account deletion
-- **Requirements**:
-  - Complete user data export (profile, audit logs, activity)
-  - Secure account deletion with data purging
-  - Data retention policy enforcement
-  - User-initiated data requests
-- **Compliance Impact**: Required for GDPR Article 17 (Right to be Forgotten)
-- **User Impact**: Builds trust and meets legal requirements
+#### Audit Log Export
+
+**Story Points**: 3
+
+- Add audit logs to user data export functionality
+- Integrate with existing export API endpoints
+- **Note**: User data export (profile, activity) already implemented
 
 ---
-
-## 🟡 **High Priority (Q2 2026)**
 
 ### **Role-Based Access Control (RBAC)**
 
-**Status**: ❌ Not Started  
-**Effort**: 3-4 weeks  
-**Risk**: MEDIUM - Limits enterprise features
+#### Permission System
 
-#### **Permission System**
+**Story Points**: 13
 
-- **Description**: Implement granular role and permission management
-- **Requirements**:
-  - Role definition system (Admin, Manager, User, etc.)
-  - Permission-based access control
-  - Resource-level permissions
-  - Role assignment interface
-- **Business Impact**: Enables enterprise team management
-- **Technical Debt**: Current system has basic auth only
+- Role definition system (Admin, Manager, User, etc.)
+- Permission-based access control
+- Resource-level permissions
+- Role assignment interface
+- Database schema for roles and permissions
+- **Current**: Placeholder `hasRole` function exists but not implemented
 
-#### **Admin Dashboard**
+#### Admin Dashboard
 
-- **Description**: Administrative interface for system management
-- **Requirements**:
-  - User management (roles, permissions, status)
-  - System monitoring and health checks
-  - Audit log viewer and search
-  - Configuration management
+**Story Points**: 13
+
+- User management interface (roles, permissions, status)
+- System monitoring and health checks
+- Audit log viewer and search
+- Configuration management UI
+- Site configurations
 - **Dependencies**: RBAC system, Audit trail storage
-- **User Impact**: Reduces administrative overhead
 
 ---
 
-## 🟢 **Medium Priority (Q3 2026)**
+### **Session Management Enhancements**
 
-### **User Experience Enhancements**
+#### Session State Management
 
-**Status**: ❌ Not Started  
-**Effort**: 1-2 weeks each  
-**Risk**: LOW - Quality of life improvements
+**Story Points**: 8
 
-#### **Navigation Breadcrumbs**
+- Concurrent session control (multi-device support)
+- Session termination for specific devices
+- Session activity tracking and reporting
+- **Current**: Basic session handling exists, lacks advanced features
 
-- **Description**: Improve navigation with breadcrumb trails
-- **Requirements**:
-  - Dynamic breadcrumb generation
-  - Context-aware navigation paths
-  - Mobile-responsive design
-  - Accessibility compliance
-- **User Impact**: Better navigation experience
-- **Technical Complexity**: Low
+#### Session-Based Rate Limiting
 
-#### **Analytics Integration**
+**Story Points**: 5
 
-- **Description**: Implement Google Analytics for usage insights
-- **Requirements**:
-  - GA4 integration with Next.js
-  - Privacy-compliant tracking
-  - Custom event tracking
-  - Performance monitoring
-- **Business Impact**: Data-driven product decisions
-- **Privacy Considerations**: GDPR consent management
+- Dynamic rate limiting based on user/session state
+- Integration between session state and rate limiting
+- **Current**: Only IP-based rate limiting exists
+
+#### Enhanced Session Logging
+
+**Story Points**: 3
+
+- Structured session lifecycle logging
+- Request ID correlation across all logs
+- Audit trail for sensitive session operations
+- **Current**: Basic logging exists but inconsistent
 
 ---
 
-## 🔵 **Future Considerations (Q4 2026+)**
+### **Account Security**
 
-### **Advanced Features**
+#### Account Unlock System
 
-#### **Multi-tenant Architecture**
+**Story Points**: 5
 
-- **Description**: Support multiple organizations in single deployment
-- **Effort**: 6-8 weeks
-- **Business Impact**: SaaS scalability
+- Automatically unlock accounts after cooldown period
+- Admin-triggered account unlock for locked accounts
+- Rate limiting with automatic cooldown
 
-#### **API Rate Limiting Enhancements**
-
-- **Description**: Advanced rate limiting with user-specific quotas
-- **Effort**: 2-3 weeks
-- **Technical Impact**: Better resource protection
-
-#### **Advanced Security Features**
-
-- **Description**: 2FA, SSO integration, advanced threat detection
-- **Effort**: 4-6 weeks
-- **Security Impact**: Enterprise security requirements
+**Note**: Email change/update and username recovery features are not planned for this application.
 
 ---
 
-## Implementation Status
+### **Advanced Rate Limiting**
 
-### ✅ **Recently Completed**
+#### User-Specific Quotas
 
-#### **Observability Stack (December 2025)**
+**Story Points**: 5
 
-- ✅ Datadog integration for log aggregation
-- ✅ Pino → Datadog transport in production
-- ✅ Clean separation of logging concerns
-- ✅ Sentry error tracking optimization
-- ✅ Datadog RUM for user analytics
-
-#### **Security Foundation**
-
-- ✅ Comprehensive audit event framework
-- ✅ PII sanitization in logs
-- ✅ Security context extraction
-- ✅ Rate limiting implementation
+- Advanced rate limiting with user-specific quotas
+- Per-user rate limit configuration
+- API quota management
+- **Current**: Well-implemented rate limiting exists but no user-specific quotas
 
 ---
 
-## Risk Assessment
+### **Multi-Tenant Architecture**
 
-### **Critical Risks**
+#### Tenant System
 
-| Risk                 | Impact                            | Mitigation                |
-| -------------------- | --------------------------------- | ------------------------- |
-| **No Audit Storage** | Cannot serve regulated industries | Implement Q1 2026         |
-| **Limited RBAC**     | Restricts enterprise adoption     | Implement Q2 2026         |
-| **Compliance Gaps**  | Legal/regulatory exposure         | Prioritize audit features |
+**Story Points**: 21
 
-### **Technical Debt**
-
-| Item                   | Priority | Effort    |
-| ---------------------- | -------- | --------- |
-| Audit database storage | Critical | 2-3 weeks |
-| RBAC implementation    | High     | 3-4 weeks |
-| Admin dashboard        | Medium   | 2-3 weeks |
+- Support multiple organizations in single deployment
+- Tenant isolation and data separation
+- Tenant-specific configuration
+- Billing and subscription per tenant
 
 ---
 
-## Success Metrics
+### **Advanced Security Features**
 
-### **Q1 2026 Goals**
+#### Multi-Factor Authentication (MFA)
 
-- ✅ Audit trail database storage implemented
-- ✅ GDPR compliance features complete
-- ✅ User data export/deletion functional
-- 📊 **Target**: Enable regulated industry adoption
+**Story Points**: 13
 
-### **Q2 2026 Goals**
+- 2FA implementation (TOTP, SMS, WebAuthn)
+- MFA enrollment and management UI
+- Recovery codes
+- **Current**: Supabase config has MFA sections but not implemented
 
-- ✅ RBAC system operational
-- ✅ Admin dashboard deployed
-- ✅ Enterprise features available
-- 📊 **Target**: 50% reduction in admin overhead
+#### Single Sign-On (SSO)
 
-### **Q3 2026 Goals**
+**Story Points**: 8
 
-- ✅ UX improvements deployed
-- ✅ Analytics integration complete
-- ✅ User satisfaction metrics improved
-- 📊 **Target**: 20% improvement in user engagement
+- SSO integration (SAML, OAuth)
+- Enterprise identity provider support
+- SSO configuration UI
 
----
+#### Advanced Threat Detection
 
-## Resource Requirements
+**Story Points**: 8
 
-### **Development Team**
-
-- **Backend Developer**: Audit storage, RBAC, compliance features
-- **Frontend Developer**: Admin dashboard, UX improvements
-- **DevOps Engineer**: Analytics integration, monitoring
-
-### **Estimated Timeline**
-
-- **Q1 2026**: Compliance & Audit (Critical)
-- **Q2 2026**: RBAC & Admin Dashboard (High)
-- **Q3 2026**: UX & Analytics (Medium)
-- **Q4 2026**: Advanced Features (Future)
+- Anomaly detection in user behavior
+- Brute force detection enhancements
+- Geographic anomaly detection
+- Suspicious activity alerts
 
 ---
 
-## Dependencies
+### **Analytics Enhancements**
 
-### **External Dependencies**
+#### Google Analytics 4 Integration
 
-- Supabase database schema updates
-- Datadog configuration for compliance logging
-- Google Analytics setup and configuration
+**Story Points**: 3
 
-### **Internal Dependencies**
-
-- Audit storage → Compliance features
-- RBAC → Admin dashboard
-- User management → Data export features
+- GA4 integration with Next.js
+- Privacy-compliant tracking configuration
+- Custom event tracking
+- Performance monitoring
+- **Current**: Vercel Analytics is integrated; GA4 would be additional
 
 ---
 
-## Review Schedule
+## 📊 **Total Story Points by Category**
 
-- **Monthly Reviews**: Progress assessment and priority adjustments
-- **Quarterly Planning**: Roadmap updates and resource allocation
-- **Next Review**: January 21, 2026
+- **Compliance & Audit**: 16 points
+- **RBAC**: 26 points
+- **Session Management**: 16 points
+- **Account Security**: 5 points
+- **Rate Limiting**: 5 points
+- **Multi-Tenant**: 21 points
+- **Advanced Security**: 29 points
+- **Analytics**: 3 points
+
+**Total Remaining**: 121 story points
 
 ---
 
-## Contact & Feedback
+## 🔄 **Review Notes**
 
-For roadmap questions, feature requests, or priority discussions:
-
-- **Technical Lead**: Review implementation feasibility
-- **Product Owner**: Assess business impact and priorities
-- **Compliance Officer**: Validate regulatory requirements
+- This document is a living backlog and should be updated as features are completed or requirements change
+- Story points are estimates and may be adjusted based on implementation complexity
+- Dependencies between features should be considered during sprint planning
+- No timeline or priority is assigned—prioritization should be done during planning sessions
 
 ---
 
 **Document Status**: ✅ Active  
-**Next Update**: January 21, 2026  
-**Version History**: v1.0 (December 21, 2025) - Initial roadmap
+**Next Update**: As needed  
+**Version History**:
+
+- v1.0 (December 21, 2025) - Initial roadmap
+- v2.0 (January 11, 2026) - Streamlined backlog with story points
