@@ -17,7 +17,7 @@
  * @requires generate:i18n-types script to be available
  * @uses chokidar for file watching
  *
- * @author Structura Team
+ * @author YwyBase Team
  * @since 1.0.0
  */
 
@@ -49,7 +49,7 @@ let buildProcess: ReturnType<typeof spawn> | null = null
  * handleFileChange('change', 'src/locales/en/common.json');
  * ```
  */
-function handleFileChange(event: string, path: string) {
+function handleFileChange(event: string, path: string): void {
   console.log(`\n📝 Detected ${event} in ${path}, regenerating types...`)
 
   if (buildProcess) {

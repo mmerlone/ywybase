@@ -1,3 +1,31 @@
+/**
+ * Location Detection Server Actions
+ *
+ * IP-based geolocation service using ipgeolocation.io API.
+ * Provides country detection with caching to minimize API usage.
+ *
+ * @remarks
+ * **Features**:
+ * - IP-based country detection
+ * - In-memory LRU cache (24-hour TTL)
+ * - Automatic cache eviction
+ * - API rate limit protection
+ * - Timeout handling (5 seconds)
+ *
+ * **Cache Strategy**:
+ * - Results cached per IP for 24 hours
+ * - Max 1000 entries (LRU eviction at 10%)
+ * - Suitable for single-instance deployments
+ *
+ * **Production Considerations**:
+ * For multi-instance deployments, consider:
+ * - Redis for distributed caching
+ * - Vercel KV for Vercel deployments
+ * - Or accept cache misses across instances
+ *
+ * @module actions/location
+ */
+
 'use server'
 
 import { buildLogger } from '@/lib/logger/server'
@@ -17,38 +45,48 @@ const MAX_CACHE_SIZE = 1000 // Prevent unbounded memory growth
 const CACHE_EVICTION_RATIO = 0.1 // Remove 10% of oldest entries when cache is full
 
 /**
- * Get country from cache if available and not expired
+ * Get country from cache if available and not expired.
+ *
+ * @param cacheKey - Cache key (IP address or 'auto-detect')
+ * @returns Country code or null if not cached/expired
+ * @internal
  */
 function getCachedCountry(cacheKey: string): string | null {
   const cached = geoLocationCache.get(cacheKey)
-  
+
   if (!cached) return null
-  
+
   // Check if cache entry is expired
   if (Date.now() - cached.timestamp > CACHE_TTL) {
     geoLocationCache.delete(cacheKey)
     return null
   }
-  
+
   return cached.country
 }
 
 /**
- * Store country in cache with LRU eviction
+ * Store country in cache with LRU eviction.
+ * Automatically removes oldest entries when cache reaches max size.
+ *
+ * @param cacheKey - Cache key (IP address or 'auto-detect')
+ * @param country - Country code to cache
+ * @internal
  */
 function cacheCountry(cacheKey: string, country: string): void {
   // Improved LRU: if cache is full, remove oldest entries based on CACHE_EVICTION_RATIO
   if (geoLocationCache.size >= MAX_CACHE_SIZE) {
     const entriesToRemove = Math.max(1, Math.floor(MAX_CACHE_SIZE * CACHE_EVICTION_RATIO))
-    const sortedEntries = Array.from(geoLocationCache.entries()).sort(
-      ([, a], [, b]) => a.timestamp - b.timestamp
-    )
-    
+    const sortedEntries = Array.from(geoLocationCache.entries()).sort(([, a], [, b]) => a.timestamp - b.timestamp)
+
     for (let i = 0; i < entriesToRemove && i < sortedEntries.length; i++) {
-      geoLocationCache.delete(sortedEntries[i][0])
+      const entry = sortedEntries[i]
+      if (entry) {
+        geoLocationCache.delete(entry[0])
+      }
     }
   }
-  
+
   geoLocationCache.set(cacheKey, {
     country,
     timestamp: Date.now(),
@@ -56,18 +94,43 @@ function cacheCountry(cacheKey: string, country: string): void {
 }
 
 /**
- * Server Action to detect the user's country using IP geolocation.
- * Replaces the legacy /api/location/country API route.
- * 
- * Implements caching to prevent API quota exhaustion:
- * - Results cached for 24 hours per IP
- * - Maximum 1000 cached entries (LRU eviction)
+ * Detect user's country using IP geolocation API.
+ * Uses ipgeolocation.io with caching to minimize API calls.
+ *
+ * @param ipAddress - Optional IP address to geolocate (auto-detects if omitted)
+ * @returns ISO country code (e.g., 'US', 'GB') or null if detection fails
+ *
+ * @remarks
+ * **API Limits**: Free tier has request limits.
+ * Cache reduces API calls significantly.
+ *
+ * **Caching**:
+ * - Results cached for 24 hours
+ * - Per-IP caching
+ * - LRU eviction at 1000 entries
+ *
+ * **Error Handling**:
+ * - Returns null on API failure
+ * - Returns null on timeout (5s)
+ * - Validates country code with country-state-city
+ *
+ * @example
+ * ```typescript
+ * // Auto-detect from request IP
+ * const country = await detectCountry()
+ * if (country) {
+ *   console.log('Detected country:', country)
+ * }
+ *
+ * // Detect specific IP
+ * const country = await detectCountry('8.8.8.8')
+ * ```
  */
 export async function detectCountry(ipAddress?: string): Promise<string | null> {
   try {
     // Generate cache key (use provided IP or 'auto-detect' for auto-detection)
     const cacheKey = ipAddress || 'auto-detect'
-    
+
     // Check cache first
     const cachedCountry = getCachedCountry(cacheKey)
     if (cachedCountry) {
@@ -144,14 +207,14 @@ export async function detectCountry(ipAddress?: string): Promise<string | null> 
     cacheCountry(cacheKey, country.isoCode)
 
     return country.isoCode
-  } catch (error) {
+  } catch (err) {
     // Handle timeout errors specifically
-    if (error instanceof Error && error.name === 'AbortError') {
-      logger.warn({ error: 'Request timeout' }, 'IP geolocation API timeout')
+    if (err instanceof Error && err.name === 'AbortError') {
+      logger.warn({ message: 'Request timeout' }, 'IP geolocation API timeout')
       return null
     }
 
-    logger.error({ error }, 'Unexpected error in IP geolocation API (Server Action)')
+    logger.error({ err }, 'Unexpected error in IP geolocation API (Server Action)')
     return null
   }
 }

@@ -1,14 +1,35 @@
+/**
+ * Timezone Utilities
+ *
+ * Provides functions for working with IANA timezones using moment-timezone.
+ * Supports both client and server environments through isomorphic logger.
+ */
+
 import moment from 'moment-timezone'
+import { buildIsomorphicLogger } from '@/lib/logger/isomorphic'
 
 import { Timezone } from '@/types/timezone.types'
 
+const logger = buildIsomorphicLogger('timezone-utils')
+
 // Note: This utility can be used in both client and server environments
-// Since this is a shared utility, we don't import logger here to avoid client/server issues
-// Callers should handle logging if needed
+// Uses isomorphic logger to handle both contexts correctly
 
 /**
- * Gets all available IANA timezones with their current offsets using moment-timezone
- * @returns Array of Timezone objects sorted by offset and name
+ * Get all available IANA timezones with their current UTC offsets.
+ * Results are sorted alphabetically by timezone name.
+ *
+ * @returns Array of Timezone objects with value, label, and offset
+ *
+ * @example
+ * ```typescript
+ * const timezones = getTimezones();
+ * // Returns: [
+ * //   { value: 'America/New_York', label: 'America/New York (UTC-5)', offset: -5 },
+ * //   { value: 'Europe/London', label: 'Europe/London (UTC+0)', offset: 0 },
+ * //   ...
+ * // ]
+ * ```
  */
 export function getTimezones(): Timezone[] {
   const timezoneNames = moment.tz.names()
@@ -35,8 +56,22 @@ export function getTimezones(): Timezone[] {
 }
 
 /**
- * Gets the user's current timezone using moment-timezone
- * @returns The IANA timezone string (e.g., 'America/New_York')
+ * Get the user's current timezone using browser or system detection.
+ * Falls back to UTC if detection fails.
+ *
+ * @returns The IANA timezone string (e.g., 'America/New_York', 'Europe/London')
+ *
+ * @remarks
+ * Detection methods:
+ * 1. moment-timezone guess (primary)
+ * 2. Intl.DateTimeFormat API (fallback)
+ * 3. 'UTC' (final fallback)
+ *
+ * @example
+ * ```typescript
+ * const timezone = getCurrentTimezone();
+ * // Returns: 'America/New_York' (based on user's system)
+ * ```
  */
 export function getCurrentTimezone(): string {
   try {
@@ -48,11 +83,8 @@ export function getCurrentTimezone(): string {
     }
 
     return guessedTz
-  } catch (e) {
-    // Note: We use console.warn here because this is a shared utility
-    // that can be called from both client and server, and we don't want
-    // to introduce logger dependencies that could cause bundling issues
-    console.warn('Could not determine timezone, using UTC as fallback:', e)
+  } catch (err) {
+    logger.warn({ err }, 'Could not determine timezone, using UTC as fallback')
     return 'UTC'
   }
 }

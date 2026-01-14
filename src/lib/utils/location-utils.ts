@@ -1,11 +1,13 @@
 import { ICountry, IState, ICity, Country, State, City } from 'country-state-city'
+import { buildIsomorphicLogger } from '@/lib/logger/isomorphic'
 
 import { detectCountry } from '@/lib/actions/location'
 import { getCurrentTimezone } from '@/lib/utils/timezone'
 
+const logger = buildIsomorphicLogger('location-utils')
+
 // Note: This utility can be used in both client and server environments
-// Since this is a shared utility, we use console.warn for non-critical warnings
-// as logger would introduce client/server bundling issues
+// Uses isomorphic logger to handle both contexts correctly
 
 // Cache for detected country to avoid multiple API calls
 let cachedCountry: ICountry | null = null
@@ -124,7 +126,7 @@ export async function detectUserCountry(): Promise<ICountry | null> {
   }
 
   // Start detection process
-  detectionPromise = (async () => {
+  detectionPromise = (async (): Promise<ICountry | null> => {
     // Method 1: Browser locale (e.g., 'en-US' -> 'US')
     try {
       let locale = navigator.language
@@ -143,8 +145,8 @@ export async function detectUserCountry(): Promise<ICountry | null> {
           }
         }
       }
-    } catch (error) {
-      console.warn('Could not detect country from locale:', error)
+    } catch (err) {
+      logger.warn({ err }, 'Could not detect country from locale')
     }
 
     // Method 2: IP geolocation API (most accurate)
@@ -156,8 +158,6 @@ export async function detectUserCountry(): Promise<ICountry | null> {
         return country
       }
     }
-
-    // TODO: Method 2.5: Use https://github.com/googlemaps/google-maps-services-js?tab=readme-ov-file
 
     // Method 3: Timezone-based detection (fallback)
     try {
@@ -221,8 +221,8 @@ export async function detectUserCountry(): Promise<ICountry | null> {
           }
         }
       }
-    } catch (error) {
-      console.warn('Could not detect country from timezone:', error)
+    } catch (err) {
+      logger.warn({ err }, 'Could not detect country from timezone')
     }
 
     // No detection method succeeded

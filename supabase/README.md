@@ -1,6 +1,6 @@
-# Structura Supabase
+# YwyBase Supabase
 
-This directory contains all Supabase-related files for the Structura project, including database migrations, backups, and initialization scripts.
+This directory contains all Supabase-related files for the YwyBase project, including database migrations, backups, and initialization scripts.
 
 ## 📁 **Directory Structure**
 
@@ -36,7 +36,7 @@ The `init` directory contains SQL scripts that run when the database is first cr
 
 ### **Migrations**
 
-Database schema migrations for the Structura project using Supabase. These are used to evolve the database schema over time.
+Database schema migrations for the YwyBase project using Supabase. These are used to evolve the database schema over time.
 
 ## 🚀 **Creating New Migrations**
 

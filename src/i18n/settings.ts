@@ -35,7 +35,8 @@ if (scriptName && import.meta.url.endsWith(scriptName)) {
   try {
     process.stdout.write(JSON.stringify({ i18nConfig }, null, 2) + '\n')
   } catch (error) {
-    console.error('Failed to output i18n config to stdout:', error)
+    // Use stderr for script errors (appropriate for CLI tools)
+    process.stderr.write(`Failed to output i18n config: ${error}\n`)
   }
 }
 

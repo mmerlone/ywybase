@@ -17,7 +17,7 @@
  * @requires src/locales/en/common.json to exist as the source of truth
  * @generates src/types/generated/i18n.types.ts
  *
- * @author Structura Team
+ * @author YwyBase Team
  * @since 1.0.0
  */
 
@@ -71,8 +71,14 @@ async function generateTypes(): Promise<void> {
     const enTranslations = parseJsonFile<Record<string, unknown>>(join(LOCALES_PATH, 'en/common.json'))
 
     // Generate the type content
-    const typeContent = `// Auto-generated file - DO NOT EDIT
-// Last generated: ${new Date().toISOString()}
+    const typeContent = `/**
+ * Auto-generated file - DO NOT EDIT
+ *
+ * Last generated: ${new Date().toISOString()}
+ *
+ * To regenerate these types, run:
+ *   pnpm run generate:i18n-types
+ */
 
 export type CommonTranslations = ${JSON.stringify(enTranslations, null, 2).replace(/"([^"]+)":/g, '$1:')};
 

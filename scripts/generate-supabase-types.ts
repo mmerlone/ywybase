@@ -11,13 +11,13 @@
  * pnpm run gen:types
  *
  * # Or run directly
- * npx ts-node scripts/generateSupabaseTypes.ts
+ * npx ts-node scripts/generate-supabase-types.ts
  * ```
  *
  * @requires NEXT_PUBLIC_SUPABASE_PROJECT_ID or SUPABASE_PROJECT_ID in .env.local
  * @requires Supabase CLI to be installed globally
  *
- * @author Structura Team
+ * @author YwyBase Team
  * @since 1.0.0
  */
 
@@ -59,7 +59,7 @@ if (!SUPABASE_PROJECT_ID) {
  * console.log('Types generated successfully!');
  * ```
  */
-async function generateTypes() {
+async function generateTypes(): Promise<void> {
   console.log('🔍 Generating Supabase types...')
 
   try {
@@ -80,19 +80,19 @@ async function generateTypes() {
 
     // Add a header to the generated types
     const header = `/**
- * This is an auto-generated file. DO NOT EDIT DIRECTLY.
- *
- * Generated: ${new Date().toISOString()}
- * Project ID: ${SUPABASE_PROJECT_ID}
- *
- * To regenerate these types, run:
- *   pnpm run gen:types
- *
- * For more information about Supabase types, see:
- *   https://supabase.com/docs/guides/database/api/generating-types
- */
+   * Auto-generated file - DO NOT EDIT
+   *
+   * Generated: ${new Date().toISOString()}
+   * Project ID: ${SUPABASE_PROJECT_ID}
+   *
+   * To regenerate these types, run:
+   *   pnpm run gen:types
+   *
+   * For more information about Supabase types, see:
+   *   https://supabase.com/docs/guides/database/api/generating-types
+   */
 
-`
+  `
 
     // Write the types to file
     writeFileSync(OUTPUT_FILE, header + types, 'utf8')

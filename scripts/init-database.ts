@@ -1,29 +1,32 @@
 /**
- * @fileoverview Script to initialize Supabase database from bootstrap SQL script.
+ * @fileoverview Script to initialize Supabase database using migrations.
  *
- * This script initializes a fresh Supabase database with the schema defined in
- * `supabase/init/init.sql`. It will NOT overwrite existing data unless --force is used.
+ * This script uses Supabase CLI to apply migrations to your remote database.
+ * It's the recommended way to manage database schema with Supabase.
  *
  * @example
  * ```bash
- * # Initialize database (safe, won't overwrite existing data)
+ * # Apply all pending migrations
  * pnpm run db:init
  *
- * # Force initialization (will drop and recreate everything)
- * pnpm run db:init --force
+ * # Check migration status
+ * pnpm run db:init --status
+ *
+ * # Reset database and reapply all migrations (DANGER!)
+ * pnpm run db:init --reset
  * ```
  *
  * @requires NEXT_PUBLIC_SUPABASE_URL in .env.local
- * @requires SUPABASE_PROJECT_ID or NEXT_PUBLIC_SUPABASE_PROJECT_ID in .env.local
+ * @requires SUPABASE_PROJECT_ID in .env.local
  * @requires SUPABASE_DB_PASSWORD in .env.local
- * @requires psql to be available (comes with PostgreSQL client tools)
+ * @requires Supabase CLI (installed via npx)
  *
- * @author Structura Team
+ * @author YwyBase Team
  * @since 1.0.0
  */
 
 import { execSync } from 'child_process'
-import { existsSync, readFileSync } from 'fs'
+import { existsSync } from 'fs'
 import { join } from 'path'
 import { parseArgs } from 'util'
 import dotenv from 'dotenv'
@@ -35,8 +38,8 @@ dotenv.config({ path: join(process.cwd(), '.env.local') })
 const args = parseArgs({
   args: process.argv.slice(2),
   options: {
-    force: { type: 'boolean', default: false },
-    'init-file': { type: 'string', default: 'supabase/init/init.sql' },
+    status: { type: 'boolean', default: false },
+    reset: { type: 'boolean', default: false },
   },
   allowPositionals: true,
 })
@@ -53,7 +56,7 @@ if (!SUPABASE_URL) {
 }
 
 if (!PROJECT_ID) {
-  console.error('❌ Error: SUPABASE_PROJECT_ID or NEXT_PUBLIC_SUPABASE_PROJECT_ID is not set in .env.local')
+  console.error('❌ Error: SUPABASE_PROJECT_ID is not set in .env.local')
   process.exit(1)
 }
 
@@ -62,106 +65,122 @@ if (!DB_PASSWORD) {
   process.exit(1)
 }
 
-// Extract database connection details from Supabase URL
-const dbHost = `${PROJECT_ID}.supabase.co`
-const dbPort = '5432'
-const dbName = 'postgres'
-const dbUser = 'postgres'
-
-// Path to init SQL file
-const initFilePath = join(process.cwd(), args.values['init-file'] as string)
-
-// Check if init file exists
-if (!existsSync(initFilePath)) {
-  console.error(`❌ Error: Init file not found at ${initFilePath}`)
-  console.error('   Make sure the init.sql file exists in supabase/init/')
+// Check if supabase directory exists
+const supabasePath = join(process.cwd(), 'supabase')
+if (!existsSync(supabasePath)) {
+  console.error('❌ Error: supabase/ directory not found')
+  console.error('')
+  console.error('   Initialize Supabase in your project:')
+  console.error('   npx supabase init')
+  console.error('')
   process.exit(1)
 }
 
-console.log('🚀 Initializing Supabase database...')
-console.log(`   Host: ${dbHost}`)
-console.log(`   Database: ${dbName}`)
-console.log(`   Init file: ${initFilePath}`)
-console.log(`   Force mode: ${args.values.force ? 'YES (will overwrite existing data)' : 'NO (safe mode)'}`)
+// Check if migrations directory exists
+const migrationsPath = join(supabasePath, 'migrations')
+if (!existsSync(migrationsPath)) {
+  console.error('❌ Error: supabase/migrations/ directory not found')
+  console.error('')
+  console.error('   Create your first migration:')
+  console.error('   npx supabase migration new initial_schema')
+  console.error('')
+  process.exit(1)
+}
+
+console.log('🚀 Supabase Database Migration Tool')
+console.log(`   Project ID: ${PROJECT_ID}`)
+console.log(`   Migrations: ${migrationsPath}`)
 console.log('')
 
-// Check if database has existing tables (unless force mode)
-if (!args.values.force) {
+// Set database password as environment variable for Supabase CLI
+process.env.DB_PASSWORD = DB_PASSWORD
+
+try {
+  // Check Supabase CLI availability
+  console.log('🔍 Checking Supabase CLI...')
   try {
-    console.log('🔍 Checking for existing database objects...')
-    const checkQuery = `
-      SELECT COUNT(*) as count
-      FROM information_schema.tables
-      WHERE table_schema NOT IN ('pg_catalog', 'information_schema')
-      AND table_schema NOT LIKE 'pg_%'
-    `
-
-    const checkCommand = `PGPASSWORD="${DB_PASSWORD}" psql -h ${dbHost} -p ${dbPort} -U ${dbUser} -d ${dbName} -t -c "${checkQuery}"`
-
-    const result = execSync(checkCommand, { encoding: 'utf-8', stdio: 'pipe' })
-    const tableCount = parseInt(result.trim(), 10)
-
-    if (tableCount > 0) {
-      console.error('❌ Error: Database already contains tables.')
-      console.error(`   Found ${tableCount} existing table(s).`)
-      console.error('')
-      console.error('   To initialize anyway (this will overwrite existing data), use:')
-      console.error('   pnpm run db:init --force')
-      console.error('')
-      console.error('   ⚠️  WARNING: --force will drop all existing data!')
-      process.exit(1)
-    }
-
-    console.log('✅ Database appears to be empty. Proceeding with initialization...')
-    console.log('')
-  } catch (error) {
-    console.error('❌ Error checking database state:', error instanceof Error ? error.message : String(error))
+    execSync('npx supabase --version', { encoding: 'utf-8', stdio: 'pipe' })
+    console.log('✅ Supabase CLI available')
+  } catch {
+    console.error('❌ Error: Supabase CLI not available')
+    console.error('   Install it globally: npm install -g supabase')
+    console.error('   Or use via npx (automatic)')
     process.exit(1)
   }
-} else {
-  console.log('⚠️  FORCE MODE: Will attempt to initialize even if tables exist.')
-  console.log('   Note: The init script should handle existing objects gracefully.')
+
+  // Handle --status flag
+  if (args.values.status) {
+    console.log('')
+    console.log('📊 Checking migration status...')
+    console.log('')
+
+    const statusCommand = `npx supabase migration list --db-url "postgresql://postgres:${DB_PASSWORD}@db.${PROJECT_ID}.supabase.co:5432/postgres"`
+
+    execSync(statusCommand, {
+      stdio: 'inherit',
+      encoding: 'utf-8',
+    })
+
+    process.exit(0)
+  }
+
+  // Handle --reset flag
+  if (args.values.reset) {
+    console.log('⚠️  WARNING: Database reset requested!')
+    console.log('   This will DROP all tables and reapply migrations.')
+    console.log('   ALL DATA WILL BE LOST!')
+    console.log('')
+    console.log('   To confirm, run:')
+    console.log(
+      `   npx supabase db reset --db-url "postgresql://postgres:${DB_PASSWORD}@db.${PROJECT_ID}.supabase.co:5432/postgres"`
+    )
+    console.log('')
+    process.exit(1)
+  }
+
+  // Apply migrations
+  console.log('📝 Applying migrations to remote database...')
   console.log('')
-}
 
-// Read the init SQL file
-let initSql: string
-try {
-  initSql = readFileSync(initFilePath, 'utf-8')
-  console.log(`✅ Read init file (${initSql.length} characters)`)
-} catch (error) {
-  console.error(`❌ Error reading init file: ${error instanceof Error ? error.message : String(error)}`)
-  process.exit(1)
-}
+  const pushCommand = `npx supabase db push --db-url "postgresql://postgres:${DB_PASSWORD}@db.${PROJECT_ID}.supabase.co:5432/postgres"`
 
-// Execute the init SQL
-try {
-  console.log('📝 Executing initialization script...')
-
-  // Use psql to execute the SQL file
-  const psqlCommand = `PGPASSWORD="${DB_PASSWORD}" psql -h ${dbHost} -p ${dbPort} -U ${dbUser} -d ${dbName} -f "${initFilePath}"`
-
-  execSync(psqlCommand, {
+  execSync(pushCommand, {
     stdio: 'inherit',
     encoding: 'utf-8',
   })
 
   console.log('')
-  console.log('✅ Database initialization completed successfully!')
+  console.log('✅ Database migrations completed successfully!')
+  console.log('')
+  console.log('🧬 Regenerating Supabase types...')
+
+  execSync('pnpm run gen:types', {
+    stdio: 'inherit',
+    encoding: 'utf-8',
+  })
+
+  console.log('')
+  console.log('✅ Supabase types are up to date!')
   console.log('')
   console.log('📋 Next steps:')
-  console.log('   1. Run migrations: pnpm run db:migrations:sync')
-  console.log('   2. Generate types: pnpm run gen:types')
+  console.log('   1. Check migration status: pnpm run db:init --status')
+  console.log('   2. Create new migration: npx supabase migration new <name>')
   console.log('')
 } catch (error) {
   console.error('')
-  console.error('❌ Error during database initialization:')
+  console.error('❌ Error during database migration:')
   console.error(error instanceof Error ? error.message : String(error))
   console.error('')
-  console.error('💡 Tips:')
-  console.error('   - Verify your database credentials in .env.local')
-  console.error('   - Check that psql is installed and in your PATH')
-  console.error('   - Ensure your Supabase project is accessible')
-  console.error('   - Check the init.sql file for syntax errors')
+  console.error('💡 Troubleshooting:')
+  console.error('   - Verify SUPABASE_DB_PASSWORD in .env.local')
+  console.error('   - Check database connectivity from Supabase Dashboard')
+  console.error('   - Ensure migrations are valid SQL')
+  console.error('   - Review migration files in supabase/migrations/')
+  console.error('')
+  console.error('💡 Useful commands:')
+  console.error('   - Check status: pnpm run db:init --status')
+  console.error('   - Create migration: npx supabase migration new <name>')
+  console.error('   - Pull remote schema: npx supabase db pull')
+  console.error('')
   process.exit(1)
 }

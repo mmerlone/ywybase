@@ -34,7 +34,6 @@ It contains comprehensive guides, components, and utilities for building user in
 - [React Drawer component](https://mui.com/material-ui/react-drawer.md): The navigation drawers (or "sidebars") provide ergonomic access to destinations in a site or app functionality such as switching accounts.
 - [React Floating Action Button (FAB) component](https://mui.com/material-ui/react-floating-action-button.md): A Floating Action Button (FAB) performs the primary, or most common, action on a screen.
 - [React Grid component](https://mui.com/material-ui/react-grid.md): The responsive layout grid adapts to screen size and orientation, ensuring consistency across layouts.
-- [React GridLegacy component](https://mui.com/material-ui/react-grid-legacy.md): The Material Design responsive layout grid adapts to screen size and orientation, ensuring consistency across layouts.
 - [React Icon Component](https://mui.com/material-ui/icons.md): Guidance and suggestions for using icons with Material UI.
 - [React List component](https://mui.com/material-ui/react-list.md): Lists are continuous, vertical indexes of text or images.
 - [React Masonry component](https://mui.com/material-ui/react-masonry.md): Masonry lays out contents of varying dimensions as blocks of the same width and different height with configurable gaps.
@@ -148,11 +147,5 @@ It contains comprehensive guides, components, and utilities for building user in
 
 ## Migration
 
-- [Upgrade to Grid v2](https://mui.com/material-ui/migration/upgrade-to-grid-v2.md): This guide explains how and why to migrate from the GridLegacy component to the Grid component.
-- [Migration from @material-ui/pickers](https://mui.com/material-ui/migration/pickers-migration.md): <p class="description"><code>@material-ui/pickers</code> was moved to the <code>@mui/lab</code>.</p>
 - [Upgrade to native color](https://mui.com/material-ui/migration/upgrade-to-v7.md): This guide explains how to upgrade from JavaScript color manipulation to native color.
 - [Migrating to Pigment CSS](https://mui.com/material-ui/migration/upgrade-to-v6.md): This guide helps you integrate Pigment CSS with Material UI.
-- [Migrating from deprecated APIs](https://mui.com/material-ui/migration/migrating-from-deprecated-apis.md): Learn how to migrate away from recently deprecated APIs before they become breaking changes.
-- [Migrating from JSS (optional)](https://mui.com/material-ui/migration/migration-v4.md): This guide explains how to migrate from JSS to Emotion when updating from Material UI v4 to v5.
-- [Migration from v3 to v4](https://mui.com/material-ui/migration/migration-v3.md): Yeah, v4 has been released!
-- [Migration from v0.x to v1](https://mui.com/material-ui/migration/migration-v0x.md): Yeah, v1 has been released! Take advantage of 2 years worth of effort.

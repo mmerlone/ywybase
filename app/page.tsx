@@ -7,7 +7,7 @@ import { HeroSection } from '@/components/marketing/hero'
 
 export const metadata: Metadata = {
   title: 'Home',
-  description: 'A comprehensive Structura for modern web applications with Next.js, TypeScript, and Material UI',
+  description: 'A comprehensive YwyBase for modern web applications with Next.js, TypeScript, and Material UI',
 }
 
 export default function HomePage(): JSX.Element {
@@ -19,6 +19,9 @@ export default function HomePage(): JSX.Element {
       <Box component="section">
         <FeaturesSection />
       </Box>
+      {/* <Box component="section">
+        <Ywy />
+      </Box> */}
       <Box component="section">
         <CTASection />
       </Box>

@@ -1,6 +1,6 @@
 /**
  * Image Optimization Utilities for Supabase Storage
- * 
+ *
  * Provides utilities for generating optimized image URLs with Supabase's
  * built-in image transformation API.
  */
@@ -55,13 +55,13 @@ export const AVATAR_SIZES = {
 
 /**
  * Generate an optimized image URL using Supabase's image transformation
- * 
+ *
  * @param client - Supabase client instance
  * @param bucket - Storage bucket name
  * @param filePath - Path to the file in storage
  * @param options - Transformation options
  * @returns Optimized image URL
- * 
+ *
  * @example
  * ```typescript
  * const url = getOptimizedImageUrl(
@@ -86,7 +86,6 @@ export function getOptimizedImageUrl(
           width: options.width,
           height: options.height,
           resize: options.resize,
-          format: options.format,
           quality: options.quality,
         }
       : undefined,
@@ -97,19 +96,19 @@ export function getOptimizedImageUrl(
 
 /**
  * Generate multiple optimized image URLs for responsive images
- * 
+ *
  * @param client - Supabase client instance
  * @param bucket - Storage bucket name
  * @param filePath - Path to the file in storage
  * @returns Object with URLs for different sizes
- * 
+ *
  * @example
  * ```typescript
  * const urls = getResponsiveImageUrls(supabaseClient, 'avatars', 'user-123/avatar.jpg')
- * console.log(urls.thumbnail) // 50x50 WebP
- * console.log(urls.small)     // 100x100 WebP
- * console.log(urls.medium)    // 200x200 WebP
- * console.log(urls.large)     // 400x400 WebP
+ * // urls.thumbnail -> 50x50 WebP
+ * // urls.small     -> 100x100 WebP
+ * // urls.medium    -> 200x200 WebP
+ * // urls.large     -> 400x400 WebP
  * ```
  */
 export function getResponsiveImageUrls(
@@ -128,17 +127,13 @@ export function getResponsiveImageUrls(
 /**
  * Get the base (unoptimized) URL for an image
  * Useful for fallback or original image access
- * 
+ *
  * @param client - Supabase client instance
  * @param bucket - Storage bucket name
  * @param filePath - Path to the file in storage
  * @returns Base public URL
  */
-export function getBaseImageUrl(
-  client: SupabaseClient<Database>,
-  bucket: string,
-  filePath: string
-): string {
+export function getBaseImageUrl(client: SupabaseClient<Database>, bucket: string, filePath: string): string {
   const {
     data: { publicUrl },
   } = client.storage.from(bucket).getPublicUrl(filePath)
@@ -148,14 +143,14 @@ export function getBaseImageUrl(
 
 /**
  * Helper to determine optimal avatar size based on container dimensions
- * 
+ *
  * @param containerSize - The size of the container in pixels
  * @returns The appropriate avatar size configuration
- * 
+ *
  * @example
  * ```typescript
  * const size = getOptimalAvatarSize(150)
- * console.log(size) // Returns AVATAR_SIZES.medium (200x200)
+ * // Returns AVATAR_SIZES.medium (200x200)
  * ```
  */
 export function getOptimalAvatarSize(containerSize: number): ImageTransformOptions {
@@ -167,17 +162,17 @@ export function getOptimalAvatarSize(containerSize: number): ImageTransformOptio
 
 /**
  * Extract bucket and file path from Supabase Storage public URL
- * 
+ *
  * Supabase Storage URLs follow the pattern:
  * https://{project}.supabase.co/storage/v1/object/public/{bucket}/{path}
- * 
+ *
  * @param url - Supabase Storage public URL
  * @returns Object with bucket and filePath, or null if URL doesn't match pattern
- * 
+ *
  * @example
  * ```typescript
  * const info = parseSupabaseStorageUrl('https://proj.supabase.co/storage/v1/object/public/avatars/user-123/avatar.jpg')
- * console.log(info) // { bucket: 'avatars', filePath: 'user-123/avatar.jpg' }
+ * // Returns: { bucket: 'avatars', filePath: 'user-123/avatar.jpg' }
  * ```
  */
 export function parseSupabaseStorageUrl(url: string | null): { bucket: string; filePath: string } | null {
@@ -188,6 +183,8 @@ export function parseSupabaseStorageUrl(url: string | null): { bucket: string; f
   if (urlParts.length !== 2) return null
 
   const [, bucketAndPath] = urlParts
+  if (!bucketAndPath) return null
+
   const pathParts = bucketAndPath.split('/')
   const bucket = pathParts[0]
   const filePath = pathParts.slice(1).join('/')
@@ -198,4 +195,14 @@ export function parseSupabaseStorageUrl(url: string | null): { bucket: string; f
   if (!bucket || !cleanFilePath) return null
 
   return { bucket, filePath: cleanFilePath }
+}
+
+/**
+ * Checks if an avatar path is a default/system avatar
+ * @param path - The avatar path to check
+ * @returns boolean indicating if the path is a default avatar
+ */
+export const isDefaultAvatar = (path: string | null): boolean => {
+  if (!path) return false
+  return path.startsWith('default/') || path.startsWith('system/')
 }

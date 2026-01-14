@@ -2,7 +2,6 @@ import { Container, Typography, Box } from '@mui/material'
 import type { Metadata } from 'next'
 
 import { CookieSettings } from '@/components/cookie/CookieSettings'
-import { MainLayout } from '@/components/layout/MainLayout'
 
 export const metadata: Metadata = {
   title: 'Cookie Preferences',
@@ -11,19 +10,17 @@ export const metadata: Metadata = {
 
 export default function CookiesPage(): JSX.Element {
   return (
-    <MainLayout>
-      <Container maxWidth="md">
-        <Box sx={{ py: 4 }}>
-          <Typography variant="h3" component="h1" gutterBottom align="center">
-            Cookie Preferences
-          </Typography>
-          <Typography variant="body2" align="center" color="text.secondary" sx={{ mb: 4 }}>
-            Manage how we use cookies to improve your experience
-          </Typography>
+    <Container maxWidth="md">
+      <Box sx={{ py: 4 }}>
+        <Typography variant="h3" component="h1" gutterBottom align="center">
+          Cookie Preferences
+        </Typography>
+        <Typography variant="body2" align="center" color="text.secondary" sx={{ mb: 4 }}>
+          Manage how we use cookies to improve your experience
+        </Typography>
 
-          <CookieSettings />
-        </Box>
-      </Container>
-    </MainLayout>
+        <CookieSettings />
+      </Box>
+    </Container>
   )
 }
