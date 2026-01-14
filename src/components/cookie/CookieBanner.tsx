@@ -25,7 +25,7 @@ import { ChangeEvent, useCallback, useState } from 'react'
 import { useCookieConsent } from '@/hooks/useCookieConsent'
 import { CookiePreferences } from '@/types/cookie.types'
 
-export function CookieBanner() {
+export function CookieBanner(): JSX.Element | null {
   const [showDetails, setShowDetails] = useState(false)
   const { acceptAll, acceptSelected, decline, isBannerOpen, preferences: currentPreferences } = useCookieConsent()
 
@@ -53,13 +53,14 @@ export function CookieBanner() {
   }, [decline])
 
   const handlePreferenceChange = useCallback(
-    (category: keyof CookiePreferences) => (event: ChangeEvent<HTMLInputElement>) => {
-      if (category === 'necessary') return
-      setLocalPreferences((prev) => ({
-        ...prev,
-        [category]: event.target.checked,
-      }))
-    },
+    (category: keyof CookiePreferences): ((event: ChangeEvent<HTMLInputElement>) => void) =>
+      (event: ChangeEvent<HTMLInputElement>) => {
+        if (category === 'necessary') return
+        setLocalPreferences((prev) => ({
+          ...prev,
+          [category]: event.target.checked,
+        }))
+      },
     []
   )
 
@@ -76,7 +77,7 @@ export function CookieBanner() {
         right: 0,
         zIndex: 9999,
         p: 2,
-        background: 'linear-gradient(to top, rgba(0,0,0,0.1), transparent)',
+        background: 'var(--gradient-overlay-subtle)',
       }}>
       <Paper
         elevation={8}

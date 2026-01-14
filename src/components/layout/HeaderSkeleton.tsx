@@ -4,7 +4,7 @@ import { SITE_CONFIG } from '@/config/site'
 
 export function HeaderSkeleton(): JSX.Element {
   return (
-    <AppBar position={SITE_CONFIG.fixedHeader ? 'sticky' : 'static'} elevation={2}>
+    <AppBar position={SITE_CONFIG.layout.fixedHeader ? 'sticky' : 'static'} elevation={2}>
       <Toolbar>
         {/* Logo skeleton */}
         <Skeleton variant="circular" width={40} height={40} sx={{ mr: 2 }} />

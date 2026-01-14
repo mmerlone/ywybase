@@ -47,7 +47,23 @@ export function ThemeToggle(): JSX.Element {
       exclusive
       onChange={handleThemeChange}
       aria-label="theme selection"
-      size="small">
+      size="small"
+      sx={{
+        '& .MuiToggleButton-root': {
+          color: 'text.secondary',
+          borderColor: 'divider',
+          '&.Mui-selected': {
+            color: 'primary.main',
+            backgroundColor: 'action.selected',
+            '&:hover': {
+              backgroundColor: 'action.hover',
+            },
+          },
+          '&:hover': {
+            backgroundColor: 'action.hover',
+          },
+        },
+      }}>
       {themeOptions.map((option) => (
         <ToggleButton key={option.value} value={option.value} aria-label={option.ariaLabel}>
           {option.icon}

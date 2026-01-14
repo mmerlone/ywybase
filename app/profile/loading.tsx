@@ -1,20 +1,15 @@
-import { Box, Container, Grid, Paper, Skeleton, Typography } from '@mui/material'
+import { Box, Container, Grid, Paper, Skeleton } from '@mui/material'
 
-export default function ProfileLoading() {
+export default function ProfileLoading(): JSX.Element {
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
-      {/* Page header */}
-      <Typography variant="h4" component="h1" gutterBottom>
-        <Skeleton width="40%" />
-      </Typography>
-      <Typography variant="body1" color="text.secondary" paragraph>
-        <Skeleton width="60%" />
-      </Typography>
+      {/* Page subtitle (no h4 title in actual page) */}
+      <Skeleton variant="text" width="50%" height={24} sx={{ mb: 2 }} />
 
       {/* Grid layout matching ProfileForm */}
       <Box sx={{ mt: 1, width: '100%' }}>
         <Grid container spacing={3}>
-          {/* Left Column - Avatar Section (md: 4 columns) */}
+          {/* Left Column - Avatar Section (sticky sidebar) */}
           <Grid size={{ xs: 12, md: 4 }}>
             <Paper sx={{ p: 3 }}>
               <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
@@ -25,20 +20,28 @@ export default function ProfileLoading() {
             </Paper>
           </Grid>
 
-          {/* Right Column - Form Sections (md: 8 columns) */}
+          {/* Right Column - Tabbed Form (single Paper with tabs) */}
           <Grid size={{ xs: 12, md: 8 }}>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+            <Paper sx={{ p: 4 }}>
+              {/* Tabs */}
+              <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+                <Box sx={{ display: 'flex', gap: 3 }}>
+                  <Skeleton variant="text" width={80} height={40} />
+                  <Skeleton variant="text" width={80} height={40} />
+                </Box>
+              </Box>
+
               {/* Account Details Section */}
-              <Paper sx={{ p: 3 }}>
+              <Box sx={{ mb: 4 }}>
                 <Skeleton variant="text" width={150} height={28} sx={{ mb: 2 }} />
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
                   <Skeleton variant="rectangular" height={56} sx={{ borderRadius: 1 }} />
                   <Skeleton variant="rectangular" height={56} sx={{ borderRadius: 1 }} />
                 </Box>
-              </Paper>
+              </Box>
 
               {/* Personal Info Section */}
-              <Paper sx={{ p: 3 }}>
+              <Box sx={{ mb: 4 }}>
                 <Skeleton variant="text" width={180} height={28} sx={{ mb: 2 }} />
                 <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
                   <Skeleton variant="rectangular" height={56} sx={{ borderRadius: 1 }} />
@@ -51,19 +54,19 @@ export default function ProfileLoading() {
                 <Box sx={{ mt: 2 }}>
                   <Skeleton variant="rectangular" height={100} sx={{ borderRadius: 1 }} />
                 </Box>
-              </Paper>
+              </Box>
 
               {/* Contact Info Section */}
-              <Paper sx={{ p: 3 }}>
+              <Box sx={{ mb: 4 }}>
                 <Skeleton variant="text" width={160} height={28} sx={{ mb: 2 }} />
                 <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
                   <Skeleton variant="rectangular" height={56} sx={{ borderRadius: 1 }} />
                   <Skeleton variant="rectangular" height={56} sx={{ borderRadius: 1 }} />
                 </Box>
-              </Paper>
+              </Box>
 
               {/* Location Info Section */}
-              <Paper sx={{ p: 3 }}>
+              <Box sx={{ mb: 4 }}>
                 <Skeleton variant="text" width={170} height={28} sx={{ mb: 2 }} />
                 <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
                   <Skeleton variant="rectangular" height={56} sx={{ borderRadius: 1 }} />
@@ -72,24 +75,24 @@ export default function ProfileLoading() {
                   <Skeleton variant="rectangular" height={56} sx={{ borderRadius: 1 }} />
                   <Skeleton variant="rectangular" height={56} sx={{ borderRadius: 1 }} />
                 </Box>
-              </Paper>
+              </Box>
 
               {/* Professional Info Section */}
-              <Paper sx={{ p: 3 }}>
+              <Box sx={{ mb: 4 }}>
                 <Skeleton variant="text" width={200} height={28} sx={{ mb: 2 }} />
                 <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
                   <Skeleton variant="rectangular" height={56} sx={{ borderRadius: 1 }} />
                   <Skeleton variant="rectangular" height={56} sx={{ borderRadius: 1 }} />
                   <Skeleton variant="rectangular" height={56} sx={{ borderRadius: 1 }} />
                 </Box>
-              </Paper>
+              </Box>
 
               {/* Form action buttons */}
-              <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mt: 1 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mt: 4 }}>
                 <Skeleton variant="rectangular" width="100%" height={42} sx={{ borderRadius: 1, maxWidth: 200 }} />
                 <Skeleton variant="rectangular" width="100%" height={42} sx={{ borderRadius: 1, maxWidth: 200 }} />
               </Box>
-            </Box>
+            </Paper>
           </Grid>
         </Grid>
       </Box>

@@ -6,6 +6,7 @@ import { useAuthContext } from '@/components/providers'
 import { useProfile } from '@/hooks/useProfile'
 import { useOptimizedAvatar } from '@/hooks/useOptimizedAvatar'
 import { logger } from '@/lib/logger/client'
+import { AVATAR_SIZES } from '@/lib/utils/image-utils'
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
 const VALID_FILE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
@@ -45,8 +46,8 @@ export function AvatarSection(): JSX.Element {
         if (uploadedUrl) {
           logger.info({ uploadedUrl }, 'Avatar upload completed successfully')
         }
-      } catch (error) {
-        logger.error({ error }, 'Failed to update avatar')
+      } catch (err) {
+        logger.error({ err }, 'Failed to update avatar')
       } finally {
         setIsUploading(false)
         // Reset the file input
@@ -68,8 +69,8 @@ export function AvatarSection(): JSX.Element {
         logger.info({}, 'Starting avatar removal')
         await updateProfile({ avatar_url: null })
         logger.info({}, 'Avatar removal completed successfully')
-      } catch (error) {
-        logger.error({ error }, 'Failed to remove avatar')
+      } catch (err) {
+        logger.error({ err }, 'Failed to remove avatar')
       } finally {
         setIsUploading(false)
       }
@@ -100,7 +101,7 @@ export function AvatarSection(): JSX.Element {
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}>
         <Avatar
-          src={avatarUrls.large}
+          src={avatarUrls.getUrl(AVATAR_SIZES.large) || undefined}
           alt={profile?.display_name ?? 'User'}
           sx={{
             width: '100%',
@@ -109,10 +110,17 @@ export function AvatarSection(): JSX.Element {
             transition: 'opacity 0.3s ease',
             opacity: isHovered ? 0.8 : 1,
           }}
-          imgProps={{
-            loading: 'lazy',
-            // Provide srcSet for responsive images
-            srcSet: `${avatarUrls.medium} 1x, ${avatarUrls.large} 2x`,
+          slotProps={{
+            img: {
+              loading: 'lazy',
+              // Provide srcSet for responsive images with width descriptors
+              ...(avatarUrls.getUrl(AVATAR_SIZES.medium) && avatarUrls.getUrl(AVATAR_SIZES.large)
+                ? {
+                    srcSet: `${avatarUrls.getUrl(AVATAR_SIZES.medium)} ${AVATAR_SIZES.medium.width}w, ${avatarUrls.getUrl(AVATAR_SIZES.large)} ${AVATAR_SIZES.large.width}w`,
+                    sizes: '(max-width: 599px) 150px, (max-width: 899px) 180px, 200px',
+                  }
+                : {}),
+            },
           }}
         />
 

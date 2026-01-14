@@ -7,6 +7,7 @@ import { forwardRef, useId, useMemo, useState } from 'react'
 import { logger } from '@/lib/logger/client'
 import { cn } from '@/lib/utils'
 import type { LabelledToggleOption } from '@/types'
+import { carvedShadow, extrudedShadow } from '@/theme'
 
 export interface LabelledToggleProps<T extends string | number> {
   id?: string
@@ -98,7 +99,8 @@ function LabelledToggleInner<T extends string | number>(
       fullWidth={fullWidth}
       disabled={disabled}
       required={required}
-      className="p-1 rounded-full inset-shadow-gray-800/50 inset-shadow-sm shadow-sm shadow-gray-50">
+      className="rounded-full"
+      sx={carvedShadow}>
       {label ? (
         <FormLabel id={`${groupId}-label`} className="mb-2">
           {label}
@@ -112,23 +114,22 @@ function LabelledToggleInner<T extends string | number>(
         name={uniqueName}
         value={effectiveValue !== undefined ? String(effectiveValue) : ''}
         onChange={handleChange}
-        className={cn('w-full')}>
+        className={cn('w-full rounded-full')}>
         <Box
-          className={cn('relative inline-grid w-full select-none', className)}
+          className={cn('relative inline-grid w-full select-none rounded-full m-1', className)}
           sx={{
             gridTemplateColumns: `repeat(${segmentsCount}, minmax(0, 1fr))`,
           }}>
-          <Box aria-hidden className={cn('pointer-events-none absolute inset-0', 'backdrop-blur-[2px]')} />
+          <Box aria-hidden className={cn('pointer-events-none absolute inset-0 rounded-full', 'backdrop-blur-[2px]')} />
 
           <Box
             aria-hidden
             className={cn(
-              ' inset-shadow-gray-50/50 inset-shadow-sm shadow-sm shadow-gray-900',
-              'absolute top-0 bottom-0 left-0 rounded-full shadow-md',
+              'absolute top-0 bottom-0 left-0 rounded-full',
               !reduceMotion && 'transition-transform duration-200 ease-out'
             )}
             style={indicatorStyle}
-            sx={{ bgcolor: 'background.paper' }}
+            sx={[extrudedShadow, { bgcolor: 'background.paper' }]}
           />
 
           {options.map((opt, idx) => {
@@ -153,11 +154,14 @@ function LabelledToggleInner<T extends string | number>(
                       width: 0,
                       height: 0,
                     }}
-                    inputProps={{ 'aria-label': opt.ariaLabel }}
+                    slotProps={{ input: { 'aria-label': opt.ariaLabel } }}
                   />
                 }
                 label={
-                  <Box component="span" className={cn('relative z-10 m-2')}>
+                  <Box
+                    component="span"
+                    className={cn('relative z-10 m-2')}
+                    sx={{ fontWeight: effectiveValue === opt.value ? 600 : 400 }}>
                     {opt.label}
                   </Box>
                 }

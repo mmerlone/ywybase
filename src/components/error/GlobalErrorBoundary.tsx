@@ -5,6 +5,7 @@ import { Alert, Box, Button, Container, Paper, Typography } from '@mui/material'
 import type React from 'react'
 import { Component, type ReactNode } from 'react'
 
+import { ErrorCodes } from '@/lib/error/codes'
 import { logger } from '@/lib/logger/client'
 import type { AppError } from '@/types/error.types'
 
@@ -47,9 +48,24 @@ export class GlobalErrorBoundary extends Component<Props, State> {
         statusCode: appError.statusCode,
         isOperational: appError.isOperational,
       })
+
+      // Special handling for configuration errors
+      if (appError.code === ErrorCodes.config.missingEnvVar()) {
+        logger.error(
+          {
+            ...errorContext,
+            setupUrl: 'https://supabase.com/dashboard/project/_/settings/api',
+            documentation: 'https://supabase.com/docs/guides/api/api-keys',
+          },
+          'Configuration Error: Application cannot start'
+        )
+      } else {
+        logger.error(errorContext, 'Global Error Boundary caught an error')
+      }
+    } else {
+      logger.error(errorContext, 'Global Error Boundary caught an error')
     }
 
-    logger.error(errorContext, 'Global Error Boundary caught an error')
     this.setState({ error, errorInfo })
 
     // Capture error to Sentry for issue tracking
@@ -111,6 +127,30 @@ export class GlobalErrorBoundary extends Component<Props, State> {
                 We&apos;re sorry, but something unexpected happened. Our team has been notified and is working to fix
                 the issue.
               </Typography>
+
+              {/* Show configuration error setup instructions */}
+              {this.isAppError(this.state.error) &&
+                this.state.error.code === ErrorCodes.config.missingEnvVar() &&
+                process.env.NODE_ENV === 'development' && (
+                  <Alert severity="info" sx={{ mb: 3, textAlign: 'left' }}>
+                    <Typography variant="subtitle2" gutterBottom>
+                      Quick Fix:
+                    </Typography>
+                    <Typography variant="body2" component="div">
+                      1. Create <code>.env.local</code> from <code>.env.sample</code>
+                      <br />
+                      2. Add your Supabase credentials from{' '}
+                      <a
+                        href="https://supabase.com/dashboard/project/_/settings/api"
+                        target="_blank"
+                        rel="noopener noreferrer">
+                        Supabase Dashboard
+                      </a>
+                      <br />
+                      3. Restart the server
+                    </Typography>
+                  </Alert>
+                )}
 
               {typeof process !== 'undefined' &&
                 process.env?.NODE_ENV === 'development' &&

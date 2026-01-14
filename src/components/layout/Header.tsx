@@ -10,7 +10,7 @@ import { SITE_CONFIG } from '@/config/site'
 
 export function Header(): JSX.Element {
   return (
-    <AppBar position={SITE_CONFIG.fixedHeader ? 'sticky' : 'static'} elevation={2}>
+    <AppBar position={SITE_CONFIG.layout.fixedHeader ? 'sticky' : 'static'} elevation={2}>
       <Toolbar>
         <LogoIcon />
         <Typography
@@ -20,11 +20,10 @@ export function Header(): JSX.Element {
           sx={{
             flexGrow: 1,
             textDecoration: 'none',
-            color: 'var(--mui-palette-text-primary)',
             fontWeight: 700,
             letterSpacing: '.1rem',
           }}>
-          Structura
+          {SITE_CONFIG.name}
         </Typography>
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>

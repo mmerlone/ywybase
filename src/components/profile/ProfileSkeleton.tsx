@@ -1,7 +1,7 @@
 import { Skeleton } from '@mui/material'
 import { Box } from '@mui/material'
 
-export function ProfileSkeleton() {
+export function ProfileSkeleton(): JSX.Element {
   return (
     <Box sx={{ width: '100%', p: 3 }}>
       <Skeleton variant="circular" width={120} height={120} sx={{ mx: 'auto', mb: 2 }} />
