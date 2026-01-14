@@ -29,7 +29,7 @@ import { SignOutReasonEnum } from '@/types'
 
 /**
  * User menu component that displays different UI based on authentication state
- * Shows sign in/sign up buttons when not authenticated, and user avatar with menu when authenticated
+ * Shows login/sign up buttons when not authenticated, and user avatar with menu when authenticated
  */
 export function UserMenu(): JSX.Element {
   const context = useAuthContext()
@@ -85,11 +85,11 @@ export function UserMenu(): JSX.Element {
           color="inherit"
           size="small"
           startIcon={<LoginIcon />}>
-          Sign In
+          Login
         </Button>
         <Button
           component={Link}
-          href="/auth?op=register"
+          href="/auth?op=sign-up"
           variant="contained"
           color="primary"
           size="small"
@@ -119,7 +119,8 @@ export function UserMenu(): JSX.Element {
             sx={{
               width: 32,
               height: 32,
-              bgcolor: 'primary.main',
+              bgcolor: 'primary.dark',
+              color: 'common.white',
               fontSize: '0.875rem',
               fontWeight: 600,
             }}>

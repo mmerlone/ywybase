@@ -2,7 +2,7 @@
 
 ## 📋 Overview
 
-This directory contains a **dynamic, self-contained authentication system** that handles multiple operations (login, register, password reset, etc.) through a single, adaptive form component. The architecture preserves the elegant UX of operation switching while maintaining clean, maintainable code organization.
+This directory contains a **dynamic, self-contained authentication system** that handles multiple operations (login, sign-up, password reset, etc.) through a single, adaptive form component. The architecture preserves the elegant UX of operation switching while maintaining clean, maintainable code organization.
 
 ## 🎯 Design Philosophy
 
@@ -104,7 +104,7 @@ src/components/auth/
 
 **Responsibility**: Defines form validation schemas using Zod
 
-- **Operation-Specific Validation**: Different rules for login, register, etc.
+- **Operation-Specific Validation**: Different rules for login, sign-up, etc.
 - **Custom Validators**: Implements complex validation logic
 - **Error Messages**: Provides user-friendly error messages
 

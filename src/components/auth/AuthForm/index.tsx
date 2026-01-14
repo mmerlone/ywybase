@@ -1,9 +1,9 @@
 'use client'
 
-import { Alert, Box, Button, CircularProgress, Paper, Stack, Typography, useTheme } from '@mui/material'
+import { Alert, Box, Button, CircularProgress, Paper, Stack, Typography } from '@mui/material'
 import { motion } from 'motion/react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState, startTransition } from 'react'
 import { FormProvider } from 'react-hook-form'
 
 import { PasswordMeter } from '../PasswordMeter'
@@ -16,34 +16,44 @@ import { LoginButtons } from './LoginButtons'
 
 import { useAuthContext } from '@/components/providers/AuthProvider'
 import { useAuthForm } from '@/hooks/useAuthForm'
-import { signInWithEmail, signUpWithEmail, requestPasswordReset, updateUserPassword } from '@/lib/auth/actions/server'
+import { loginWithEmail, signUpWithEmail, forgotPassword, setPassword, updatePassword } from '@/lib/actions/auth/server'
 import { handleClientError as handleError } from '@/lib/error'
-import type { AppError } from '@/types/error.types'
+import type { SerializableError } from '@/types/auth.types'
+import type { FormTypeMap, AuthOperations } from '@/types/auth.types'
 import {
   LoginFormInput,
-  RegisterFormInput,
+  SignUpFormInput,
   ResetPasswordEmailFormInput,
   ResetPasswordPassFormInput,
   UpdatePasswordFormInput,
 } from '@/types/auth.types'
-import { AuthOperationsEnum } from '@/types/enums'
+import { AuthOperationsEnum } from '@/types/auth.types'
+
+const validOperations = Object.values(AuthOperationsEnum) as Array<keyof FormTypeMap>
+type FormOperationType = keyof FormTypeMap
+
+// Runtime guard to check if an operation is a valid form operation
+function isFormOperation(operation: AuthOperations): operation is FormOperationType {
+  return (validOperations as readonly string[]).includes(operation)
+}
 
 interface AuthFormProps {
-  initialOperation?: AuthOperationsEnum
+  initialOperation?: AuthOperations
 }
 
 export default function AuthForm({ initialOperation = AuthOperationsEnum.LOGIN }: AuthFormProps): JSX.Element {
-  const [operation, setOperation] = useState<AuthOperationsEnum>(initialOperation)
-  const [error, setError] = useState<AppError | null>(null)
+  const [operation, setOperation] = useState<AuthOperations>(initialOperation)
+  const [error, setError] = useState<SerializableError | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [isRedirecting, setIsRedirecting] = useState(false)
   const [emailSent, setEmailSent] = useState(false)
   const searchParams = useSearchParams()
-  const formMethods = useAuthForm(operation)
+  // Use runtime guard to ensure operation is a valid form operation
+  const formMethods = useAuthForm(isFormOperation(operation) ? operation : AuthOperationsEnum.LOGIN)
   const { reset } = formMethods
-  // We only need updatePassword (for recovery), and clearError from context now
-  // other operations are handled by server actions
-  const { updatePassword, clearError } = useAuthContext()
+  // All operations are handled by server actions, only need clearError from context
+  const { clearError } = useAuthContext()
   const router = useRouter()
 
   useEffect(() => {
@@ -67,40 +77,35 @@ export default function AuthForm({ initialOperation = AuthOperationsEnum.LOGIN }
         }
       }
     }
+
     checkSignOutReason()
-  }, [])
+  }, [searchParams, router])
 
   // Handle operation changes and form reset
   useEffect((): void => {
     const op = searchParams.get('op')?.toLowerCase() ?? null
-    const newOperation = ((): AuthOperationsEnum => {
-      switch (op) {
-        case AuthOperationsEnum.LOGIN:
-          return AuthOperationsEnum.LOGIN
-        case AuthOperationsEnum.REGISTER:
-          return AuthOperationsEnum.REGISTER
-        case AuthOperationsEnum.FORGOT_PASSWORD:
-          return AuthOperationsEnum.FORGOT_PASSWORD
-        case AuthOperationsEnum.RESET_PASSWORD:
-          return AuthOperationsEnum.RESET_PASSWORD
-        case AuthOperationsEnum.UPDATE_PASSWORD:
-          return AuthOperationsEnum.UPDATE_PASSWORD
-        default:
-          return AuthOperationsEnum.LOGIN
-      }
-    })()
+    const newOperation =
+      op && validOperations.includes(op as FormOperationType) ? (op as AuthOperations) : AuthOperationsEnum.LOGIN
 
     if (newOperation !== operation) {
-      setOperation(newOperation)
-      const newConfig = authFormDefaults[newOperation]
+      // Batch state updates with startTransition for better performance
+      startTransition(() => {
+        setOperation(newOperation)
+        setError(null)
+        setEmailSent(false)
+      })
+
+      // Use runtime guard to ensure newOperation is a valid form operation
+      const newConfig = isFormOperation(newOperation)
+        ? authFormDefaults[newOperation]
+        : authFormDefaults[AuthOperationsEnum.LOGIN]
       reset(newConfig)
-      setError(null)
-      setEmailSent(false)
     }
-  }, [searchParams, operation, reset])
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- reset is stable from react-hook-form
+  }, [searchParams, operation])
 
   const handleOperationChange = useCallback(
-    (newOperation: AuthOperationsEnum): void => {
+    (newOperation: AuthOperations): void => {
       // Update the URL using Next.js router so useSearchParams reacts
       const url = new URL(window.location.href)
       url.searchParams.set('op', newOperation)
@@ -109,12 +114,14 @@ export default function AuthForm({ initialOperation = AuthOperationsEnum.LOGIN }
     [router]
   )
 
-  const getErrorMessage = (error: AppError): string => {
+  const getErrorMessage = (error: SerializableError): string => {
     switch (error.code) {
       case 'AUTH/INVALID_CREDENTIALS':
         return 'Invalid email or password. Please check your credentials and try again.'
       case 'AUTH/EMAIL_ALREADY_IN_USE':
-        return 'This email is already registered. Please sign in instead.'
+        return 'This email is already in use. Please login instead.'
+      case 'AUTH/EMAIL_NOT_CONFIRMED':
+        return 'Please verify your email address before logging in. Check your inbox for the confirmation link.'
       default:
         return error.message
     }
@@ -123,7 +130,7 @@ export default function AuthForm({ initialOperation = AuthOperationsEnum.LOGIN }
   const handleFormSubmit = async (
     data:
       | LoginFormInput
-      | RegisterFormInput
+      | SignUpFormInput
       | ResetPasswordEmailFormInput
       | ResetPasswordPassFormInput
       | UpdatePasswordFormInput
@@ -132,158 +139,107 @@ export default function AuthForm({ initialOperation = AuthOperationsEnum.LOGIN }
       setIsLoading(true)
       setIsRedirecting(false)
       setError(null)
+
+      setSuccessMessage(null) // Clear success message when submitting a form
       clearError() // Clear any auth context errors
 
       switch (operation) {
         case AuthOperationsEnum.LOGIN: {
           const { email, password } = data as LoginFormInput
-          const result = await signInWithEmail({ email, password })
+          const result = await loginWithEmail({ email, password })
 
           if (!result.success) {
-            // Extract error message from AppError or use fallback
-            const errorMessage =
-              typeof result.error === 'string' ? result.error : result.error?.message || 'Login failed'
-
-            const errorCode = errorMessage.includes('Invalid email') ? 'AUTH/INVALID_CREDENTIALS' : 'AUTH/UNKNOWN'
-
-            const appError = handleError(new Error(errorMessage), {
-              operation: 'login',
-              code: errorCode,
-            })
-
-            if (result.error) {
-              // Since we can't mutate appError.message (it's likely readonly on Error too? No, Error.message is usually mutable in JS but AppError interface might define it readonly.
-              // Actually AppError extends Error. In TS Error.message is string.
-              // But looking at AppError definition path...
-              // Safest to just rely on the error passed to handleError constructor if possible, OR
-              // handleError logic. Providing message in options if supported?
-              // handleError(error, context).
-              // We passed new Error(result.error) so message should be set correctly.
+            // Use the serialized error from the server directly
+            if (typeof result.error === 'string') {
+              // Fallback for string errors
+              const appError = handleError(new Error(result.error), {
+                operation: AuthOperationsEnum.LOGIN,
+                code: 'AUTH/UNKNOWN',
+              })
+              setError(appError)
+            } else {
+              // Use the serialized AppErrorJSON from server
+              setError(result.error || null)
             }
-
-            setError(appError)
             return
           }
           setIsRedirecting(true)
           router.push('/profile')
           break
         }
-        case AuthOperationsEnum.REGISTER: {
-          const { email, password, name, acceptTerms } = data as RegisterFormInput
+        case AuthOperationsEnum.SIGN_UP: {
+          const { email, password, name, acceptTerms } = data as SignUpFormInput
           const result = await signUpWithEmail({ email, password, name, confirmPassword: password, acceptTerms })
 
           if (!result.success) {
-            let errorCode = 'AUTH/UNKNOWN'
-            let errorContext = {}
+            // Use the serialized error from the server
+            const errorObj =
+              typeof result.error === 'string'
+                ? handleError(new Error(result.error), { operation: 'signup', code: 'AUTH/UNKNOWN' })
+                : result.error
 
-            // Extract error message from AppError or use fallback
-            const errorMessage =
-              typeof result.error === 'string' ? result.error : result.error?.message || 'Registration failed'
-
-            // Check for "already registered" based on message content
-            if (
-              errorMessage.toLowerCase().includes('already registered') ||
-              errorMessage.toLowerCase().includes('already in use')
-            ) {
-              errorCode = 'AUTH/EMAIL_ALREADY_IN_USE'
-              errorContext = { shouldSwitchToLogin: true }
-            }
-
-            const appError = handleError(new Error(errorMessage), {
-              operation: 'signup',
-              code: errorCode,
-              ...errorContext,
-            })
-
-            // Check if error suggests switching to login (e.g., user already exists)
-            // accessing strongly typed context if possible
-            // We know context structure from AppError definition, but TS might not infer strict union narrowing easily here
-            if (appError.context && 'shouldSwitchToLogin' in appError.context && appError.context.shouldSwitchToLogin) {
-              // Switch to login mode using existing operation change handler
+            // Check if error code suggests switching to login
+            if (errorObj?.code === 'AUTH/EMAIL_ALREADY_IN_USE') {
               handleOperationChange(AuthOperationsEnum.LOGIN)
               return
             }
-            setError(appError)
+            setError(errorObj || null)
             return
           }
 
-          // New server actions don't return redirectTo, so handle redirect manually
-          setIsRedirecting(true)
-          router.push('/auth/confirm')
+          // Show success message and switch to login
+          setSuccessMessage('Account created! Please check your email to verify your account.')
+          handleOperationChange(AuthOperationsEnum.LOGIN)
           break
         }
         case AuthOperationsEnum.FORGOT_PASSWORD: {
           const { email } = data as ResetPasswordEmailFormInput
-          const result = await requestPasswordReset({ email })
+          const result = await forgotPassword({ email })
 
           if (!result.success) {
-            // Extract error message from AppError or use fallback
-            const errorMessage =
-              typeof result.error === 'string' ? result.error : result.error?.message || 'Password reset failed'
-
-            const appError = handleError(new Error(errorMessage), { operation: 'resetPassword' })
-            setError(appError)
+            // Use the serialized error from the server
+            const errorObj =
+              typeof result.error === 'string'
+                ? handleError(new Error(result.error), { operation: 'resetPassword' })
+                : result.error
+            setError(errorObj || null)
             return
           }
           setEmailSent(true)
           break
         }
-        case AuthOperationsEnum.RESET_PASSWORD: {
-          // This case usually happens when user clicks email link and lands on page with token
-          // The form collects new password.
-          // Server action 'updatePassword' takes 'currentPassword', 'newPassword', 'confirmPassword'
-          // BUT ResetPasswordPassFormInput usually only has 'password' and 'confirmPassword'.
-          // The 'updatePassword' action in actions.ts seems designed for LOGGED IN users changing password (requires currentPassword).
-          // For Reset Password (recovery), Supabase usually handles it via `supabase.auth.updateUser` AFTER verifying the token hash on the server.
-          // Wait, `actions.ts` `updatePassword` implementation:
-          // 1. getUser() 2. signIn() 3. updatePassword().
-          // This is definitely for "Change Password".
-          // It is NOT for "Reset Password" (recovery flow).
-          // The recovery flow usually involves the user being signed in implicitly by the link (exchange code for session)
-          // and then just calling updateUser.
-          // If the user lands on /auth/reset-password, allow them to set new password.
+        case AuthOperationsEnum.SET_PASSWORD: {
+          // This case happens when user clicks password reset link from email and lands on page with token
+          // The form collects new password. The user is authenticated via the reset token.
+          const { password, confirmPassword } = data as ResetPasswordPassFormInput
+          const result = await setPassword({ password, confirmPassword })
 
-          // Current client code: `await updatePassword(password)` from context.
-          // Context `updatePassword`: calling `authService.updatePassword(newPassword)`.
-          // AuthService `updatePassword`: `supabase.auth.updateUser({ password })`.
-
-          // The Server Action `updatePassword` requires `currentPassword`.
-          // This means the existing Server Action is NOT suitable for the Reset Password flow (recovery).
-          // We need a separate `completePasswordReset` action or similar that doesn't ask for current password.
-          // However, `updateUser` is secure because the user holds the session via the recovery link.
-
-          // I should stick to client-side for this specific operation OR create a new action.
-          // Since I'm refactoring, I'll stick to client-side for RESET_PASSWORD for now to avoid breakage,
-          // OR I need to modify `actions.ts` to allow update without current password (if user is recovering).
-          // But `actions.ts` explicitly checks current password.
-
-          // FOR NOW: I will revert to using `useAuthContext`'s `updatePassword` for this specific case?
-          // "The existing src/lib/auth/actions.ts file is currently unused".
-          // Using the client context for RESET_PASSWORD is likely safer than breaking it with the wrong server action.
-
-          // I will add `updatePassword` back to the destructured context for this case.
-          const { password } = data as ResetPasswordPassFormInput
-          // Using context function for recovery flow
-          const { error } = await updatePassword(password)
-          if (error) {
-            setError(error)
+          if (!result.success) {
+            // Use the serialized error from the server
+            const errorObj =
+              typeof result.error === 'string'
+                ? handleError(new Error(result.error), { operation: AuthOperationsEnum.SET_PASSWORD })
+                : result.error
+            setError(errorObj || null)
             return
           }
-          setIsRedirecting(true)
-          router.push('/profile')
+
+          // Show success message before redirecting
+          setSuccessMessage(result.message || 'Password reset completed successfully')
+          reset()
           break
         }
         case AuthOperationsEnum.UPDATE_PASSWORD: {
           const { currentPassword, newPassword, confirmPassword } = data as UpdatePasswordFormInput
-          const result = await updateUserPassword({ currentPassword, newPassword, confirmPassword })
+          const result = await updatePassword({ currentPassword, newPassword, confirmPassword })
 
           if (!result.success) {
-            // Extract error message from AppError or use fallback
-            const errorMessage =
-              typeof result.error === 'string' ? result.error : result.error?.message || 'Password update failed'
-
-            const appError = handleError(new Error(errorMessage), { operation: 'updatePassword' })
-            setError(appError)
+            // Use the serialized error from the server
+            const errorObj =
+              typeof result.error === 'string'
+                ? handleError(new Error(result.error), { operation: 'updatePassword' })
+                : result.error
+            setError(errorObj || null)
             return
           }
           setIsRedirecting(true)
@@ -303,8 +259,6 @@ export default function AuthForm({ initialOperation = AuthOperationsEnum.LOGIN }
     }
   }
 
-  const theme = useTheme()
-
   if (emailSent) {
     return (
       <Paper
@@ -316,12 +270,12 @@ export default function AuthForm({ initialOperation = AuthOperationsEnum.LOGIN }
           textAlign: 'center',
           bgcolor: 'background.paper',
           borderRadius: 2,
-          boxShadow: theme.shadows[4],
+          boxShadow: 'var(--mui-shadows-4)',
         }}>
         <Typography variant="h6" component="h2" gutterBottom color="text.primary">
           Check your email
         </Typography>
-        <Typography variant="body1" color="text.secondary" paragraph>
+        <Typography variant="body1" color="text.secondary">
           We&apos;ve sent you a password reset link. Please check your email.
         </Typography>
         <Button
@@ -341,74 +295,106 @@ export default function AuthForm({ initialOperation = AuthOperationsEnum.LOGIN }
 
   return (
     <Paper
-      elevation={3}
       sx={{
         width: '100%',
         mx: 'auto',
         p: 4,
         bgcolor: 'background.paper',
         borderRadius: 2,
-        boxShadow: theme.shadows[4],
+        boxShadow: 'var(--mui-shadows-4)',
       }}>
-      <Typography variant="h5" component="h1" align="center" gutterBottom color="text.primary" sx={{ fontWeight: 600 }}>
-        {uiText.titles[operation]}
-      </Typography>
-      {error && (
-        <Alert
-          severity="error"
-          action={
-            <Button
-              size="small"
-              color="inherit"
-              onClick={() => {
-                setError(null)
-                clearError()
-              }}
-              sx={{ textTransform: 'none' }}>
-              Dismiss
-            </Button>
-          }
-          sx={{
-            mt: 1,
-            '& .MuiAlert-message': {
-              width: '100%',
-              textAlign: 'left',
-            },
-          }}>
-          <Box>
-            <Typography variant="body2" sx={{ fontWeight: 500 }}>
-              {getErrorMessage(error)}
-            </Typography>
-          </Box>
-        </Alert>
-      )}
-
-      {operation !== AuthOperationsEnum.RESET_PASSWORD && operation !== AuthOperationsEnum.UPDATE_PASSWORD && (
-        <Box sx={{ mb: 3, mt: 2 }}>
-          <AuthOperationSelector
-            currentOperation={operation}
-            onOperationChange={handleOperationChange}
-            disabled={isLoading}
-          />
-        </Box>
-      )}
-
-      {operation === AuthOperationsEnum.UPDATE_PASSWORD && (
-        <Box sx={{ mb: 2, mt: 1, display: 'flex', justifyContent: 'flex-end' }}>
-          <Button
-            variant="text"
-            size="small"
-            onClick={() => handleOperationChange(AuthOperationsEnum.LOGIN)}
-            disabled={isLoading}
-            sx={{ textTransform: 'none' }}>
-            Back to login
-          </Button>
-        </Box>
-      )}
-
       <FormProvider {...formMethods}>
-        <form onSubmit={formMethods.handleSubmit(handleFormSubmit)}>
-          <Stack direction="row" spacing={4} justifyContent="space-between" alignItems="center" mb={2}>
+        <Typography
+          variant="h5"
+          component="h1"
+          align="center"
+          gutterBottom
+          color="text.primary"
+          sx={{ fontWeight: 600 }}>
+          {uiText.titles[operation]}
+        </Typography>
+        {successMessage && (
+          <Alert
+            severity="success"
+            elevation={2}
+            action={
+              operation === AuthOperationsEnum.SET_PASSWORD ? (
+                <Button
+                  size="small"
+                  variant="contained"
+                  onClick={() => router.push('/profile')}
+                  sx={{
+                    textTransform: 'none',
+                    whiteSpace: 'nowrap',
+                    minWidth: 'auto',
+                  }}>
+                  Go to Profile
+                </Button>
+              ) : (
+                <Button
+                  size="small"
+                  color="inherit"
+                  onClick={() => setSuccessMessage(null)}
+                  sx={{ textTransform: 'none' }}>
+                  Dismiss
+                </Button>
+              )
+            }
+            sx={{
+              mt: 1,
+              '& .MuiAlert-message': {
+                width: '100%',
+                textAlign: 'left',
+              },
+            }}>
+            <Box>
+              <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                {successMessage}
+              </Typography>
+            </Box>
+          </Alert>
+        )}
+        {error && (
+          <Alert
+            severity="error"
+            elevation={2}
+            action={
+              <Button
+                size="small"
+                color="inherit"
+                onClick={() => {
+                  setError(null)
+                  clearError()
+                }}
+                sx={{ textTransform: 'none' }}>
+                Dismiss
+              </Button>
+            }
+            sx={{
+              mt: 1,
+              '& .MuiAlert-message': {
+                width: '100%',
+                textAlign: 'left',
+              },
+            }}>
+            <Box>
+              <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                {getErrorMessage(error)}
+              </Typography>
+            </Box>
+          </Alert>
+        )}
+        <Stack direction="row" spacing={8} justifyContent="space-between" alignItems="start" mb={2}>
+          <form onSubmit={formMethods.handleSubmit(handleFormSubmit)} style={{ width: '100%' }}>
+            {(operation === AuthOperationsEnum.LOGIN || operation === AuthOperationsEnum.SIGN_UP) && (
+              <Box sx={{ mb: 3, mt: 2, width: '100%' }}>
+                <AuthOperationSelector
+                  currentOperation={operation}
+                  onOperationChange={handleOperationChange}
+                  disabled={isLoading}
+                />
+              </Box>
+            )}
             <Stack
               spacing={3}
               component={motion.div}
@@ -433,7 +419,7 @@ export default function AuthForm({ initialOperation = AuthOperationsEnum.LOGIN }
                 </motion.div>
               )}
 
-              {(operation === AuthOperationsEnum.LOGIN || operation === AuthOperationsEnum.REGISTER) && (
+              {(operation === AuthOperationsEnum.LOGIN || operation === AuthOperationsEnum.SIGN_UP) && (
                 <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
                   <Button
                     variant="text"
@@ -442,6 +428,19 @@ export default function AuthForm({ initialOperation = AuthOperationsEnum.LOGIN }
                     disabled={isLoading}
                     sx={{ textTransform: 'none' }}>
                     Forgot password
+                  </Button>
+                </Box>
+              )}
+              {(operation === AuthOperationsEnum.UPDATE_PASSWORD ||
+                operation === AuthOperationsEnum.FORGOT_PASSWORD) && (
+                <Box sx={{ mb: 2, mt: 1, display: 'flex', justifyContent: 'flex-end' }}>
+                  <Button
+                    variant="text"
+                    size="small"
+                    onClick={() => handleOperationChange(AuthOperationsEnum.LOGIN)}
+                    disabled={isLoading}
+                    sx={{ textTransform: 'none' }}>
+                    Back to login
                   </Button>
                 </Box>
               )}
@@ -459,31 +458,31 @@ export default function AuthForm({ initialOperation = AuthOperationsEnum.LOGIN }
                 )}
               </Button>
             </Stack>
-            {(operation === AuthOperationsEnum.LOGIN || operation === AuthOperationsEnum.REGISTER) && (
-              <>
-                <Paper
-                  sx={{
-                    width: '100%',
-                    maxWidth: '400px',
-                    padding: '16px',
-                  }}>
-                  <Stack sx={{ width: '100%' }}>
-                    <Typography
-                      variant="h6"
-                      component="h1"
-                      align="center"
-                      gutterBottom
-                      color="text.primary"
-                      sx={{ fontWeight: 600 }}>
-                      OR
-                    </Typography>
-                    <LoginButtons disabled={isLoading} />
-                  </Stack>
-                </Paper>
-              </>
-            )}
-          </Stack>
-        </form>
+          </form>
+          {(operation === AuthOperationsEnum.LOGIN || operation === AuthOperationsEnum.SIGN_UP) && (
+            <Paper
+              sx={{
+                width: '100%',
+                maxWidth: '400px',
+                p: 2,
+                mt: 2,
+                // padding: '16px',
+              }}>
+              <Stack sx={{ width: '100%' }}>
+                <Typography
+                  variant="h6"
+                  component="h1"
+                  align="center"
+                  gutterBottom
+                  color="text.primary"
+                  sx={{ fontWeight: 600 }}>
+                  OR
+                </Typography>
+                <LoginButtons disabled={isLoading} />
+              </Stack>
+            </Paper>
+          )}
+        </Stack>
       </FormProvider>
     </Paper>
   )

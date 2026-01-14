@@ -1,10 +1,10 @@
 import LabelledToggle from '@/components/layout/LabelledToggle'
-import type { LabelledToggleOption } from '@/types'
-import { AuthOperationsEnum } from '@/types/enums'
+import { AuthOperationsEnum, type LabelledToggleOption } from '@/types'
+import { AuthOperations } from '@/types/auth.types'
 
 interface AuthOperationSelectorProps {
-  currentOperation: AuthOperationsEnum
-  onOperationChange: (operation: AuthOperationsEnum) => void
+  currentOperation: AuthOperations
+  onOperationChange: (operation: AuthOperations) => void
   disabled?: boolean
 }
 
@@ -19,10 +19,12 @@ export function AuthOperationSelector({
   disabled = false,
 }: AuthOperationSelectorProps): JSX.Element {
   // Define the operations that users can switch between
-  const operations: ReadonlyArray<LabelledToggleOption<AuthOperationsEnum>> = [
-    { value: AuthOperationsEnum.LOGIN, label: 'Sign In' },
-    { value: AuthOperationsEnum.REGISTER, label: 'Sign Up' },
-    // { value: AuthOperationsEnum.FORGOT_PASSWORD, label: "Forgot Password" },
+  const operations: ReadonlyArray<LabelledToggleOption<AuthOperations>> = [
+    { value: AuthOperationsEnum.LOGIN, label: 'Login' },
+    { value: AuthOperationsEnum.SIGN_UP, label: 'Sign Up' },
+    // { value: AuthOperationsEnum.FORGOT_PASSWORD, label: 'Forgot Password' },
+    // { value: AuthOperationsEnum.UPDATE_PASSWORD, label: 'Update Password' },
+    // { value: AuthOperationsEnum.SET_PASSWORD, label: 'Set Password' },
   ]
 
   return (

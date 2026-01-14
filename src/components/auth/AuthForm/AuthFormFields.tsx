@@ -1,13 +1,17 @@
 'use client'
 
-import { Box, Checkbox, FormControlLabel, Link, TextField, Typography } from '@mui/material'
+import { Box, Checkbox, FormControlLabel, Link, TextField, Typography, IconButton, InputAdornment } from '@mui/material'
+import { Visibility, VisibilityOff } from '@mui/icons-material'
 import { AnimatePresence, LayoutGroup, motion } from 'motion/react'
 import { useFormContext } from 'react-hook-form'
+import { useState } from 'react'
 
-import { AuthOperationsEnum } from '@/types/enums'
+import { uiText } from './config/uiText'
+import { AuthOperationsEnum } from '@/types/auth.types'
+import { AuthOperations } from '@/types'
 
 type AuthFormFieldsProps = {
-  operation: AuthOperationsEnum
+  operation: AuthOperations
   isLoading?: boolean
 }
 
@@ -16,6 +20,12 @@ export function AuthFormFields({ operation, isLoading = false }: AuthFormFieldsP
     register,
     formState: { errors },
   } = useFormContext()
+
+  const [showPassword, setShowPassword] = useState<Record<string, boolean>>({})
+
+  const { fields, links } = uiText
+  const [acceptTermsPrefix = '', afterTermsRaw = ''] = fields.acceptTerms.split(links.termsOfService)
+  const [betweenTermsAndPrivacy = '', acceptTermsSuffix = ''] = afterTermsRaw.split(links.privacyPolicy)
 
   const renderEmailField = (): JSX.Element => (
     <motion.div
@@ -26,7 +36,7 @@ export function AuthFormFields({ operation, isLoading = false }: AuthFormFieldsP
       exit={{ opacity: 0, y: -8 }}
       transition={{ duration: 0.68 }}>
       <TextField
-        label="Email"
+        label={fields.email}
         type="email"
         {...register('email')}
         error={!!errors.email}
@@ -38,26 +48,45 @@ export function AuthFormFields({ operation, isLoading = false }: AuthFormFieldsP
     </motion.div>
   )
 
-  const renderPasswordField = (name: string, label: string): JSX.Element => (
-    <motion.div
-      layout
-      key={`${name}-field`}
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -8 }}
-      transition={{ duration: 0.68 }}>
-      <TextField
-        label={label}
-        type="password"
-        {...register(name)}
-        error={!!errors[name]}
-        helperText={errors[name]?.message as string}
-        fullWidth
-        margin="normal"
-        disabled={isLoading}
-      />
-    </motion.div>
-  )
+  const renderPasswordField = (name: string, label: string): JSX.Element => {
+    const visible = !!showPassword[name]
+    return (
+      <motion.div
+        layout
+        key={`${name}-field`}
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -8 }}
+        transition={{ duration: 0.68 }}>
+        <TextField
+          label={label}
+          type={visible ? 'text' : 'password'}
+          {...register(name)}
+          error={!!errors[name]}
+          helperText={errors[name]?.message as string}
+          fullWidth
+          margin="normal"
+          disabled={isLoading}
+          slotProps={{
+            input: {
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    aria-label="toggle password visibility"
+                    onClick={() => setShowPassword((prev) => ({ ...prev, [name]: !prev[name] }))}
+                    onMouseDown={(e) => e.preventDefault()}
+                    edge="end"
+                    disabled={isLoading}>
+                    {visible ? <Visibility /> : <VisibilityOff />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            },
+          }}
+        />
+      </motion.div>
+    )
+  }
 
   const renderNameField = (): JSX.Element => (
     <motion.div
@@ -68,7 +97,7 @@ export function AuthFormFields({ operation, isLoading = false }: AuthFormFieldsP
       exit={{ opacity: 0, y: -8 }}
       transition={{ duration: 0.68 }}>
       <TextField
-        label="Full Name"
+        label={fields.name}
         {...register('name')}
         error={!!errors.name}
         helperText={errors.name?.message as string}
@@ -91,14 +120,15 @@ export function AuthFormFields({ operation, isLoading = false }: AuthFormFieldsP
         control={<Checkbox {...register('acceptTerms')} disabled={isLoading} />}
         label={
           <Typography variant="body2">
-            I agree to the{' '}
+            {acceptTermsPrefix}
             <Link href="/terms" target="_blank" rel="noopener noreferrer">
-              Terms of Service
-            </Link>{' '}
-            and{' '}
-            <Link href="/privacy" target="_blank" rel="noopener noreferrer">
-              Privacy Policy
+              {links.termsOfService}
             </Link>
+            {betweenTermsAndPrivacy}
+            <Link href="/privacy" target="_blank" rel="noopener noreferrer">
+              {links.privacyPolicy}
+            </Link>
+            {acceptTermsSuffix}
           </Typography>
         }
       />
@@ -110,16 +140,16 @@ export function AuthFormFields({ operation, isLoading = false }: AuthFormFieldsP
       <LayoutGroup>
         <motion.div layout transition={{ layout: { duration: 0.25, ease: [0.2, 0, 0.2, 1] } }}>
           <AnimatePresence mode="wait" initial={false}>
-            {operation !== AuthOperationsEnum.RESET_PASSWORD && operation !== AuthOperationsEnum.UPDATE_PASSWORD && (
+            {operation !== AuthOperationsEnum.SET_PASSWORD && operation !== AuthOperationsEnum.UPDATE_PASSWORD && (
               <>
                 {renderEmailField()}
                 {operation !== AuthOperationsEnum.FORGOT_PASSWORD && (
                   <>
-                    {renderPasswordField('password', 'Password')}
+                    {renderPasswordField('password', fields.password)}
 
-                    {operation === AuthOperationsEnum.REGISTER && (
+                    {operation === AuthOperationsEnum.SIGN_UP && (
                       <>
-                        {renderPasswordField('confirmPassword', 'Confirm Password')}
+                        {renderPasswordField('confirmPassword', fields.confirmPassword)}
                         {renderNameField()}
                         {renderTermsCheckbox()}
                       </>
@@ -129,18 +159,18 @@ export function AuthFormFields({ operation, isLoading = false }: AuthFormFieldsP
               </>
             )}
 
-            {operation === AuthOperationsEnum.RESET_PASSWORD && (
+            {operation === AuthOperationsEnum.SET_PASSWORD && (
               <>
-                {renderPasswordField('password', 'New Password')}
-                {renderPasswordField('confirmPassword', 'Confirm New Password')}
+                {renderPasswordField('password', fields.newPassword)}
+                {renderPasswordField('confirmPassword', fields.confirmNewPassword)}
               </>
             )}
 
             {operation === AuthOperationsEnum.UPDATE_PASSWORD && (
               <>
-                {renderPasswordField('currentPassword', 'Current Password')}
-                {renderPasswordField('newPassword', 'New Password')}
-                {renderPasswordField('confirmPassword', 'Confirm New Password')}
+                {renderPasswordField('currentPassword', fields.currentPassword)}
+                {renderPasswordField('newPassword', fields.newPassword)}
+                {renderPasswordField('confirmPassword', fields.confirmNewPassword)}
               </>
             )}
           </AnimatePresence>

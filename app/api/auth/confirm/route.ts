@@ -1,105 +1,41 @@
-import { type EmailOtpType } from '@supabase/supabase-js'
-import { type NextRequest, NextResponse } from 'next/server'
+import { type NextRequest } from 'next/server'
 
-import { handleApiError, withApiErrorHandler } from '@/lib/error/server'
-import { applySecurityHeaders } from '@/lib/security/headers'
-import { logSecurityEvent, extractSecurityContext } from '@/lib/security/audit'
-import { withRateLimit } from '@/lib/security/rate-limit'
+import { withApiErrorHandler } from '@/lib/error/server'
+import { withRateLimit } from '@/middleware/security/rate-limit'
 import { createClient } from '@/lib/supabase/server'
+import { handleEmailAuthCode } from '@/lib/utils/email-auth-handler'
+import { AuthOperationsEnum } from '@/types/auth.types'
 
-export const GET = withRateLimit('emailVerification', withApiErrorHandler(async (request: NextRequest): Promise<NextResponse> => {
-  const { searchParams, origin } = new URL(request.url)
-  const token_hash = searchParams.get('token_hash')
-  const type = searchParams.get('type') as EmailOtpType | null
-  const next = searchParams.get('next') || '/profile'
-
-  // Enhanced logging for verification attempt using centralized security audit
-  const securityContext = extractSecurityContext(request, {
-    details: { type, hasToken: !!token_hash },
-  })
-
-  logSecurityEvent('email_verification', securityContext, 'Email verification attempt')
-
-  // Create redirect link without the secret token
-  const redirectTo = new URL(next, origin)
-  redirectTo.searchParams.delete('token_hash')
-  redirectTo.searchParams.delete('type')
-
-  if (token_hash && type) {
+/**
+ * Email Verification Handler
+ *
+ * This route handles the email verification link clicked by users after sign-up.
+ * It performs the following steps:
+ *
+ * 1. Validates the PKCE code from the email link
+ * 2. Exchanges the code for an authenticated session
+ * 3. Auto-logs in the user
+ * 4. Redirects to /profile with a success message
+ *
+ * Flow:
+ * User signs up → Email sent → User clicks link → This handler → Auto-login → /profile
+ *
+ * @route GET /api/auth/confirm?code={pkce_code}
+ */
+export const GET = withRateLimit(
+  'emailVerification',
+  withApiErrorHandler(async (request: NextRequest) => {
     const supabase = await createClient()
 
-    try {
-      const { error, data } = await supabase.auth.verifyOtp({
-        type,
-        token_hash,
-      })
-
-      if (!error) {
-        // Log successful verification using centralized security audit
-        logSecurityEvent(
-          'email_verification',
-          extractSecurityContext(request, {
-            userId: data.user?.id,
-            details: { type, success: true },
-          }),
-          'Email verification successful'
-        )
-
-        // Successful verification
-        redirectTo.searchParams.set('verified', 'true')
-        return applySecurityHeaders(NextResponse.redirect(redirectTo))
-      }
-
-      // Log verification failure using centralized security audit
-      logSecurityEvent(
-        'authentication_failure',
-        extractSecurityContext(request, {
-          details: { type, error: error.message, reason: 'email_verification_failed' },
-          severity: 'medium',
-        }),
-        'Email verification failed'
-      )
-
-      // Handle verification error with structured logging
-      return handleApiError(error, request, {
-        operation: 'email-verification',
-        tokenHashPresent: true,
-        type,
-      })
-    } catch (error) {
-      // Log error using centralized security audit
-      logSecurityEvent(
-        'suspicious_activity',
-        extractSecurityContext(request, {
-          details: {
-            type,
-            error: error instanceof Error ? error.message : 'Unknown error',
-            reason: 'email_verification_error',
-          },
-          severity: 'high',
-        }),
-        'Email verification error'
-      )
-      throw error // Let withApiErrorHandler handle it
-    }
-  }
-
-  // Log missing or invalid parameters using centralized security audit
-  logSecurityEvent(
-    'suspicious_activity',
-    extractSecurityContext(request, {
-      details: {
-        hasToken: !!token_hash,
-        hasType: !!type,
-        reason: 'invalid_verification_request',
+    // Use shared email auth handler
+    const result = await handleEmailAuthCode(request, supabase, {
+      type: AuthOperationsEnum.SIGN_UP,
+      successMessage: 'Email verified successfully! Welcome to your profile.',
+      logContext: {
+        flow: 'email-verification',
       },
-      severity: 'medium',
-    }),
-    'Invalid verification request'
-  )
+    })
 
-  // Return to error page with instructions
-  const errorUrl = new URL('/auth/auth-code-error', origin)
-  errorUrl.searchParams.set('code', 'invalid_verification_link')
-  return applySecurityHeaders(NextResponse.redirect(errorUrl))
-}))
+    return result.response
+  })
+)

@@ -1,11 +1,123 @@
 import type { AuthUser, Session } from '@supabase/supabase-js'
 
-import type { AuthOperationsEnum, AuthProvidersEnum, SignOutReasonEnum } from './enums'
-
-import type { AppError, AuthErrorContext } from '@/types/error.types'
+import type { AppError, AppErrorJSON, AuthErrorContext } from '@/types/error.types'
 
 // Re-export AuthUser and Session
 export type { AuthUser, Session }
+
+/**
+ * Authentication operations used in the application.
+ * Defines the different types of authentication forms and flows.
+ */
+export enum AuthOperationsEnum {
+  // Standard authentication
+  LOGIN = 'login',
+  SIGN_UP = 'sign-up',
+  SIGN_OUT = 'sign-out',
+
+  // SIGN UP: resend verification email
+  RESEND_VERIFICATION = 'resend-verification',
+
+  // Password reset flow (two-step)
+  FORGOT_PASSWORD = 'forgot-password', // Step 1: Request password reset email (handles both initial request and resend)
+  SET_PASSWORD = 'set-password', // Step 2: Set new password (token-auth from email link, new password fields only)
+
+  // Account management
+  UPDATE_PASSWORD = 'update-password', // For logged-in users to change their password (current password fields only)
+
+  // Future: Account Recovery
+  // ACCOUNT_RECOVERY = 'account-recovery',
+
+  // Future: MFA
+  // SETUP_MFA = 'setup-mfa',
+  // VERIFY_MFA = 'verify-mfa',
+}
+
+/**
+ * Authentication providers supported by the application.
+ *
+ * @remarks
+ * This enum defines the authentication providers that can be used for user authentication.
+ * Each provider corresponds to an OAuth 2.0 or OpenID Connect identity provider.
+ *
+ * @example
+ * ```typescript
+ * // Using the AuthProviders enum
+ * const provider: AuthProviders = AuthProvider.GOOGLE;
+ *
+ * // Checking provider type
+ * if (provider === AuthProvidersEnum.GOOGLE) {
+ *   // Handle Google authentication
+ * }
+ * ```
+ */
+export enum AuthProvidersEnum {
+  /**
+   * Google OAuth 2.0 provider.
+   *
+   * @remarks
+   * Requires Google OAuth 2.0 credentials to be configured.
+   *
+   * @see [Google OAuth 2.0 Documentation](https://developers.google.com/identity/protocols/oauth2)
+   */
+  GOOGLE = 'google',
+
+  /**
+   * GitHub OAuth 2.0 provider.
+   *
+   * @remarks
+   * Requires GitHub OAuth App to be configured.
+   *
+   * @see [GitHub OAuth Documentation](https://docs.github.com/en/developers/apps/building-oauth-apps/authorizing-oauth-apps)
+   */
+  GITHUB = 'github',
+
+  /**
+   * Microsoft OAuth 2.0 provider.
+   *
+   * @remarks
+   * Requires Microsoft Identity Platform application to be configured.
+   *
+   * @see [Microsoft Identity Platform Documentation](https://docs.microsoft.com/en-us/azure/active-directory/develop/v2-oauth2-auth-code-flow)
+   */
+  MICROSOFT = 'microsoft',
+
+  /**
+   * Apple Sign In provider.
+   *
+   * @remarks
+   * Requires Apple Developer account and Sign In with Apple configuration.
+   *
+   */
+  APPLE = 'apple',
+}
+
+/**
+ * Sign out reasons
+ */
+export enum SignOutReasonEnum {
+  USER_ACTION = 'user_action',
+  USER_NOT_FOUND = 'user_not_found',
+  SESSION_EXPIRED = 'session_expired',
+  UNKNOWN = 'unknown',
+}
+
+export enum VerificationStatusEnum {
+  IDLE = 'idle',
+  CHECKING = 'checking',
+  UNVERIFIED = 'unverified',
+  VERIFIED = 'verified',
+}
+
+/**
+ * Represents an error that can be either:
+ * - AppError: A full error instance from client-side error handling
+ * - AppErrorJSON: A serialized error from server actions (crosses client-server boundary)
+ *
+ * Server actions must serialize errors to JSON for transmission, while client-side
+ * error handlers return AppError instances. This union type accepts both forms.
+ */
+export type SerializableError = AppError | AppErrorJSON
 
 /**
  * Type representing an authentication operation.
@@ -82,7 +194,7 @@ export interface AuthProviderConfig {
 }
 
 /**
- * Options for the sign-in process.
+ * Options for the login process.
  *
  * @remarks
  * This interface defines optional parameters that can be passed when initiating
@@ -115,16 +227,21 @@ export interface AuthContextType {
   // Auth state
   authUser: AuthUser | null
   session: Session | null
-  error: AppError | null
+  error: SerializableError | null
   isLoading: boolean
 
   // Auth actions
-  signIn: (email: string, password: string) => Promise<{ error: AppError | null }>
-  signInWithProvider: (provider: AuthProvidersEnum) => Promise<{ error: AppError | null }>
-  signUpWithEmail: (email: string, password: string, options: { name: string }) => Promise<{ error: AppError | null }>
-  resetPassword: (email: string) => Promise<{ error: AppError | null }>
-  updatePassword: (password: string) => Promise<{ error: AppError | null }>
-  signOut: (reason?: SignOutReason) => Promise<{ error: AppError | null }>
+  signIn: (email: string, password: string) => Promise<{ error: SerializableError | null }>
+  signInWithProvider: (provider: AuthProvidersEnum) => Promise<{ error: SerializableError | null }>
+  signUpWithEmail: (
+    email: string,
+    password: string,
+    confirmPassword: string,
+    acceptTerms: boolean,
+    options?: { name: string }
+  ) => Promise<{ error: SerializableError | null }>
+  resetPassword: (email: string) => Promise<{ error: SerializableError | null }>
+  signOut: (reason?: SignOutReason) => Promise<{ error: SerializableError | null }>
   refreshSession: () => Promise<void>
 
   // Utilities
@@ -155,7 +272,7 @@ export interface LoginFormInput {
   password: string
 }
 
-export interface RegisterFormInput extends LoginFormInput {
+export interface SignUpFormInput extends LoginFormInput {
   confirmPassword: string
   name: string
   acceptTerms: boolean
@@ -165,7 +282,7 @@ export interface RegisterFormInput extends LoginFormInput {
  * Type for signup credentials, excluding confirmPassword and acceptTerms
  * Used when submitting signup forms where these fields are handled separately
  */
-export type SignupCredentials = Omit<RegisterFormInput, 'confirmPassword' | 'acceptTerms'> & {
+export type SignupCredentials = Omit<SignUpFormInput, 'confirmPassword' | 'acceptTerms'> & {
   /**
    * User's full name
    */
@@ -189,11 +306,15 @@ export interface UpdatePasswordFormInput {
 
 export type FormTypeMap = {
   [AuthOperationsEnum.LOGIN]: LoginFormInput
-  [AuthOperationsEnum.REGISTER]: RegisterFormInput
+  [AuthOperationsEnum.SIGN_UP]: SignUpFormInput
   [AuthOperationsEnum.FORGOT_PASSWORD]: ResetPasswordEmailFormInput
-  [AuthOperationsEnum.RESET_PASSWORD]: ResetPasswordPassFormInput
+  [AuthOperationsEnum.SET_PASSWORD]: ResetPasswordPassFormInput
   [AuthOperationsEnum.UPDATE_PASSWORD]: UpdatePasswordFormInput
 }
+
+export type FormType = keyof FormTypeMap
+
+export type VerificationStatusType = `${VerificationStatusEnum}`
 
 // Type guard for form inputs
 export function isLoginFormInput(data: unknown): data is LoginFormInput {
@@ -202,7 +323,7 @@ export function isLoginFormInput(data: unknown): data is LoginFormInput {
   )
 }
 
-export function isRegisterFormInput(data: unknown): data is RegisterFormInput {
+export function isSignUpFormInput(data: unknown): data is SignUpFormInput {
   return (
     typeof data === 'object' &&
     data !== null &&

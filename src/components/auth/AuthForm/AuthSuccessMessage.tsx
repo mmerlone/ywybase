@@ -2,7 +2,7 @@ import { Box, Button, Typography } from '@mui/material'
 
 import { uiText } from './config/uiText'
 
-import { AuthOperationsEnum } from '@/types/enums'
+import { AuthOperationsEnum } from '@/types/auth.types'
 
 /**
  * Success message component for post-submission states
@@ -26,9 +26,7 @@ export function AuthSuccessMessage({ operation, onBackToLogin }: AuthSuccessMess
       <Typography variant="h6" gutterBottom>
         {uiText.success.emailSent}
       </Typography>
-      <Typography color="textSecondary" paragraph>
-        {uiText.success.emailSentDescription}
-      </Typography>
+      <Typography color="textSecondary">{uiText.success.emailSentDescription}</Typography>
       <Button variant="contained" color="primary" onClick={onBackToLogin}>
         {uiText.links.backToSignIn}
       </Button>

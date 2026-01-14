@@ -2,11 +2,12 @@ import { Box, Container, Typography } from '@mui/material'
 import type { Metadata } from 'next'
 
 import AuthForm from '@/components/auth/AuthForm'
-import { AuthOperationsEnum } from '@/types/enums'
+import { AuthOperationsEnum } from '@/types/auth.types'
+import { SITE_CONFIG } from '@/config/site'
 
 export const metadata: Metadata = {
   title: 'Authentication',
-  description: 'Sign in or create a new account',
+  description: 'Login or create a new account',
 }
 
 interface PageProps {
@@ -21,12 +22,12 @@ export default async function AuthPage({ searchParams }: PageProps): Promise<JSX
     switch (normalized) {
       case AuthOperationsEnum.LOGIN:
         return AuthOperationsEnum.LOGIN
-      case AuthOperationsEnum.REGISTER:
-        return AuthOperationsEnum.REGISTER
+      case AuthOperationsEnum.SIGN_UP:
+        return AuthOperationsEnum.SIGN_UP
       case AuthOperationsEnum.FORGOT_PASSWORD:
         return AuthOperationsEnum.FORGOT_PASSWORD
-      case AuthOperationsEnum.RESET_PASSWORD:
-        return AuthOperationsEnum.RESET_PASSWORD
+      case AuthOperationsEnum.SET_PASSWORD:
+        return AuthOperationsEnum.SET_PASSWORD
       case AuthOperationsEnum.UPDATE_PASSWORD:
         return AuthOperationsEnum.UPDATE_PASSWORD
       default:
@@ -52,7 +53,7 @@ export default async function AuthPage({ searchParams }: PageProps): Promise<JSX
             textAlign: 'center',
             fontWeight: 500,
           }}>
-          Welcome to Structura
+          Welcome to {SITE_CONFIG.name}
         </Typography>
         <AuthForm initialOperation={initialOperation || undefined} />
       </Box>

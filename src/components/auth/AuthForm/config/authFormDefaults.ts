@@ -1,11 +1,11 @@
 import type {
   LoginFormInput,
-  RegisterFormInput,
+  SignUpFormInput,
   ResetPasswordEmailFormInput,
   ResetPasswordPassFormInput,
   UpdatePasswordFormInput,
 } from '@/types/auth.types'
-import { AuthOperationsEnum } from '@/types/enums'
+import { AuthOperationsEnum } from '@/types/auth.types'
 
 /**
  * Default values for each authentication operation
@@ -19,19 +19,19 @@ export const authFormDefaults = {
     password: '',
   } satisfies LoginFormInput,
 
-  [AuthOperationsEnum.REGISTER]: {
+  [AuthOperationsEnum.SIGN_UP]: {
     email: '',
     password: '',
     confirmPassword: '',
     name: '',
     acceptTerms: false,
-  } satisfies RegisterFormInput,
+  } satisfies SignUpFormInput,
 
   [AuthOperationsEnum.FORGOT_PASSWORD]: {
     email: '',
   } satisfies ResetPasswordEmailFormInput,
 
-  [AuthOperationsEnum.RESET_PASSWORD]: {
+  [AuthOperationsEnum.SET_PASSWORD]: {
     password: '',
     confirmPassword: '',
   } satisfies ResetPasswordPassFormInput,

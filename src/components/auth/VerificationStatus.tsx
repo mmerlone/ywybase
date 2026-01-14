@@ -1,98 +1,81 @@
 'use client'
 
-import { Alert, Button, CircularProgress, Snackbar } from '@mui/material'
-import { useCallback, useEffect, useState } from 'react'
+import { Alert, Button, CircularProgress } from '@mui/material'
+import { useEffect, useActionState } from 'react'
 
-import { SITE_CONFIG } from '@/config/site'
-import { logger } from '@/lib/logger/client'
-import { createClient } from '@/lib/supabase/client'
+import { resendVerification, checkVerificationStatus } from '@/lib/actions/auth/server'
+import type { AuthResponse } from '@/types/error.types'
+import { VerificationStatusType } from '@/types/auth.types'
+import { VerificationStatusEnum } from '@/types/auth.types'
 
 type VerificationStatusProps = {
   userId: string
-  email: string
 }
 
-type Status = 'idle' | 'checking' | 'unverified' | 'verified'
+export function VerificationStatus({ userId }: VerificationStatusProps): JSX.Element | null {
+  // Check verification status state
+  const [checkState, checkFormAction, isPending] = useActionState(
+    async (_prevState: AuthResponse, formData: FormData) => {
+      return checkVerificationStatus(formData)
+    },
+    {
+      success: false,
+      error: undefined,
+      message: '',
+      pending: false,
+      data: { verified: false },
+    } as AuthResponse<{ verified: boolean }>,
+    '/auth/verify' // permalink for verification action
+  )
 
-export function VerificationStatus({ userId, email }: VerificationStatusProps): JSX.Element | null {
-  const [status, setStatus] = useState<Status>('checking')
-  const [isLoading, setIsLoading] = useState(false)
-  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
-    open: false,
-    message: '',
-    severity: 'success',
-  })
+  // Resend verification state
+  const [resendState, resendFormAction, isResendPending] = useActionState(
+    async () => {
+      return resendVerification()
+    },
+    {
+      success: false,
+      error: undefined,
+      message: '',
+      pending: false,
+    } as AuthResponse<void>,
+    '/auth/resend-verification' // permalink for resend action
+  )
 
-  const checkVerification = useCallback(async (): Promise<void> => {
-    setStatus('checking')
-    try {
-      const supabase = createClient()
-      const {
-        data: { user },
-        error,
-      } = await supabase.auth.getUser()
+  // Determine current status from check state
+  const getStatus = (pending: boolean): VerificationStatusType => {
+    if (pending) return VerificationStatusEnum.CHECKING
+    const data = checkState.data as { verified: boolean } | undefined
+    if (checkState.success && data?.verified) return VerificationStatusEnum.VERIFIED
+    if (checkState.success && !data?.verified) return VerificationStatusEnum.UNVERIFIED
+    return VerificationStatusEnum.IDLE
+  }
 
-      if (error) throw error
+  const status = getStatus(isPending)
 
-      if (user?.email_confirmed_at) {
-        setStatus('verified')
-      } else {
-        setStatus('unverified')
-      }
-    } catch (error) {
-      logger.error({ error, userId }, 'Error checking verification status')
-      setStatus('unverified')
-    }
-  }, [userId])
-
-  const handleResendVerification = useCallback(async (): Promise<void> => {
-    setIsLoading(true)
-    try {
-      const supabase = createClient()
-      const { error } = await supabase.auth.resend({
-        type: 'signup',
-        email,
-        options: {
-          emailRedirectTo: `${SITE_CONFIG.url}/auth/confirm`,
-        },
-      })
-
-      if (error) {
-        logger.error({ error, email }, 'Failed to resend verification email')
-        throw error
-      }
-
-      setSnackbar({
-        open: true,
-        message: 'Verification email sent. Please check your inbox.',
-        severity: 'success',
-      })
-    } catch (error) {
-      logger.error({ error, email }, 'Error resending verification email')
-      setSnackbar({
-        open: true,
-        message: 'Failed to send verification email. Please try again.',
-        severity: 'error',
-      })
-    } finally {
-      setIsLoading(false)
-    }
-  }, [email])
-
+  // Auto-check verification status on mount and periodically
   useEffect(() => {
-    checkVerification()
-    // Check verification status every 30 seconds
-    const interval = setInterval(checkVerification, 30000)
+    const checkStatus = (): void => {
+      const formData = new FormData()
+      formData.append('userId', userId)
+      checkFormAction(formData)
+    }
+
+    // Initial check
+    checkStatus()
+
+    // Check every 30 seconds
+    const interval = setInterval(checkStatus, 30000)
     return (): void => clearInterval(interval)
-  }, [checkVerification, userId])
+  }, [userId, checkFormAction])
 
   // Don't show anything if email is verified
-  if (status === 'verified') {
+  if (status === VerificationStatusEnum.VERIFIED) {
     return null
   }
 
   // Show loading state while checking verification status
-  if (status === 'checking') {
+  if (isPending) {
     return (
       <Alert severity="info" icon={<CircularProgress size={20} />} sx={{ mb: 2 }}>
         Verifying your email status...
@@ -106,21 +89,37 @@ export function VerificationStatus({ userId, email }: VerificationStatusProps): 
       <Alert
         severity="warning"
         action={
-          <Button color="inherit" size="small" onClick={handleResendVerification} disabled={isLoading}>
-            {isLoading ? <CircularProgress size={20} /> : 'Resend Email'}
-          </Button>
+          <form action={resendFormAction}>
+            <Button type="submit" color="inherit" size="small" disabled={isResendPending}>
+              {isResendPending ? <CircularProgress size={20} /> : 'Resend Email'}
+            </Button>
+          </form>
         }
         sx={{ mb: 2 }}>
         Please verify your email address to access all features.
       </Alert>
 
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
-        <Alert severity={snackbar.severity}>{snackbar.message}</Alert>
-      </Snackbar>
+      {checkState.error && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {typeof checkState.error === 'string'
+            ? checkState.error
+            : 'Failed to check verification status. Please try again.'}
+        </Alert>
+      )}
+
+      {resendState.error && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {typeof resendState.error === 'string'
+            ? resendState.error
+            : 'Failed to send verification email. Please try again.'}
+        </Alert>
+      )}
+
+      {resendState.success && (
+        <Alert severity="success" sx={{ mb: 2 }}>
+          {resendState.message || 'Verification email sent. Please check your inbox.'}
+        </Alert>
+      )}
     </>
   )
 }

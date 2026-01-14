@@ -6,7 +6,7 @@ import { useState } from 'react'
 
 import { useAuthContext } from '@/components/providers'
 import { logger } from '@/lib/logger/client'
-import { AuthProvidersEnum } from '@/types/enums'
+import { AuthProvidersEnum } from '@/types/auth.types'
 
 interface LoginButtonsProps {
   disabled?: boolean
@@ -27,10 +27,12 @@ export function LoginButtons({ disabled = false }: LoginButtonsProps): JSX.Eleme
 
       const { error } = await signInWithProvider(provider)
       if (error) {
-        logger.error({ error, provider }, 'Login failed')
+        // Convert SerializableError to Error for logging
+        const errorMsg = typeof error === 'string' ? error : error.message
+        logger.error({ err: new Error(errorMsg), provider }, 'Login failed')
       }
-    } catch (error) {
-      logger.error({ error, provider }, 'Login failed')
+    } catch (err) {
+      logger.error({ err, provider }, 'Login failed')
     } finally {
       setLoadingStates((prev) => ({ ...prev, [provider]: false }))
     }
@@ -47,8 +49,8 @@ export function LoginButtons({ disabled = false }: LoginButtonsProps): JSX.Eleme
     const configs = {
       [AuthProvidersEnum.GOOGLE]: {
         icon: <Google sx={{ fontSize: 20 }} />,
-        text: 'Sign in with Google',
-        loadingText: 'Signing in...',
+        text: 'Login with Google',
+        loadingText: 'Logging in...',
         variant: 'contained' as const,
         sx: {
           borderRadius: 3,
@@ -61,8 +63,8 @@ export function LoginButtons({ disabled = false }: LoginButtonsProps): JSX.Eleme
       },
       [AuthProvidersEnum.GITHUB]: {
         icon: <GitHub sx={{ fontSize: 20 }} />,
-        text: 'Sign in with GitHub',
-        loadingText: 'Signing in...',
+        text: 'Login with GitHub',
+        loadingText: 'Logging in...',
         variant: 'outlined' as const,
         sx: {
           borderRadius: 3,
@@ -70,8 +72,8 @@ export function LoginButtons({ disabled = false }: LoginButtonsProps): JSX.Eleme
       },
       [AuthProvidersEnum.MICROSOFT]: {
         icon: <Microsoft sx={{ fontSize: 20 }} />,
-        text: 'Sign in with Microsoft',
-        loadingText: 'Signing in...',
+        text: 'Login with Microsoft',
+        loadingText: 'Logging in...',
         variant: 'contained' as const,
         sx: {
           borderRadius: 3,
@@ -84,8 +86,8 @@ export function LoginButtons({ disabled = false }: LoginButtonsProps): JSX.Eleme
       },
       [AuthProvidersEnum.APPLE]: {
         icon: <Apple sx={{ fontSize: 20 }} />,
-        text: 'Sign in with Apple',
-        loadingText: 'Signing in...',
+        text: 'Login with Apple',
+        loadingText: 'Logging in...',
         variant: 'contained' as const,
         sx: {
           borderRadius: 3,

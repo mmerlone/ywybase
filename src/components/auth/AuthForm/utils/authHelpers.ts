@@ -1,4 +1,4 @@
-import { AuthOperationsEnum } from '@/types/enums'
+import { AuthOperationsEnum } from '@/types/auth.types'
 
 /**
  * Utility functions for authentication components
@@ -9,7 +9,7 @@ import { AuthOperationsEnum } from '@/types/enums'
  * Type guard to check if an operation requires email field
  */
 export function operationRequiresEmail(operation: AuthOperationsEnum): boolean {
-  return [AuthOperationsEnum.LOGIN, AuthOperationsEnum.REGISTER, AuthOperationsEnum.FORGOT_PASSWORD].includes(operation)
+  return [AuthOperationsEnum.LOGIN, AuthOperationsEnum.SIGN_UP, AuthOperationsEnum.FORGOT_PASSWORD].includes(operation)
 }
 
 /**
@@ -18,8 +18,8 @@ export function operationRequiresEmail(operation: AuthOperationsEnum): boolean {
 export function operationRequiresPassword(operation: AuthOperationsEnum): boolean {
   return [
     AuthOperationsEnum.LOGIN,
-    AuthOperationsEnum.REGISTER,
-    AuthOperationsEnum.RESET_PASSWORD,
+    AuthOperationsEnum.SIGN_UP,
+    AuthOperationsEnum.SET_PASSWORD,
     AuthOperationsEnum.UPDATE_PASSWORD,
   ].includes(operation)
 }
@@ -28,21 +28,21 @@ export function operationRequiresPassword(operation: AuthOperationsEnum): boolea
  * Type guard to check if an operation requires name field
  */
 export function operationRequiresName(operation: AuthOperationsEnum): boolean {
-  return operation === AuthOperationsEnum.REGISTER
+  return operation === AuthOperationsEnum.SIGN_UP
 }
 
 /**
  * Type guard to check if an operation requires terms acceptance
  */
 export function operationRequiresTerms(operation: AuthOperationsEnum): boolean {
-  return operation === AuthOperationsEnum.REGISTER
+  return operation === AuthOperationsEnum.SIGN_UP
 }
 
 /**
  * Type guard to check if an operation shows social login buttons
  */
 export function operationShowsSocialLogin(operation: AuthOperationsEnum): boolean {
-  return [AuthOperationsEnum.LOGIN, AuthOperationsEnum.REGISTER].includes(operation)
+  return [AuthOperationsEnum.LOGIN, AuthOperationsEnum.SIGN_UP].includes(operation)
 }
 
 /**
@@ -63,7 +63,7 @@ export function getPasswordRequirements(operation: AuthOperationsEnum): {
         passwordLabel: 'Password',
       }
 
-    case AuthOperationsEnum.REGISTER:
+    case AuthOperationsEnum.SIGN_UP:
       return {
         showCurrentPassword: false,
         showNewPassword: false,
@@ -71,7 +71,7 @@ export function getPasswordRequirements(operation: AuthOperationsEnum): {
         passwordLabel: 'Password',
       }
 
-    case AuthOperationsEnum.RESET_PASSWORD:
+    case AuthOperationsEnum.SET_PASSWORD:
       return {
         showCurrentPassword: false,
         showNewPassword: true,
@@ -111,5 +111,5 @@ export function formatOperationForDisplay(operation: AuthOperationsEnum): string
  * Check if operation is a password reset flow
  */
 export function isPasswordResetOperation(operation: AuthOperationsEnum): boolean {
-  return [AuthOperationsEnum.FORGOT_PASSWORD, AuthOperationsEnum.RESET_PASSWORD].includes(operation)
+  return [AuthOperationsEnum.FORGOT_PASSWORD, AuthOperationsEnum.SET_PASSWORD].includes(operation)
 }

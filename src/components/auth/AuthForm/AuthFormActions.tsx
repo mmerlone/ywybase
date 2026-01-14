@@ -3,7 +3,7 @@ import { Button, CircularProgress } from '@mui/material'
 import { uiText } from './config/uiText'
 import { LoginButtons } from './LoginButtons'
 
-import { AuthOperationsEnum } from '@/types/enums'
+import { AuthOperationsEnum } from '@/types/auth.types'
 
 /**
  * Form actions component that renders submit button and social login options
@@ -24,8 +24,8 @@ export function AuthFormActions({ operation, isLoading }: AuthFormActionsProps):
         {isLoading ? <CircularProgress size={24} /> : buttonText}
       </Button>
 
-      {/* Show social login for login and register operations */}
-      {(operation === AuthOperationsEnum.LOGIN || operation === AuthOperationsEnum.REGISTER) && (
+      {/* Show social login for login and sign up operations */}
+      {(operation === AuthOperationsEnum.LOGIN || operation === AuthOperationsEnum.SIGN_UP) && (
         <LoginButtons disabled={isLoading} />
       )}
     </>

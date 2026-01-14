@@ -92,8 +92,8 @@ export function ServerAuth({
     try {
       const hasAccess = await checkAccess(isAuthenticated, authUser, session)
       return hasAccess
-    } catch (error) {
-      logger.error({ error }, 'Error in access control check')
+    } catch (err) {
+      logger.error({ err }, 'Error in access control check')
       return false
     }
   }, [isAuthenticated, isLoading, authUser, session, checkAccess, required])

@@ -1,17 +1,55 @@
+/**
+ * Authentication Form Validators
+ *
+ * Zod schemas for validating authentication-related forms.
+ * Provides validation for login, signup, password reset, and password update operations.
+ */
+
 import { z } from 'zod'
 
 import { emailSchema, passwordSchema } from './common'
 
-import { AuthOperationsEnum } from '@/types/enums'
+import { AuthOperationsEnum } from '@/types/auth.types'
 
-// Login form schema
+/**
+ * Login form validation schema.
+ * Validates email and password fields for user authentication.
+ *
+ * @example
+ * ```typescript
+ * const result = loginSchema.parse({
+ *   email: 'user@example.com',
+ *   password: 'SecurePass123!'
+ * });
+ * ```
+ */
 export const loginSchema = z.object({
   email: emailSchema,
   password: z.string().min(1, 'Password is required'),
 })
 
-// Register form schema
-export const registerSchema = z
+/**
+ * Sign up form validation schema.
+ * Validates all required fields for new user registration including
+ * name, email, password confirmation, and terms acceptance.
+ *
+ * @remarks
+ * - Validates password confirmation matches
+ * - Requires explicit terms acceptance (must be true)
+ * - Trims whitespace from name field
+ *
+ * @example
+ * ```typescript
+ * const result = signUpSchema.parse({
+ *   name: 'John Doe',
+ *   email: 'john@example.com',
+ *   password: 'SecurePass123!',
+ *   confirmPassword: 'SecurePass123!',
+ *   acceptTerms: true
+ * });
+ * ```
+ */
+export const signUpSchema = z
   .object({
     name: z
       .string()
@@ -30,12 +68,37 @@ export const registerSchema = z
     path: ['confirmPassword'],
   })
 
-// Forgot password (email) schema
+/**
+ * Forgot password email submission schema.
+ * Validates the email address for password reset requests.
+ *
+ * @example
+ * ```typescript
+ * const result = forgotPasswordEmailSchema.parse({
+ *   email: 'user@example.com'
+ * });
+ * ```
+ */
 export const forgotPasswordEmailSchema = z.object({
   email: emailSchema,
 })
 
-// Forgot password (new password) schema
+/**
+ * Password reset form validation schema.
+ * Validates new password and confirmation when resetting via email link.
+ *
+ * @remarks
+ * Used after user clicks the password reset link from their email.
+ * Validates that both password fields match.
+ *
+ * @example
+ * ```typescript
+ * const result = forgotPasswordPassSchema.parse({
+ *   password: 'NewSecurePass123!',
+ *   confirmPassword: 'NewSecurePass123!'
+ * });
+ * ```
+ */
 export const forgotPasswordPassSchema = z
   .object({
     password: passwordSchema,
@@ -46,7 +109,23 @@ export const forgotPasswordPassSchema = z
     path: ['confirmPassword'],
   })
 
-// Update password schema
+/**
+ * Update password form validation schema.
+ * Validates password change for authenticated users.
+ *
+ * @remarks
+ * Requires current password for security and validates that
+ * new password matches confirmation. Used when user is already logged in.
+ *
+ * @example
+ * ```typescript
+ * const result = updatePasswordSchema.parse({
+ *   currentPassword: 'OldPass123!',
+ *   newPassword: 'NewSecurePass123!',
+ *   confirmPassword: 'NewSecurePass123!'
+ * });
+ * ```
+ */
 export const updatePasswordSchema = z
   .object({
     currentPassword: z.string().min(1, 'Current password is required'),
@@ -58,18 +137,45 @@ export const updatePasswordSchema = z
     path: ['confirmPassword'],
   })
 
-// Export types
+/**
+ * Inferred TypeScript type for login form data.
+ */
 export type LoginFormInput = z.infer<typeof loginSchema>
-export type RegisterFormInput = z.infer<typeof registerSchema>
+
+/**
+ * Inferred TypeScript type for sign up form data.
+ */
+export type SignUpFormInput = z.infer<typeof signUpSchema>
+
+/**
+ * Inferred TypeScript type for password reset email form data.
+ */
 export type ResetPasswordEmailFormInput = z.infer<typeof forgotPasswordEmailSchema>
+
+/**
+ * Inferred TypeScript type for password reset password form data.
+ */
 export type ResetPasswordPassFormInput = z.infer<typeof forgotPasswordPassSchema>
+
+/**
+ * Inferred TypeScript type for update password form data.
+ */
 export type UpdatePasswordFormInput = z.infer<typeof updatePasswordSchema>
 
-// Auth form schemas mapping
+/**
+ * Mapping of authentication operations to their corresponding validation schemas.
+ * Provides type-safe access to the correct schema for each auth operation.
+ *
+ * @example
+ * ```typescript
+ * const schema = authFormSchemas[AuthOperationsEnum.LOGIN];
+ * const result = schema.parse(formData);
+ * ```
+ */
 export const authFormSchemas = {
   [AuthOperationsEnum.LOGIN]: loginSchema,
-  [AuthOperationsEnum.REGISTER]: registerSchema,
+  [AuthOperationsEnum.SIGN_UP]: signUpSchema,
   [AuthOperationsEnum.FORGOT_PASSWORD]: forgotPasswordEmailSchema,
-  [AuthOperationsEnum.RESET_PASSWORD]: forgotPasswordPassSchema,
+  [AuthOperationsEnum.SET_PASSWORD]: forgotPasswordPassSchema,
   [AuthOperationsEnum.UPDATE_PASSWORD]: updatePasswordSchema,
 } as const

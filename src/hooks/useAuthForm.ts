@@ -7,26 +7,29 @@ import {
   forgotPasswordEmailSchema,
   forgotPasswordPassSchema,
   loginSchema,
-  registerSchema,
+  signUpSchema,
   updatePasswordSchema,
 } from '@/lib/validators'
 import type { FormTypeMap } from '@/types/auth.types'
-import { AuthOperationsEnum } from '@/types/enums'
+import { AuthOperationsEnum } from '@/types/auth.types'
 
-const schemaMap = {
+// Only form operations are included - SIGN_OUT and RESEND_VERIFICATION are not form operations
+type FormOperation = keyof FormTypeMap
+
+const schemaMap: Record<FormOperation, ZodType<unknown>> = {
   [AuthOperationsEnum.LOGIN]: loginSchema,
-  [AuthOperationsEnum.REGISTER]: registerSchema,
+  [AuthOperationsEnum.SIGN_UP]: signUpSchema,
   [AuthOperationsEnum.FORGOT_PASSWORD]: forgotPasswordEmailSchema,
-  [AuthOperationsEnum.RESET_PASSWORD]: forgotPasswordPassSchema,
+  [AuthOperationsEnum.SET_PASSWORD]: forgotPasswordPassSchema,
   [AuthOperationsEnum.UPDATE_PASSWORD]: updatePasswordSchema,
-} satisfies Record<AuthOperationsEnum, ZodType<unknown>>
+}
 
-const defaultValuesMap: { [K in AuthOperationsEnum]: FormTypeMap[K] } = {
+const defaultValuesMap: { [K in FormOperation]: FormTypeMap[K] } = {
   [AuthOperationsEnum.LOGIN]: {
     email: '',
     password: '',
   },
-  [AuthOperationsEnum.REGISTER]: {
+  [AuthOperationsEnum.SIGN_UP]: {
     email: '',
     password: '',
     confirmPassword: '',
@@ -36,7 +39,7 @@ const defaultValuesMap: { [K in AuthOperationsEnum]: FormTypeMap[K] } = {
   [AuthOperationsEnum.FORGOT_PASSWORD]: {
     email: '',
   },
-  [AuthOperationsEnum.RESET_PASSWORD]: {
+  [AuthOperationsEnum.SET_PASSWORD]: {
     password: '',
     confirmPassword: '',
   },
@@ -55,7 +58,7 @@ const defaultValuesMap: { [K in AuthOperationsEnum]: FormTypeMap[K] } = {
  * password reset, and password update forms.
  *
  * @template {AuthOperationsEnum} T - The authentication operation type
- * @param {T} operation - The authentication operation type (login, register, etc.)
+ * @param {T} operation - The authentication operation type (login, sign-up, etc.)
  * @returns {UseFormReturn<FormTypeMap[T]>} React Hook Form instance with:
  * - Form state and validation
  * - Form methods (register, handleSubmit, etc.)
@@ -86,8 +89,8 @@ const defaultValuesMap: { [K in AuthOperationsEnum]: FormTypeMap[K] } = {
  *
  * @example
  * ```tsx
- * function RegisterForm() {
- *   const form = useAuthForm(AuthOperationsEnum.REGISTER);
+ * function SignUpForm() {
+ *   const form = useAuthForm(AuthOperationsEnum.SIGN_UP);
  *
  *   return (
  *     <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -96,13 +99,13 @@ const defaultValuesMap: { [K in AuthOperationsEnum]: FormTypeMap[K] } = {
  *       <input {...form.register('confirmPassword')} />
  *       <input {...form.register('name')} />
  *       <input {...form.register('acceptTerms')} type="checkbox" />
- *       <button type="submit">Register</button>
+ *       <button type="submit">Sign Up</button>
  *     </form>
  *   );
  * }
  * ```
  */
-export function useAuthForm<T extends AuthOperationsEnum>(operation: T): UseFormReturn<FormTypeMap[T]> {
+export function useAuthForm<T extends FormOperation>(operation: T): UseFormReturn<FormTypeMap[T]> {
   const schema = schemaMap[operation]
   const defaultValues = defaultValuesMap[operation]
 
