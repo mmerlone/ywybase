@@ -27,45 +27,40 @@ const nextConfig = {
   productionBrowserSourceMaps: false,
 
   webpack: (config) => {
+    // Ignore warnings from Sentry's instrumentation and telemetry
     config.ignoreWarnings = [
       { module: /@opentelemetry/ },
       { module: /require-in-the-middle/ },
       { file: /@sentry\/nextjs/ },
+      // @vercel/kv (via @upstash/redis) uses Node.js APIs for performance
+      // This is safe because we use dynamic import() with fallback to memory store
+      { module: /@upstash\/redis/ },
     ]
+
+    // Required for browser compatibility
     config.resolve.fallback = {
       ...config.resolve.fallback,
       fs: false,
     }
-    // Only externalize for server-side bundles
+
+    // Externalize native and binary modules for server bundles
     if (config.name === 'server') {
       config.externals.push({
         'node:fs': 'commonjs fs',
-        'node:crypto': 'commonjs crypto',
-        argon2: 'argon2',
         pino: 'pino',
         'thread-stream': 'thread-stream',
-        'pino-worker': 'pino-worker',
-        'pino-file': 'pino-file',
         'pino-pretty': 'pino-pretty',
       })
-    } else {
-      // For client bundles, completely exclude server logger modules
-      config.externals.push({
-        '@/lib/logger/server': 'void 0',
-        pino: 'void 0',
-        'thread-stream': 'void 0',
-        'pino-worker': 'void 0',
-        'pino-file': 'void 0',
-        'pino-pretty': 'void 0',
-      })
     }
+
     return config
   },
 }
 
 const sentryConfig = {
   org: 'mmerlones-org',
-  project: 'structura',
+  project: 'ywybase',
+  authToken: process.env.SENTRY_AUTH_TOKEN,
   silent: !process.env.CI,
   widenClientFileUpload: true,
   tunnelRoute: '/monitoring',

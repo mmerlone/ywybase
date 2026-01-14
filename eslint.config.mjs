@@ -29,16 +29,19 @@ const eslintConfig = defineConfig([
     },
     rules: {
       // Catch unused imports and variables - this helps catch removed imports
-      '@typescript-eslint/no-unused-vars': [
-        'error',
-        // {
-        //   argsIgnorePattern: '^_',
-        //   varsIgnorePattern: '^_',
-        //   caughtErrorsIgnorePattern: '^_',
-        // },
-      ],
+      '@typescript-eslint/no-unused-vars': 'error',
       // Catch variables used before declaration
       '@typescript-eslint/no-use-before-define': 'error',
+      // Require explicit return types for functions
+      '@typescript-eslint/explicit-function-return-type': 'error',
+      // Disallow usage of the any type
+      '@typescript-eslint/no-explicit-any': 'error',
+    },
+  },
+  {
+    files: ['**/*.mjs'],
+    rules: {
+      '@typescript-eslint/explicit-function-return-type': 'off',
     },
   },
 ])

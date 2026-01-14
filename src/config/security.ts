@@ -130,14 +130,13 @@ export const SECURITY_HEADERS = {
     'magnetometer=()',
     'gyroscope=()',
     'accelerometer=()',
-    'ambient-light-sensor=()',
     'autoplay=()',
     'encrypted-media=()',
     'picture-in-picture=()',
   ].join(', '),
 
   // Server information (security through obscurity)
-  Server: 'Structura',
+  Server: '',
   'X-Powered-By': '', // Remove default X-Powered-By header
 } as const
 
@@ -191,10 +190,10 @@ export const COOKIE_CONFIG = {
  * Different rate limits for different types of endpoints.
  */
 export const RATE_LIMIT_CONFIG = {
-  // Authentication endpoints (login, register, password reset)
+  // Authentication endpoints (login, sign-up, password reset)
   auth: {
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 5, // 5 attempts per window
+    max: isDevelopment ? 999 : 5, // 999 in dev, 5 attempts per window in production
     message: 'Too many authentication attempts, please try again later',
     standardHeaders: true,
     legacyHeaders: false,
@@ -203,7 +202,7 @@ export const RATE_LIMIT_CONFIG = {
   // General API endpoints
   api: {
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // 100 requests per window
+    max: isDevelopment ? 999 : 100, // 100 requests per window
     message: 'Too many requests, please try again later',
     standardHeaders: true,
     legacyHeaders: false,
@@ -212,7 +211,7 @@ export const RATE_LIMIT_CONFIG = {
   // File upload endpoints
   upload: {
     windowMs: 60 * 60 * 1000, // 1 hour
-    max: 10, // 10 uploads per hour
+    max: isDevelopment ? 999 : 10, // 10 uploads per hour
     message: 'Too many file uploads, please try again later',
     standardHeaders: true,
     legacyHeaders: false,
@@ -221,7 +220,7 @@ export const RATE_LIMIT_CONFIG = {
   // Password reset endpoints (more restrictive)
   passwordReset: {
     windowMs: 60 * 60 * 1000, // 1 hour
-    max: 3, // 3 attempts per hour
+    max: isDevelopment ? 999 : 3, // 3 attempts per hour
     message: 'Too many password reset attempts, please try again later',
     standardHeaders: true,
     legacyHeaders: false,
@@ -230,7 +229,7 @@ export const RATE_LIMIT_CONFIG = {
   // Email verification endpoints
   emailVerification: {
     windowMs: 60 * 60 * 1000, // 1 hour
-    max: 10, // 10 verification attempts per hour
+    max: isDevelopment ? 999 : 10, // 10 verification attempts per hour
     message: 'Too many verification attempts, please try again later',
     standardHeaders: true,
     legacyHeaders: false,
@@ -254,12 +253,9 @@ export const VALIDATION_CONFIG = {
       'image/png',
       'image/webp',
       'image/gif',
-      // Documents (if needed)
-      'application/pdf',
-      'text/plain',
     ],
-    allowedExtensions: ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.pdf', '.txt'],
-    maxFiles: 10, // Maximum files per upload
+    allowedExtensions: ['.jpg', '.jpeg', '.png', '.webp', '.gif'],
+    maxFiles: 1, // Maximum files per upload
   },
 
   // Request size limits
@@ -442,8 +438,8 @@ export function validateSecurityConfig(): { isValid: boolean; errors: string[] }
 
   // Validate production-specific requirements
   if (isProduction) {
-    if (!process.env.SENTRY_DSN) {
-      errors.push('SENTRY_DSN is required in production')
+    if (!process.env.NEXT_PUBLIC_SENTRY_DSN) {
+      errors.push('NEXT_PUBLIC_SENTRY_DSN is required in production')
     }
   }
 

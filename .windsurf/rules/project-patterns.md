@@ -1,4 +1,4 @@
-# Structura Project Patterns & Rules
+# YwyBase Project Patterns & Rules
 
 ## Core Architecture
 
@@ -183,7 +183,7 @@ const supabase = createClientComponentClient()
 ### Supabase Integration
 
 - Generate TypeScript types from database schema
-- Use `scripts/generateSupabaseTypes.ts`
+- Use `scripts/generate-supabase-types.ts`
 - Let database handle `created_at`/`updated_at` timestamps
 - Follow RLS patterns for security
 

@@ -1,5 +1,5 @@
 {
-  "name": "Structura",
+  "name": "YwyBase",
   "type": "nextjs",
   "version": "0.1.0",
   "description": "Next.js 15 application with MUI 7, Supabase, and comprehensive authentication system",

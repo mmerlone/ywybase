@@ -3,13 +3,17 @@ import type { Metadata } from 'next'
 
 export const SITE_CONFIG = {
   // Site URLs
-  url: 'https://structura.vercel.app',
+  url: 'https://ywybase.vercel.app',
 
   // Site Info
-  name: 'Structura',
-  title: 'Structura',
-  description: 'A comprehensive Next.js application with authentication, Material UI, and modern best practices',
-  project_key: 'structura',
+  name: 'YwyBase',
+  title: 'YwyBase',
+  description:
+    'YwyBase - A Solid Ground to Scale. A comprehensive Next.js application with authentication, Material UI, and modern best practices',
+  project_key: 'ywybase',
+  // theme: 'concrete',
+  theme: 'mui',
+  // theme: 'ywybase',
 
   // Author/Creator Info
   author: 'Marcio Merlone',
@@ -19,7 +23,7 @@ export const SITE_CONFIG = {
     url: '/images/og-image.jpg',
     width: 1200,
     height: 630,
-    alt: 'Structura - Modern Web Application',
+    alt: 'YwyBase - Solid Ground to Scale',
     type: 'image/jpeg',
   },
 
@@ -37,6 +41,12 @@ export const SITE_CONFIG = {
     locale: 'en_US' as const,
   },
 
+  // Support and Contact
+  support: {
+    // TODO: Replace with actual support URL when available
+    url: '/about',
+  },
+
   // Password requirements
   passwordRequirements: {
     minLength: 8,
@@ -47,14 +57,17 @@ export const SITE_CONFIG = {
     specialChars: '!@#$%^&*(),.?:{}|<>',
   } as const,
 
-  fixedHeader: true,
-  fixedFooter: false,
-  smallFooter: false,
+  // Layout Configuration
+  layout: {
+    fixedHeader: true,
+    fixedFooter: false,
+    smallFooter: false,
+  } as const,
 
   navigation: [
     { label: 'About', link: '/about' },
     { label: 'Sentry', link: '/sentry-example-page' },
-    { label: 'GitHub', link: 'https://github.com/mmerlone/Structura', target: '_blank' },
+    { label: 'GitHub', link: 'https://github.com/mmerlone/ywybase', target: '_blank' },
   ],
 
   logging: null,

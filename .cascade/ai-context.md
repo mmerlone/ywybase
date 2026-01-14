@@ -14,9 +14,9 @@
 
 ## Project Structure
 
-Follow the structure defined in `STRUCTURE.md` at all times. Before making any changes:
+Follow structure defined in `docs/structure.md` at all times. Before making any changes:
 
-1. Always check `STRUCTURE.md` for the canonical structure
+1. Always check `docs/structure.md` for canonical structure
 2. Follow Next.js 15 App Router conventions
 3. Maintain separation of concerns
 
@@ -118,7 +118,7 @@ Follow the structure defined in `STRUCTURE.md` at all times. Before making any c
 
 ## When In Doubt
 
-1. Check `STRUCTURE.md`
+1. Check `docs/structure.md`
 2. Reference Next.js 15 documentation
 3. Follow existing patterns in the codebase
 4. Ask for clarification if needed

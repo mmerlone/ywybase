@@ -13,8 +13,48 @@
 @layer mui {
   /* This is handled automatically by the Cache Provider when enableCssLayer: true is set */
 }
+
 @layer components {
-  .inset-shadow-indigo-500 {
-    box-shadow: inset 0 2px 4px 0 rgb(99 102 241 / 0.5);
+  /* Custom component styles can go here */
+  /* .carved {
+    --tw-shadow-color: oklch(98.5% 0.002 247.839);
+    --tw-inset-shadow-color: color-mix(in srgb, oklch(27.8% 0.033 256.848) 50%, transparent);
+
+    @supports (color: color-mix(in lab, red, red)) {
+      --tw-shadow-color: color-mix(in oklab, var(--color-gray-50) var(--tw-shadow-alpha), transparent);
+      --tw-inset-shadow-color: color-mix(
+        in oklab,
+        color-mix(in oklab, var(--color-gray-800) 50%, transparent) var(--tw-inset-shadow-alpha),
+        transparent
+      );
+    }
+
+    --tw-shadow:
+      0 1px 3px 0 var(--tw-shadow-color, rgb(0 0 0 / 0.1)), 0 1px 2px -1px var(--tw-shadow-color, rgb(0 0 0 / 0.1));
+    --tw-inset-shadow: inset 0 2px 4px var(--tw-inset-shadow-color, rgb(0 0 0 / 0.05));
+    box-shadow:
+      var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow),
+      var(--tw-shadow);
   }
+
+  .extruded {
+    --tw-shadow-color: oklch(21% 0.034 264.665);
+    --tw-inset-shadow-color: color-mix(in srgb, oklch(98.5% 0.002 247.839) 50%, transparent);
+
+    @supports (color: color-mix(in lab, red, red)) {
+      --tw-shadow-color: color-mix(in oklab, var(--color-gray-900) var(--tw-shadow-alpha), transparent);
+      --tw-inset-shadow-color: color-mix(
+        in oklab,
+        color-mix(in oklab, var(--color-gray-50) 50%, transparent) var(--tw-inset-shadow-alpha),
+        transparent
+      );
+    }
+
+    --tw-shadow:
+      0 1px 3px 0 var(--tw-shadow-color, rgb(0 0 0 / 0.1)), 0 1px 2px -1px var(--tw-shadow-color, rgb(0 0 0 / 0.1));
+    --tw-inset-shadow: inset 0 2px 4px var(--tw-inset-shadow-color, rgb(0 0 0 / 0.05));
+    box-shadow:
+      var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow),
+      var(--tw-shadow);
+  } */
 }

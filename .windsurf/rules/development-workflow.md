@@ -1,4 +1,4 @@
-# Development Workflow for Structura
+# Development Workflow for YwyBase
 
 ## Environment Setup
 
@@ -13,7 +13,7 @@
 ```bash
 # Clone the repository
 git clone <repository-url>
-cd Structura
+cd ywybase
 
 # Install dependencies
 pnpm install
@@ -165,7 +165,7 @@ pnpm build
 # Supabase Configuration
 NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+SUPABASE_SECRET_KEY=your-secret-key
 
 # Development (optional)
 NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL=http://localhost:3000

@@ -1,4 +1,4 @@
-# AI Development Guidelines for Structura
+# AI Development Guidelines for YwyBase
 
 ## Package Management
 

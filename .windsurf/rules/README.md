@@ -1,6 +1,6 @@
-# Windsurf Configuration for Structura
+# Windsurf Configuration for YwyBase
 
-This directory contains comprehensive Windsurf IDE configuration for the Structura project, capturing all project patterns, conventions, and development guidelines.
+This directory contains comprehensive Windsurf IDE configuration for the YwyBase project, capturing all project patterns, conventions, and development guidelines.
 
 ## Configuration Files
 
