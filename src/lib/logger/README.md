@@ -436,14 +436,17 @@ class BaseServerService extends BaseService {
 
 ```typescript
 import { ProfileClientService } from './profile.client.service'
-import { ProfileServerService } from './profile.server.service'
+import { getProfile } from '@/lib/actions/profile'
 
 // Client-side usage
 const profileService = new ProfileClientService()
 
-// Server-side usage
-const profileServerService = await ProfileServerService.create()
+// Server-side usage with server actions (recommended)
+const result = await getProfile(userId)
+const profile = result.success ? result.data : null
 ```
+
+> **Note**: While service classes exist, **server actions are the primary pattern** for server-side data operations in this project.
 
 **Usage examples**:
 
@@ -859,7 +862,7 @@ The project uses three Sentry configuration files:
 
 ```typescript
 Sentry.init({
-  dsn: process.env.SENTRY_DSN,
+  dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
   tracesSampleRate: 1,
   enableLogs: true,
   sendDefaultPii: true,
@@ -875,7 +878,7 @@ Sentry.init({
 
 ```typescript
 Sentry.init({
-  dsn: process.env.SENTRY_DSN,
+  dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
   tracesSampleRate: 1,
   enableLogs: true,
   sendDefaultPii: true,
@@ -915,7 +918,7 @@ export const onRequestError = Sentry.captureRequestError
 import * as Sentry from '@sentry/nextjs'
 
 Sentry.init({
-  dsn: process.env.SENTRY_DSN,
+  dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
   tracesSampleRate: 1,
   enableLogs: true,
   sendDefaultPii: true,
@@ -994,66 +997,36 @@ export function captureErrorWithContext(
 #### Usage in Service Layer
 
 ```typescript
-// Server-side service example using actual implementation
-// src/lib/supabase/services/database/profiles/profile.server.service.ts
-import * as Sentry from '@sentry/nextjs'
-import { BaseServerService } from '../../base.server.service'
+// Server-side example using actual server action implementation
+// src/lib/actions/profile/index.ts
+import 'server-only'
+import { createClient } from '@/lib/supabase/server'
+import { withServerActionErrorHandling, createServerActionSuccess } from '@/lib/error/server'
+import type { AuthResponse } from '@/types/error.types'
+import type { Profile } from '@/types/database'
 
-class ProfileServerService extends BaseServerService {
-  async updateProfile(userId: string, updates: ProfileUpdate): Promise<Profile> {
-    // Start a Sentry transaction for performance monitoring
-    return Sentry.startSpan(
-      {
-        op: 'db.query',
-        name: 'ProfileServerService.updateProfile',
-      },
-      async (span) => {
-        span.setAttribute('userId', userId)
-        span.setAttribute('operation', 'updateProfile')
+export const updateProfile = withServerActionErrorHandling(
+  async (userId: string, updates: Partial<Profile>): Promise<AuthResponse<Profile>> => {
+    const supabase = await createClient()
 
-        // BaseService already has logger via buildLogger(this.constructor.name)
-        this.logger.debug({ userId }, 'Updating user profile')
+    const { data, error } = await supabase.from('profiles').update(updates).eq('id', userId).select().single()
 
-        try {
-          const dbData = convertAppProfileForUpdate(updates)
-
-          const { data, error } = await this.client.from('profiles').update(dbData).eq('id', userId).select().single()
-
-          if (error) throw error
-
-          this.logger.info({ userId, profileId: data.id }, 'Profile updated successfully')
-
-          return convertDbProfile(data)
-        } catch (error) {
-          // The error will be automatically captured by Sentry via Pino integration
-          // Additional manual capture can be done for critical errors
-          if (error instanceof Error) {
-            Sentry.withScope((scope) => {
-              scope.setTag('service', 'ProfileServerService')
-              scope.setTag('operation', 'updateProfile')
-              scope.setContext('operationContext', {
-                userId,
-                updates: JSON.stringify(updates),
-              })
-              Sentry.captureException(error)
-            })
-          }
-
-          return this.handleError(error, 'update profile', { userId, updates })
-        }
-      }
-    )
+    if (error) throw error
+    return createServerActionSuccess(data, 'Profile updated')
   }
-}
+)
 
-// Usage with the actual service pattern
-export async function getProfileService(): Promise<ProfileServerService> {
-  const client = await createClient()
-  return new ProfileServerService(client)
-}
+export const getProfile = withServerActionErrorHandling(async (userId: string): Promise<AuthResponse<Profile>> => {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single()
+
+  if (error) throw error
+  return createServerActionSuccess(data)
+})
 ```
 
-**Note**: This example uses the actual server-side service implementation that extends `BaseService` and has the logger built-in via `buildLogger(this.constructor.name)`.
+**Note**: This project uses **server actions as the primary pattern** for server-side data operations. Services exist but are not actively used. The `withServerActionErrorHandling` wrapper provides consistent error handling and logging.
 
 #### Client-Side Integration
 
@@ -1168,7 +1141,7 @@ Ensure your environment variables are properly configured:
 
 ```bash
 # .env.local
-SENTRY_DSN=your_sentry_dsn_here
+NEXT_PUBLIC_SENTRY_DSN=your_sentry_dsn_here
 SENTRY_AUTH_TOKEN=your_sentry_auth_token_here
 
 # Optional: Control Sentry in different environments

@@ -1,6 +1,17 @@
 /**
- * Server-only error handling exports
- * This file should only be imported by server-side code
+ * Server-Only Error Handling
+ *
+ * Server-side error handling exports.
+ * Should only be imported by server-side code (Server Components, Actions, API Routes).
+ *
+ * @remarks
+ * **Server-Only Features**:
+ * - withServerActionErrorHandling: Wrapper for Server Actions
+ * - handleApiError: API route error handler
+ * - handleServerError: Server-side error handler with Pino logger
+ * - batchServerActions: Batch operation helper
+ *
+ * @module error/server
  */
 
 // Server action middleware

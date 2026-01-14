@@ -1,6 +1,33 @@
 /**
- * Server-side error handling module
- * This module provides error handling functionality for server-side code using the unified handler
+ * Server-Side Error Handler
+ *
+ * Error handling for Node.js/server code.
+ * Uses server logger (Pino with JSON output).
+ *
+ * @remarks
+ * **Usage**:
+ * - Import in Server Components
+ * - Use in Server Actions
+ * - Handle database errors
+ *
+ * @module error/handlers/server.handler
+ *
+ * @example
+ * ```typescript
+ * import { handleError } from '@/lib/error/handlers/server.handler'
+ *
+ * export async function updateProfile(data: ProfileUpdate) {
+ *   try {
+ *     await db.update(data)
+ *   } catch (err) {
+ *     const appError = handleError(err, {
+ *       table: 'profiles',
+ *       operation: 'update'
+ *     })
+ *     return { error: appError.toJSON() }
+ *   }
+ * }
+ * ```
  */
 
 import { logger as serverLogger } from '@/lib/logger/server'

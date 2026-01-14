@@ -1,40 +1,84 @@
+/**
+ * Server Actions Error Middleware
+ *
+ * Standardized error handling and utilities for Next.js Server Actions.
+ * Provides wrappers, response helpers, and batch operation support.
+ *
+ * @remarks
+ * **Features**:
+ * - Server Action wrapper with logging and timing
+ * - Standardized success/error responses
+ * - Validation helper for Zod schemas
+ * - Batch operation support
+ * - Automatic path revalidation
+ *
+ * @module error/middlewares/server-actions
+ */
+
 import type { ZodIssue } from 'zod'
 
-import type { BaseErrorContext, ServerActionContext } from '@/types/error.types'
+import type { BaseErrorContext, ServerActionContext, AuthResponse } from '@/types/error.types'
 
-import type { AuthResponse } from '@/lib/auth/actions/server'
 import { handleServerError as handleError } from '@/lib/error/server'
 import { buildLogger } from '@/lib/logger/server'
 
 const logger = buildLogger('server-actions-middleware')
 
 /**
- * Zod validation error interface for type safety
+ * Zod validation error structure.
+ * @internal
  */
 interface ZodValidationError {
+  /** Array of validation issues from Zod */
   issues: ZodIssue[]
 }
 
 /**
- * Configuration options for server action error handling
+ * Configuration options for Server Action error handling.
  */
 export interface ServerActionOptions {
   /** Operation name for logging and error context */
   operation: string
   /** Additional context to include with errors */
   context?: BaseErrorContext
-  /** Whether to revalidate paths on success */
+  /** Paths to revalidate on success */
   revalidatePaths?: string[]
   /** Custom success message */
   successMessage?: string
 }
 
 /**
- * Server action wrapper that provides standardized error handling and logging
+ * Server Action wrapper with standardized error handling.
+ * Provides logging, timing, error handling, and revalidation.
  *
- * @param handler - The server action function to wrap
- * @param options - Configuration options for the wrapper
- * @returns Wrapped server action with standardized error handling
+ * @template Args - Server Action argument types
+ * @template T - Response data type
+ * @param handler - The Server Action function to wrap
+ * @param options - Configuration options
+ * @returns Wrapped Server Action with error handling
+ *
+ * @remarks
+ * **Features**:
+ * - Automatic error handling and logging
+ * - Operation timing
+ * - Path revalidation on success
+ * - Custom success messages
+ * - Auth operation detection
+ *
+ * @example
+ * ```typescript
+ * export const updateProfile = withServerActionErrorHandling(
+ *   async (userId: string, data: ProfileUpdate) => {
+ *     const profile = await db.updateProfile(userId, data)
+ *     return createServerActionSuccess(profile)
+ *   },
+ *   {
+ *     operation: 'update-profile',
+ *     revalidatePaths: ['/profile'],
+ *     successMessage: 'Profile updated successfully'
+ *   }
+ * )
+ * ```
  */
 export function withServerActionErrorHandling<Args extends readonly unknown[], T = unknown>(
   handler: (...args: Args) => Promise<AuthResponse<T>>,
@@ -82,11 +126,25 @@ export function withServerActionErrorHandling<Args extends readonly unknown[], T
     } catch (error) {
       // Handle unexpected errors with structured error handling
       const duration = Date.now() - startTime
+
+      // Mark operation as auth-related if it's an auth operation
+      const isAuthOperation = [
+        'login',
+        'sign-up',
+        'signup',
+        'forgot-password',
+        'set-password',
+        'update-password',
+        'sign-out',
+        'signout',
+      ].includes(operation.toLowerCase())
+
       const appError = handleError(error, {
         operation,
         duration,
         unexpected: true,
         argsCount: args.length,
+        ...(isAuthOperation && { authMethod: 'email' }), // Add auth context marker
         ...context,
       })
 
@@ -100,9 +158,10 @@ export function withServerActionErrorHandling<Args extends readonly unknown[], T
         `Server action failed: ${operation}`
       )
 
+      // Serialize AppError to plain object for client
       return {
         success: false,
-        error: appError,
+        error: appError.toJSON(),
         data: undefined,
       }
     }
@@ -110,11 +169,21 @@ export function withServerActionErrorHandling<Args extends readonly unknown[], T
 }
 
 /**
- * Creates a standardized success response for server actions
+ * Create a standardized success response for Server Actions.
+ * Use to return successful operation results.
  *
+ * @template T - Response data type
  * @param data - The successful response data
  * @param message - Optional success message
  * @returns Standardized success response
+ *
+ * @example
+ * ```typescript
+ * export async function createUser(data: UserData) {
+ *   const user = await db.insert(data)
+ *   return createServerActionSuccess(user, 'User created successfully')
+ * }
+ * ```
  */
 export function createServerActionSuccess<T = unknown>(data: T, message?: string): AuthResponse<T> {
   return {
@@ -125,11 +194,24 @@ export function createServerActionSuccess<T = unknown>(data: T, message?: string
 }
 
 /**
- * Creates a standardized error response for server actions
+ * Create a standardized error response for Server Actions.
+ * Converts any error to serializable AppError JSON.
  *
- * @param error - The error to convert to structured response
- * @param context - Additional context for error handling
+ * @param error - The error to convert
+ * @param context - Additional error context
  * @returns Standardized error response
+ *
+ * @example
+ * ```typescript
+ * export async function deleteUser(userId: string) {
+ *   try {
+ *     await db.delete(userId)
+ *     return createServerActionSuccess({ deleted: true })
+ *   } catch (err) {
+ *     return createServerActionError(err, { userId, operation: 'delete' })
+ *   }
+ * }
+ * ```
  */
 export function createServerActionError(
   error: unknown,
@@ -137,19 +219,35 @@ export function createServerActionError(
 ): AuthResponse<never> {
   const appError = handleError(error, context)
 
+  // Serialize AppError to plain object for client
   return {
     success: false,
-    error: appError,
+    error: appError.toJSON(),
     data: undefined,
   }
 }
 
 /**
- * Validates server action arguments and creates appropriate error responses
+ * Validate Server Action arguments with Zod.
+ * Returns error response if validation fails, null if successful.
  *
+ * @template T - Response data type
  * @param validation - Zod validation result
  * @param context - Additional context for validation errors
- * @returns Error response if validation fails, null if validation passes
+ * @returns Error response if validation fails, null if passes
+ *
+ * @example
+ * ```typescript
+ * export async function updateProfile(data: unknown) {
+ *   const validation = profileSchema.safeParse(data)
+ *   const validationError = handleServerActionValidation(validation)
+ *   if (validationError) return validationError
+ *
+ *   // Validation passed, data is now typed
+ *   const profile = await db.update(validation.data)
+ *   return createServerActionSuccess(profile)
+ * }
+ * ```
  */
 export function handleServerActionValidation<T>(
   validation: { success: boolean; error?: ZodValidationError },
@@ -162,9 +260,10 @@ export function handleServerActionValidation<T>(
       validationErrors: validation.error?.issues || [],
     })
 
+    // Serialize AppError to plain object for client
     return {
       success: false,
-      error: validationError,
+      error: validationError.toJSON(),
       data: undefined,
     }
   }
@@ -173,11 +272,35 @@ export function handleServerActionValidation<T>(
 }
 
 /**
- * Batch operation helper for multiple server actions
+ * Execute multiple Server Actions in batch.
+ * Provides aggregated results with success/error counts.
  *
- * @param operations - Array of server operations to execute
- * @param options - Configuration options for batch processing
- * @returns Batch operation results
+ * @template T - Response data type
+ * @param operations - Array of Server Action functions to execute
+ * @param options - Batch operation configuration
+ * @returns Batch operation results with counts
+ *
+ * @remarks
+ * **Options**:
+ * - stopOnFirstError: Stop batch on first failure (default: false)
+ * - operation: Operation name for logging
+ *
+ * @example
+ * ```typescript
+ * const result = await batchServerActions(
+ *   [
+ *     () => updateUser(userId1, data1),
+ *     () => updateUser(userId2, data2),
+ *     () => updateUser(userId3, data3)
+ *   ],
+ *   {
+ *     operation: 'batch-update-users',
+ *     stopOnFirstError: false
+ *   }
+ * )
+ *
+ * console.log(`Success: ${result.successCount}, Errors: ${result.errorCount}`)
+ * ```
  */
 export async function batchServerActions<T = unknown>(
   operations: Array<() => Promise<AuthResponse<T>>>,

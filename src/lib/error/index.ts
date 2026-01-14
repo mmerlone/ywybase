@@ -1,5 +1,17 @@
 /**
- * Error handling module exports
+ * Error Handling Module - Main Entry Point
+ *
+ * Central export point for error handling functionality.
+ * Provides error classes, utilities, handlers, and codes.
+ *
+ * @remarks
+ * **Import Guidelines**:
+ * - Use specific error classes (AuthError, ValidationError, etc.)
+ * - Import handleClientError for client-side code
+ * - Import from './server' for server-side utilities
+ * - Use ErrorCodes helpers for consistent error codes
+ *
+ * @module error
  */
 
 import type { Logger } from '@/types/logger.types'
@@ -30,7 +42,7 @@ export {
   NetworkErrorCodeEnum,
   ServerErrorCodeEnum,
   ValidationErrorCodeEnum,
-} from '@/types/enums'
+} from '@/types/error.types'
 
 // Error classes
 export {
@@ -51,8 +63,25 @@ export { isAppError, getErrorType } from './core/error.utils'
 // Export client error handler
 export { handleError as handleClientError } from './handlers/client.handler'
 
-// Export factory for custom logger injection
-export function createCustomErrorHandler(logger: Logger) {
+/**
+ * Create a custom error handler with injected logger.
+ * Use when you need a specialized handler with custom logging.
+ *
+ * @param logger - Logger instance to use for error logging
+ * @returns Error handler with specified logger
+ *
+ * @example
+ * ```typescript
+ * import { buildLogger } from '@/lib/logger/server'
+ * import { createCustomErrorHandler } from '@/lib/error'
+ *
+ * const logger = buildLogger('custom-module')
+ * const errorHandler = createCustomErrorHandler(logger)
+ *
+ * const appError = errorHandler.handleError(error, { userId: '123' })
+ * ```
+ */
+export function createCustomErrorHandler(logger: Logger): ReturnType<typeof createErrorHandler> {
   return createErrorHandler({ logger })
 }
 

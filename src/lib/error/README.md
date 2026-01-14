@@ -1,6 +1,6 @@
 # Error Handling System
 
-A comprehensive, centralized error handling system for the Structura application. This system provides structured error classification, consistent logging, and user-friendly error reporting.
+A comprehensive, centralized error handling system for the YwyBase application. This system provides structured error classification, consistent logging, and user-friendly error reporting.
 
 ## 🎯 **Overview**
 
@@ -19,20 +19,22 @@ src/lib/error/
 ├── README.md                    # This documentation
 ├── codes.ts                     # Error code definitions and enums
 ├── errors.ts                    # Custom error classes (AuthError, DatabaseError, etc.)
-├── handler.ts                   # Central error dispatcher and handlers
-├── server-actions.ts            # Server action error handling wrapper
-├── api-middleware.ts            # API route error handling middleware
+├── index.ts                     # Main module exports
+├── server.ts                    # Server-side specific exports
+├── core/                        # Core error utilities (isAppError, etc.)
+├── handlers/                    # Implementation of error handlers (base, client, server)
+├── middlewares/                 # Middleware for server actions and API routes
 └── types.ts                     # TypeScript interfaces and types
 ```
 
 ## 🔧 **Core Components**
 
-### **1. Error Handler (`handler.ts`)**
+### **1. Error Handler (`handlers/`)**
 
 The central dispatcher that routes errors to appropriate handlers:
 
 ```typescript
-import { handleError } from '@/lib/error/handler'
+import { createErrorHandler } from '@/lib/error'
 
 // Basic usage
 throw handleError(error, { operation: 'updateProfile' })
@@ -106,7 +108,7 @@ export class ProfileService extends BaseService {
 ### **Server Actions**
 
 ```typescript
-import { withServerActionErrorHandling } from '@/lib/error/server-actions'
+import { withServerActionErrorHandling } from '@/lib/error/server'
 
 export const updateProfile = withServerActionErrorHandling(
   async (data: ProfileUpdateData) => {
@@ -124,7 +126,7 @@ export const updateProfile = withServerActionErrorHandling(
 ### **API Routes**
 
 ```typescript
-import { withApiErrorHandler } from '@/lib/error/api-middleware'
+import { withApiErrorHandler } from '@/lib/error/server'
 
 export const GET = withApiErrorHandler(async (request: NextRequest) => {
   // ... route logic

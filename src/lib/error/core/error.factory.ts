@@ -1,6 +1,18 @@
 /**
- * Shared core error handling logic
- * This module contains the common error handling logic shared between client and server handlers
+ * Error Factory - Core Error Handling Logic
+ *
+ * Shared error handling logic for client and server.
+ * Provides Supabase error mapping, type guards, and error transformation.
+ *
+ * @remarks
+ * **Features**:
+ * - Supabase Auth error mapping
+ * - Supabase Postgrest error mapping
+ * - Context-based error categorization
+ * - Error detail sanitization
+ * - Table/field extraction from errors
+ *
+ * @module error/core/error.factory
  */
 
 import type { AuthApiError, PostgrestError } from '@supabase/supabase-js'
@@ -39,22 +51,48 @@ export {
   getErrorType,
 }
 
-// Type guard to check if unknown is an Error
+/**
+ * Type guard to check if unknown value is an Error instance.
+ *
+ * @param error - Value to check
+ * @returns True if value is Error
+ * @internal
+ */
 export function isError(error: unknown): error is Error {
   return error instanceof Error
 }
 
-// Type guard for Supabase AuthApiError
+/**
+ * Type guard for Supabase AuthApiError.
+ * Checks for Supabase-specific auth error properties.
+ *
+ * @param error - Value to check
+ * @returns True if value is Supabase AuthApiError
+ * @internal
+ */
 export function isSupabaseAuthError(error: unknown): error is AuthApiError {
   return isError(error) && 'code' in error && 'status' in error
 }
 
-// Type guard for Supabase PostgrestError
+/**
+ * Type guard for Supabase PostgrestError.
+ * Checks for Postgrest-specific error properties.
+ *
+ * @param error - Value to check
+ * @returns True if value is Supabase PostgrestError
+ * @internal
+ */
 export function isSupabasePostgrestError(error: unknown): error is PostgrestError {
   return isError(error) && 'code' in error && 'details' in error && 'hint' in error
 }
 
-// Helper function to extract table name from Postgrest error
+/**
+ * Extract table name from Postgrest error details.
+ *
+ * @param error - Postgrest error
+ * @returns Table name or undefined
+ * @internal
+ */
 export function extractTableFromError(error: PostgrestError): string | undefined {
   if (error.details && typeof error.details === 'object' && 'table' in error.details) {
     return String((error.details as { table: unknown }).table)
@@ -62,7 +100,14 @@ export function extractTableFromError(error: PostgrestError): string | undefined
   return undefined
 }
 
-// Helper function to extract field name from validation error
+/**
+ * Extract field name from validation error message.
+ * Looks for common patterns like "field 'email' is invalid".
+ *
+ * @param error - Error to extract field from
+ * @returns Field name or undefined
+ * @internal
+ */
 export function extractFieldFromValidationError(error: Error): string | undefined {
   // Try to extract field name from common validation error patterns
   const fieldPattern = /field\s+["']([^"']+)["']/i
@@ -70,7 +115,23 @@ export function extractFieldFromValidationError(error: Error): string | undefine
   return match ? match[1] : undefined
 }
 
-// Safely parse error details into a record structure
+/**
+ * Safely parse error details into a plain object.
+ * Handles objects, arrays, JSON strings, and primitives.
+ *
+ * @param details - Raw error details from Supabase
+ * @returns Sanitized plain object
+ * @internal
+ *
+ * @example
+ * ```typescript
+ * const details = safeParseErrorDetails({ code: '23505', table: 'users' })
+ * // { code: '23505', table: 'users' }
+ *
+ * const details = safeParseErrorDetails('["error1", "error2"]')
+ * // { items: ['error1', 'error2'] }
+ * ```
+ */
 export function safeParseErrorDetails(details: unknown): Record<string, unknown> {
   if (details === null || details === undefined) {
     return {}
@@ -103,7 +164,15 @@ export function safeParseErrorDetails(details: unknown): Record<string, unknown>
   return { message: String(details) }
 }
 
-// Handle server action errors
+/**
+ * Handle server action errors.
+ * Creates DatabaseError for server action failures.
+ *
+ * @param error - Original error
+ * @param context - Server action context
+ * @returns Structured AppError
+ * @internal
+ */
 export function handleServerActionError(error: unknown, context: ServerActionContext): AppError {
   return new DatabaseError({
     code: ErrorCodes.server.internalError(),
@@ -116,7 +185,15 @@ export function handleServerActionError(error: unknown, context: ServerActionCon
   })
 }
 
-// Handle network errors
+/**
+ * Handle network errors.
+ * Creates NetworkError with timeout and retry context.
+ *
+ * @param error - Original error
+ * @param context - Network error context
+ * @returns Structured AppError
+ * @internal
+ */
 export function handleNetworkError(error: unknown, context: NetworkErrorContext): AppError {
   const errorObj = isError(error) ? error : new Error(String(error))
 
@@ -136,7 +213,15 @@ export function handleNetworkError(error: unknown, context: NetworkErrorContext)
   return networkError
 }
 
-// Handle validation errors
+/**
+ * Handle validation errors.
+ * Creates ValidationError with field context.
+ *
+ * @param error - Original error
+ * @param context - Validation error context
+ * @returns Structured AppError
+ * @internal
+ */
 export function handleValidationError(error: unknown, context: ValidationErrorContext): AppError {
   const errorObj = isError(error) ? error : new Error(String(error))
 
@@ -150,7 +235,22 @@ export function handleValidationError(error: unknown, context: ValidationErrorCo
   return validationError
 }
 
-// Handle Supabase auth errors with code mapping
+/**
+ * Handle Supabase authentication errors.
+ * Maps Supabase auth error codes to structured AuthError.
+ *
+ * @param error - Supabase auth error or generic error
+ * @param context - Auth error context
+ * @returns Structured AppError
+ * @internal
+ *
+ * @remarks
+ * Maps common Supabase codes:
+ * - invalid_credentials → AUTH/INVALID_CREDENTIALS
+ * - email_not_confirmed → AUTH/EMAIL_NOT_CONFIRMED
+ * - session_expired → AUTH/SESSION_EXPIRED
+ * - user_already_exists → AUTH/EMAIL_ALREADY_IN_USE
+ */
 export function handleSupabaseAuthError(error: unknown, context: AuthErrorContext): AppError {
   if (!isSupabaseAuthError(error)) {
     // Fallback to generic auth error if it's not a Supabase auth error
@@ -177,6 +277,7 @@ export function handleSupabaseAuthError(error: unknown, context: AuthErrorContex
     email_already_in_use: { code: ErrorCodes.auth.emailAlreadyInUse(), type: 'auth' },
     user_already_exists: { code: ErrorCodes.auth.emailAlreadyInUse(), type: 'auth' },
     invalid_token: { code: ErrorCodes.auth.invalidToken(), type: 'auth' },
+    same_password: { code: ErrorCodes.validation.samePassword(), type: 'validation' },
 
     // Refresh token errors
     refresh_token_not_found: { code: ErrorCodes.auth.sessionExpired(), type: 'auth' },
@@ -213,7 +314,23 @@ export function handleSupabaseAuthError(error: unknown, context: AuthErrorContex
   return authError
 }
 
-// Handle Supabase Postgrest errors with code mapping
+/**
+ * Handle Supabase Postgrest database errors.
+ * Maps Postgrest error codes to structured DatabaseError or ValidationError.
+ *
+ * @param error - Supabase Postgrest error or generic error
+ * @param context - Database error context
+ * @param extractTable - Whether to extract table name from error
+ * @returns Structured AppError
+ * @internal
+ *
+ * @remarks
+ * Maps common Postgrest codes:
+ * - PGRST116 → DATABASE/NOT_FOUND
+ * - PGRST301 → DATABASE/RELATION_NOT_FOUND
+ * - 23505 → VALIDATION/DUPLICATE_ENTRY
+ * - 23503 → VALIDATION/FOREIGN_KEY_VIOLATION
+ */
 export function handleSupabasePostgrestError(
   error: unknown,
   context: DatabaseErrorContext,
@@ -269,7 +386,30 @@ export function handleSupabasePostgrestError(
   return databaseError
 }
 
-// Core error handling logic that can be used by both client and server handlers
+/**
+ * Core error handling logic.
+ * Routes errors to appropriate handlers based on context.
+ *
+ * @param error - Error to handle (any type)
+ * @param context - Error context for categorization
+ * @returns Structured AppError
+ *
+ * @remarks
+ * **Handling Strategy**:
+ * 1. Return if already AppError
+ * 2. Check context type (ServerAction, Network, Validation, Auth, Database)
+ * 3. Route to specific handler
+ * 4. Fallback to generic error
+ *
+ * @example
+ * ```typescript
+ * const appError = coreHandleError(error, {
+ *   provider: 'supabase',
+ *   authMethod: 'email'
+ * });
+ * // Returns AuthError
+ * ```
+ */
 export function coreHandleError(error: unknown, context: ErrorContext = {}): AppError {
   // Already handled AppError
   if (isAppError(error)) {

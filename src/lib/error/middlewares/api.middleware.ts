@@ -1,3 +1,20 @@
+/**
+ * API Route Error Middleware
+ *
+ * Standardized error handling for Next.js API routes.
+ * Provides consistent error responses and automatic logging.
+ *
+ * @remarks
+ * **Features**:
+ * - Standardized error response format
+ * - Automatic status code mapping
+ * - Request context extraction
+ * - Success response helpers
+ * - Validation error responses
+ *
+ * @module error/middlewares/api.middleware
+ */
+
 import { type NextRequest, NextResponse } from 'next/server'
 
 import type { BaseErrorContext, ValidationErrorContext } from '@/types/error.types'
@@ -8,26 +25,47 @@ import { buildLogger } from '@/lib/logger/server'
 const logger = buildLogger('api-error-handler')
 
 /**
- * Standardized API error response format
+ * Standardized API error response format.
+ * All error responses follow this structure.
  */
 export interface ApiErrorResponse {
+  /** Always false for errors */
   success: false
+  /** Error details object */
   error: {
+    /** Structured error code (DOMAIN/TYPE) */
     code: string
+    /** User-facing error message */
     message: string
+    /** Optional error context for debugging */
     context?: BaseErrorContext
+    /** HTTP status code */
     statusCode: number
   }
+  /** ISO 8601 timestamp */
   timestamp?: string
 }
 
 /**
- * Handles errors in API routes and returns standardized error responses
+ * Handle errors in API routes with standardized responses.
+ * Extracts request context and returns formatted error response.
  *
  * @param error - The error that occurred
- * @param request - The Next.js request object (optional, for context)
+ * @param request - Next.js request object (optional, for context)
  * @param context - Additional context for error logging
- * @returns Standardized NextResponse with error details
+ * @returns NextResponse with standardized error format
+ *
+ * @example
+ * ```typescript
+ * export async function GET(request: NextRequest) {
+ *   try {
+ *     const data = await fetchData()
+ *     return NextResponse.json({ data })
+ *   } catch (error) {
+ *     return handleApiError(error, request, { endpoint: 'GET /api/data' })
+ *   }
+ * }
+ * ```
  */
 export function handleApiError(
   error: unknown,
@@ -77,10 +115,20 @@ export function handleApiError(
 }
 
 /**
- * API route wrapper that automatically handles errors
+ * API route wrapper with automatic error handling.
+ * Catches all errors and returns standardized responses.
  *
  * @param handler - The API route handler function
- * @returns Wrapped handler function with error handling
+ * @returns Wrapped handler with error handling
+ *
+ * @example
+ * ```typescript
+ * export const GET = withApiErrorHandler(async (request: NextRequest) => {
+ *   const data = await db.query('SELECT * FROM users')
+ *   return NextResponse.json({ data })
+ * })
+ * // Errors are automatically caught and formatted
+ * ```
  */
 export function withApiErrorHandler(handler: (request: NextRequest) => Promise<NextResponse>) {
   return async (request: NextRequest): Promise<NextResponse> => {
@@ -95,7 +143,22 @@ export function withApiErrorHandler(handler: (request: NextRequest) => Promise<N
 }
 
 /**
- * Creates a successful API response with consistent format
+ * Create a successful API response with consistent format.
+ * Provides standardized success structure.
+ *
+ * @param data - Response data payload
+ * @param message - Optional success message
+ * @param statusCode - HTTP status code (default: 200)
+ * @returns Standardized success response
+ *
+ * @example
+ * ```typescript
+ * return createApiSuccessResponse(
+ *   { user: userData },
+ *   'User updated successfully',
+ *   200
+ * )
+ * ```
  */
 export function createApiSuccessResponse<T = unknown>(
   data: T,
@@ -124,7 +187,20 @@ export function createApiSuccessResponse<T = unknown>(
 }
 
 /**
- * Creates a validation error response
+ * Create a validation error response.
+ * Used for request validation failures.
+ *
+ * @param validationError - Validation error (e.g., Zod error)
+ * @param context - Additional validation context
+ * @returns 400 validation error response
+ *
+ * @example
+ * ```typescript
+ * const result = schema.safeParse(data)
+ * if (!result.success) {
+ *   return createApiValidationErrorResponse(result.error)
+ * }
+ * ```
  */
 export function createApiValidationErrorResponse(
   validationError: unknown,
@@ -152,7 +228,19 @@ export function createApiValidationErrorResponse(
 }
 
 /**
- * Creates an unauthorized error response
+ * Create an unauthorized error response.
+ * Used for authentication failures.
+ *
+ * @param message - Error message (default: "Unauthorized access")
+ * @param context - Additional context
+ * @returns 401 unauthorized response
+ *
+ * @example
+ * ```typescript
+ * if (!session) {
+ *   return createApiUnauthorizedResponse('Please log in')
+ * }
+ * ```
  */
 export function createApiUnauthorizedResponse(
   message: string = 'Unauthorized access',
@@ -173,7 +261,20 @@ export function createApiUnauthorizedResponse(
 }
 
 /**
- * Creates a not found error response
+ * Create a not found error response.
+ * Used when requested resource doesn't exist.
+ *
+ * @param resource - Resource name for error message
+ * @param context - Additional context
+ * @returns 404 not found response
+ *
+ * @example
+ * ```typescript
+ * const user = await db.findUser(id)
+ * if (!user) {
+ *   return createApiNotFoundResponse('User', { userId: id })
+ * }
+ * ```
  */
 export function createApiNotFoundResponse(
   resource: string = 'Resource',
