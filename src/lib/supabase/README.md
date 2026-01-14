@@ -21,15 +21,13 @@ src/lib/supabase/
 ├── middleware.ts          # Session management middleware
 ├── index.ts               # Main exports and types
 └── services/              # Service layer architecture
-    ├── base.service.ts           # Abstract base service with shared business logic
-    ├── base.client.service.ts    # Client-side service implementation
-    ├── base.server.service.ts    # Server-side service implementation
+    ├── base.service.ts           # Abstract base service with shared logic
+    ├── base.client.service.ts    # Client-side service base
+    ├── base.server.service.ts    # Server-side service base
     ├── base.interface.ts         # Service interface definitions
     └── database/
         └── profiles/
-            ├── profile.service.ts           # Abstract base profile service
-            ├── profile.client.service.ts    # Client-side profile service
-            └── profile.server.service.ts    # Server-side profile service
+            └── profile.service.ts           # Abstract base profile service
 ```
 
 ## Service Layer Architecture
@@ -53,35 +51,10 @@ abstract class ProfileService extends BaseService {
   async getProfile(userId: string): Promise<Profile | null> {
     /* ... */
   }
-  async createProfile(userId: string, data: Partial<Profile>): Promise<Profile> {
-    /* ... */
-  }
-  async updateProfile(userId: string, updates: Partial<ProfileUpdate>): Promise<Profile> {
-    /* ... */
-  }
 }
 
-// Client-side implementation with dependency injection
-class ProfileClientService extends ProfileService {
-  constructor() {
-    const client = createClient()
-    const logger = buildLogger('ProfileClientService')
-    super(client, logger, handleClientError)
-  }
-}
-
-// Server-side implementation with dependency injection
-class ProfileServerService extends ProfileService {
-  private constructor(client: SupabaseClient<Database>, logger: Logger) {
-    super(client, logger, handleServerError)
-  }
-
-  static async create(): Promise<ProfileServerService> {
-    const client = await createClient()
-    const logger = buildLogger('ProfileServerService')
-    return new ProfileServerService(client, logger)
-  }
-}
+// In Next.js 15, we typically use Server Actions for data operations
+// that interact with this service layer or the database directly.
 ```
 
 ### Service Naming Convention
@@ -102,114 +75,16 @@ src/lib/supabase/services/database/[domain]/
 - `user.client.service.ts` - Client-side user service
 - `user.server.service.ts` - Server-side user service
 
-### Direct Service Instantiation
+### Server Actions Usage
 
 ```typescript
-import { ProfileClientService } from '@/lib/supabase/services/database/profiles/profile.client.service'
-import { ProfileServerService } from '@/lib/supabase/services/database/profiles/profile.server.service'
-
-// Client-side usage (browser)
-const profileService = new ProfileClientService()
-const profile = await profileService.getProfile(userId)
-
-// Server-side usage (Node.js)
-const profileServerService = await ProfileServerService.create()
-const profile = await profileServerService.getProfile(userId)
-```
-
-### Implementing Services
-
-```typescript
-// Abstract base service with shared business logic
-export abstract class ProfileService extends BaseService {
-  async getProfile(userId: string): Promise<Profile | null> {
-    try {
-      this.logger.debug({ userId }, 'Fetching user profile')
-      const { data, error } = await this.client.from('profiles').select('*').eq('id', userId).single()
-
-      if (error) throw error
-      return convertDbProfile(data)
-    } catch (error) {
-      return this.handleError(error, 'fetch profile', { userId })
-    }
-  }
-}
-
-// Client-side service with dependency injection
-export class ProfileClientService extends ProfileService {
-  constructor() {
-    const client = createClient()
-    const logger = buildLogger('ProfileClientService')
-    super(client, logger, handleClientError)
-  }
-}
-
-// Server-side service with dependency injection
-export class ProfileServerService extends ProfileService {
-  private constructor(client: SupabaseClient<Database>, logger: Logger) {
-    super(client, logger, handleServerError)
-  }
-
-  static async create(): Promise<ProfileServerService> {
-    const client = await createClient()
-    const logger = buildLogger('ProfileServerService')
-    return new ProfileServerService(client, logger)
-  }
+// Server actions are the primary interface for database operations
+import { getProfile } from '@/lib/actions/profile'
+const result = await getProfile(userId)
+if (result.success) {
+  const profile = result.data
 }
 ```
-
-### Adding New Services
-
-1. **Create the domain directory**: `src/lib/supabase/services/database/[domain]/`
-
-2. **Create abstract base service**:
-
-   ```typescript
-   // [domain].service.ts
-   export abstract class [Domain]Service extends BaseService {
-     // Implement shared business logic methods
-   }
-   ```
-
-3. **Create client service**:
-
-   ```typescript
-   // [domain].client.service.ts
-   export class [Domain]ClientService extends [Domain]Service {
-     constructor() {
-       const client = createClient()
-       const logger = buildLogger('[Domain]ClientService')
-       super(client, logger, handleClientError)
-     }
-   }
-   ```
-
-4. **Create server service**:
-
-   ```typescript
-   // [domain].server.service.ts
-   export class [Domain]ServerService extends [Domain]Service {
-     private constructor(client: SupabaseClient<Database>, logger: Logger) {
-       super(client, logger, handleServerError)
-     }
-
-     static async create(): Promise<[Domain]ServerService> {
-       const client = await createClient()
-       const logger = buildLogger('[Domain]ServerService')
-       return new [Domain]ServerService(client, logger)
-     }
-   }
-   ```
-
-5. **Use services directly**:
-
-   ```typescript
-   // Client-side
-   const clientService = new [Domain]ClientService()
-
-   // Server-side
-   const serverService = await [Domain]ServerService.create()
-   ```
 
 ## Quick Start
 
@@ -265,24 +140,20 @@ export default async function ServerProfile({ userId }: { userId: string }) {
 }
 ```
 
-### Service Layer Usage
+### Server Action Usage
 
 ```typescript
-import { ProfileClientService } from '@/lib/supabase/services/database/profiles/profile.client.service'
+import { getProfile } from '@/lib/actions/profile'
 
-export class UserService {
-  async getUserProfile(userId: string) {
-    // Direct service instantiation with dependency injection
-    const profileService = new ProfileClientService()
+export async function useProfileData(userId: string) {
+  const result = await getProfile(userId)
 
-    try {
-      return await profileService.getProfile(userId)
-    } catch (error) {
-      // Error is handled by the service
-      console.error('Failed to get user profile:', error)
-      return null
-    }
+  if (!result.success) {
+    console.error('Failed to get user profile:', result.error)
+    return null
   }
+
+  return result.data
 }
 ```
 
@@ -306,18 +177,18 @@ import { createClient } from '@/lib/supabase/server'
 const supabase = await createClient()
 ```
 
-### 2. Explicit Client Injection
+### 2. Standardized Error Handling
 
-Services require explicit client injection:
+All database operations should use the centralized error handling system:
 
 ```typescript
-// Good - Server-side with static factory method
-const profileServerService = await ProfileServerService.create()
-const profile = await profileServerService.getProfile(userId)
-
-// Good - Client-side direct instantiation
-const profileService = new ProfileClientService()
-const profile = await profileService.getProfile(userId)
+// Consistent error handling across actions and services
+try {
+  const { data, error } = await supabase.from('profiles').select().single()
+  if (error) throw error
+} catch (error) {
+  return this.handleError(error, 'operation', { context })
+}
 ```
 
 ### Service Architecture
@@ -436,34 +307,22 @@ export class MyService extends BaseService {
 - `client` - Supabase client instance
 - `logger` - Logger instance
 
-#### ProfileService
+#### Server Actions
 
-Service for profile management operations.
+Primary interface for all database operations:
 
-```typescript
-import { ProfileClientService } from '@/lib/supabase/services/database/profiles/profile.client.service'
-import { ProfileServerService } from '@/lib/supabase/services/database/profiles/profile.server.service'
+- **Profile Actions** (`@/lib/actions/profile.ts`)
+  - `getProfile(userId)` - Fetch user profile
+  - `createProfile(userId, data)` - Create new profile
+  - `updateProfile(userId, data)` - Update profile
+  - `uploadAvatar(userId, file)` - Upload avatar image
 
-// ✅ Client-side usage
-const profileService = new ProfileClientService()
-const profile = await profileService.getProfile('user-123')
-
-// ✅ Server-side usage
-const profileServerService = await ProfileServerService.create()
-const profile = await profileServerService.getProfile('user-123')
-```
-
-**Methods**:
-
-- `getProfile(userId)` - Fetch user profile
-- `createProfile(userId, data)` - Create new profile
-- `updateProfile(userId, data)` - Update profile
-- `uploadAvatar(userId, file)` - Upload avatar image
-
-**Constructor**:
-
-- Client: No parameters needed (dependencies injected automatically)
-- Server: Use static `create()` method for async client creation
+- **Auth Actions** (`@/lib/actions/auth/server.ts`)
+  - `loginWithEmail(credentials)` - User authentication
+  - `signUpWithEmail(credentials)` - User registration
+  - `signOut()` - User logout
+  - `forgotPassword(email)` - Password reset request
+  - `resendVerification(formData)` - Resend verification email
 
 ## Configuration
 
@@ -539,17 +398,34 @@ import { createClient } from '@/lib/supabase/server' // Will cause errors
 
 ### 2. Service Instantiation
 
-Always use direct service instantiation:
+Use the recommended patterns for this project:
 
 ```typescript
-// Good - Client-side direct instantiation
-const profileService = new ProfileClientService()
-const profile = await profileService.getProfile(userId)
+// Recommended - Server actions for server components
+import { getProfile } from '@/lib/actions/profile'
 
-// Good - Server-side with static factory method
-const profileServerService = await ProfileServerService.create()
-const profile = await profileServerService.getProfile(userId)
+export default async function ProfileServerComponent({ userId }: { userId: string }) {
+  const result = await getProfile(userId)
+  const profile = result.success ? result.data : null
+  return <div>{profile?.display_name ?? 'No profile found'}</div>
+}
+
+// Recommended - Direct Supabase client for complex queries
+import { createClient } from '@/lib/supabase/server'
+
+export default async function ComplexServerComponent() {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*, posts(*)') // Join query
+    .eq('active', true)
+
+  if (error) throw error
+  return <div>{/* render data */}</div>
+}
 ```
+
+> **Architecture Note**: While service classes exist in this codebase, **server actions are the primary pattern** for server-side operations. Services are kept for reference but not actively used.
 
 ### 3. Using Custom Hooks (Optional)
 
@@ -562,13 +438,6 @@ import { useProfile } from '@/hooks/useProfile'
 export function ProfileComponent({ userId }: { userId: string }) {
   const { profile, isLoading, error, updateProfile } = useProfile(userId)
   // Hook handles React Query, caching, optimistic updates
-}
-
-// Good - Direct service usage for server components
-export default async function ProfileServerComponent({ userId }: { userId: string }) {
-  const profileServerService = await ProfileServerService.create()
-  const profile = await profileServerService.getProfile(userId)
-  return <div>{profile?.display_name}</div>
 }
 ```
 
@@ -596,20 +465,19 @@ const { data } = await supabase.from('profiles').select('*')
 
 ## Integration Examples
 
-### Next.js App Router
+### Next.js App Router (Server Component)
 
 ```typescript
-// app/dashboard/page.tsx - Server Component
-import { ProfileServerService } from '@/lib/supabase/services/database/profiles/profile.server.service'
+// app/dashboard/page.tsx
+import { getProfile } from '@/lib/actions/profile'
 import { createClient } from '@/lib/supabase/server'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
-  // Direct service instantiation with dependency injection
-  const profileService = await ProfileServerService.create()
-
   const { data: { user } } = await supabase.auth.getUser()
-  const profile = await profileService.getProfile(user?.id || '')
+
+  const result = await getProfile(user?.id || '')
+  const profile = result.data
 
   return <div>Welcome, {profile?.display_name}</div>
 }
@@ -619,14 +487,11 @@ export default async function DashboardPage() {
 
 ```typescript
 // app/api/profile/route.ts
-import { ProfileServerService } from '@/lib/supabase/services/database/profiles/profile.server.service'
+import { getProfile } from '@/lib/actions/profile'
 import { createClient } from '@/lib/supabase/server'
 
 export async function GET(request: Request) {
   const supabase = await createClient()
-  // Direct service instantiation with dependency injection
-  const profileService = await ProfileServerService.create()
-
   const {
     data: { user },
   } = await supabase.auth.getUser()
@@ -635,8 +500,8 @@ export async function GET(request: Request) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const profile = await profileService.getProfile(user.id)
-  return Response.json({ profile })
+  const result = await getProfile(user.id)
+  return Response.json({ profile: result.data })
 }
 ```
 
@@ -646,32 +511,15 @@ export async function GET(request: Request) {
 // app/actions.ts
 'use server'
 
-import { ProfileServerService } from '@/lib/supabase/services/database/profiles/profile.server.service'
-import { createClient } from '@/lib/supabase/server'
+import { updateProfile as updateProfileAction } from '@/lib/actions/profile'
 
-export async function updateProfile(formData: FormData) {
-  const supabase = await createClient()
-  // Direct service instantiation with dependency injection
-  const profileService = await ProfileServerService.create()
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    return { error: 'Unauthorized' }
-  }
-
+export async function handleUpdateProfile(formData: FormData) {
   const updates = {
     display_name: formData.get('displayName') as string,
   }
 
-  try {
-    const profile = await profileService.updateProfile(user.id, updates)
-    return { success: true, profile }
-  } catch (error) {
-    return { error: 'Failed to update profile' }
-  }
+  const result = await updateProfileAction(updates)
+  return result
 }
 ```
 
@@ -893,7 +741,8 @@ Enable debug logging for troubleshooting:
 
 ```typescript
 // In development
-const logger = createLogger({ name: 'debug', level: 'debug' })
+import { buildLogger } from '@/lib/logger/server'
+const logger = buildLogger('debug')
 ```
 
 ## Migration Guide
@@ -951,25 +800,24 @@ export class ProfileClientService extends ProfileService {
   }
 }
 
-// Server implementation
-export class ProfileServerService extends ProfileService {
-  private constructor(client: SupabaseClient<Database>, logger: Logger) {
-    super(client, logger, handleServerError)
-  }
+// Server implementation with server actions (recommended pattern)
+export const getProfile = withServerActionErrorHandling(async (userId: string): Promise<AuthResponse<Profile>> => {
+  const supabase = await createClient()
+  const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single()
 
-  static async create(): Promise<ProfileServerService> {
-    const client = await createClient()
-    const logger = buildLogger('ProfileServerService')
-    return new ProfileServerService(client, logger)
-  }
-}
+  if (error) throw error
+  return createServerActionSuccess(data)
+})
 
-// Usage - Client
+// Usage - Client components
 const profileService = new ProfileClientService()
 
-// Usage - Server
-const profileService = await ProfileServerService.create()
+// Usage - Server components (recommended)
+const result = await getProfile(userId)
+const profile = result.success ? result.data : null
 ```
+
+> **Note**: This project primarily uses server actions for server-side operations. Service classes exist but are not the primary pattern.
 
 ## Contributing
 
@@ -982,65 +830,12 @@ When adding new services or features:
 5. **Write tests** for service methods
 6. **Update documentation** with examples
 
-### Adding a New Service
+### Adding a New Data Domain
 
-```typescript
-// services/database/posts/post.service.ts
-export abstract class PostService extends BaseService {
-  async getPost(postId: string): Promise<Post | null> {
-    try {
-      this.logger.debug({ postId }, 'Fetching post')
-      const { data, error } = await this.client.from('posts').select('*').eq('id', postId).single()
-
-      if (error) throw error
-      return convertDbPost(data)
-    } catch (error) {
-      return this.handleError(error, 'fetch post', { postId })
-    }
-  }
-
-  async createPost(postData: CreatePostData): Promise<Post> {
-    try {
-      this.logger.info({ postData }, 'Creating post')
-      const { data, error } = await this.client.from('posts').insert(postData).select().single()
-
-      if (error) throw error
-      return convertDbPost(data)
-    } catch (error) {
-      return this.handleError(error, 'create post', { postData })
-    }
-  }
-}
-
-// services/database/posts/post.client.service.ts
-export class PostClientService extends PostService {
-  constructor() {
-    const client = createClient()
-    const logger = buildLogger('PostClientService')
-    super(client, logger, handleClientError)
-  }
-}
-
-// services/database/posts/post.server.service.ts
-export class PostServerService extends PostService {
-  private constructor(client: SupabaseClient<Database>, logger: Logger) {
-    super(client, logger, handleServerError)
-  }
-
-  static async create(): Promise<PostServerService> {
-    const client = await createClient()
-    const logger = buildLogger('PostServerService')
-    return new PostServerService(client, logger)
-  }
-}
-
-// Usage
-// Client-side
-const postService = new PostClientService()
-
-// Server-side
-const postService = await PostServerService.create()
-```
+1.  **Create Validator**: Define the schema in `src/lib/validators/[domain].ts`.
+2.  **Create Abstract Service** (Optional): If you have shared business logic, extend `BaseService` in `src/lib/supabase/services/database/`.
+3.  **Create Server Actions**: Implement CRUD operations in `src/lib/actions/[domain].ts` using `withServerActionErrorHandling`.
+4.  **Create Hooks**: If needed for client-side state, create a hook in `src/hooks/use[Domain].ts`.
 
 ---
 

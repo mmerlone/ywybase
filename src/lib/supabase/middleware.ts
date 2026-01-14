@@ -1,50 +1,91 @@
+/**
+ * Supabase Middleware Session Management
+ *
+ * Handles session refresh and cookie management in Next.js middleware.
+ * Ensures authentication state is maintained across requests.
+ */
+
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+import { getSupabaseConfig } from '@/config/supabase'
+import { ConfigurationError } from '@/lib/error/errors'
 import { buildLogger } from '@/lib/logger/server'
 
 const logger = buildLogger('supabase-middleware')
 
+/**
+ * Update and refresh Supabase session in middleware.
+ * Manages authentication cookies and user session state.
+ *
+ * @param request - The incoming Next.js request
+ * @param incomingResponse - Optional response to modify (creates new response if not provided)
+ * @returns NextResponse with updated session cookies and headers
+ *
+ * @remarks
+ * This function:
+ * - Refreshes authentication tokens
+ * - Updates session cookies with secure options
+ * - Adds user info to request headers for Server Components
+ * - Skips processing for error responses (status >= 400)
+ *
+ * **Security Features**:
+ * - httpOnly cookies (JavaScript access prevented)
+ * - Secure flag in production
+ * - SameSite=lax for CSRF protection
+ *
+ * @example
+ * ```typescript
+ * // In middleware.ts
+ * export async function middleware(request: NextRequest) {
+ *   // Pass no response to create new one
+ *   let response = await updateSession(request)
+ *
+ *   // Or pass existing response to modify it
+ *   response = await updateSession(request, response)
+ *
+ *   return response
+ * }
+ * ```
+ */
 export async function updateSession(request: NextRequest, incomingResponse?: NextResponse): Promise<NextResponse> {
   // Use incoming response if provided, otherwise create a new one
   const response = incomingResponse || NextResponse.next({ request })
 
   try {
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return request.cookies.getAll()
-          },
-          setAll(cookiesToSet) {
-            cookiesToSet.forEach(({ name, value, ...options }) => {
-              // Skip if this is an error response (status >= 400)
-              if (response.status >= 400) {
-                return
-              }
+    const config = getSupabaseConfig()
 
-              // Update request cookies for current request
-              request.cookies.set(name, value)
-
-              // Set secure, httpOnly, and sameSite defaults for auth cookies
-              const secure = process.env.NODE_ENV === 'production'
-              const cookieOptions = {
-                ...options,
-                httpOnly: true,
-                secure,
-                sameSite: 'lax' as const,
-                path: '/',
-              }
-
-              // Set response cookies with secure options
-              response.cookies.set(name, value, cookieOptions)
-            })
-          },
+    const supabase = createServerClient(config.url, config.publishableKey, {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll()
         },
-      }
-    )
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, ...options }) => {
+            // Skip if this is an error response (status >= 400)
+            if (response.status >= 400) {
+              return
+            }
+
+            // Update request cookies for current request
+            request.cookies.set(name, value)
+
+            // Set secure, httpOnly, and sameSite defaults for auth cookies
+            const secure = process.env.NODE_ENV === 'production'
+            const cookieOptions = {
+              ...options,
+              httpOnly: true,
+              secure,
+              sameSite: 'lax' as const,
+              path: '/',
+            }
+
+            // Set response cookies with secure options
+            response.cookies.set(name, value, cookieOptions)
+          })
+        },
+      },
+    })
 
     // Skip auth check if this is already an error response
     if (response.status >= 400) {
@@ -57,7 +98,7 @@ export async function updateSession(request: NextRequest, incomingResponse?: Nex
     } = await supabase.auth.getUser()
 
     if (error) {
-      logger.error({ error: error.message }, 'Failed to verify user')
+      logger.error({ message: error.message }, 'Failed to verify user')
       // Don't override existing error responses
       return response.status >= 400 ? response : response
     }
@@ -86,7 +127,21 @@ export async function updateSession(request: NextRequest, incomingResponse?: Nex
 
     return response
   } catch (error) {
-    logger.error({ error }, 'Unexpected error in session management')
+    // Check if this is a configuration error
+    if (error instanceof ConfigurationError) {
+      logger.error(
+        {
+          error,
+          code: error.code,
+          context: error.context,
+        },
+        'Supabase configuration error in middleware'
+      )
+      // Redirect to error page with configuration error
+      return NextResponse.redirect(new URL('/error?code=configuration_error', request.url))
+    }
+
+    logger.error({ err: error }, 'Unexpected error in session management')
     // Preserve existing error responses
     return response.status >= 400 ? response : response
   }

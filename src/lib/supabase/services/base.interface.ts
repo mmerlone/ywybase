@@ -1,11 +1,22 @@
+/**
+ * Base Service Interface Definitions
+ *
+ * Defines the common interface for all Supabase service classes.
+ * Ensures consistent API across client and server environments.
+ */
+
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/supabase'
 import type { LogLevel, LoggerContext, Logger } from '@/types/logger.types'
 import type { ErrorHandler } from './base.service'
 
 /**
- * Common interface for all base services (client and server)
- * Ensures consistent API across different environments
+ * Common interface for all base services (client and server).
+ * Ensures consistent API across different environments.
+ *
+ * @remarks
+ * All service classes should implement this interface to guarantee
+ * compatible error handling, logging, and utility methods.
  */
 export interface IBaseService {
   /**
@@ -36,9 +47,16 @@ export interface IBaseService {
 }
 
 /**
- * Base service constructor interface
+ * Base service constructor interface.
+ * Defines the structure for service class constructors.
+ *
+ * @remarks
+ * Services should implement this interface to ensure proper
+ * dependency injection of client, logger, and error handler.
  */
 export interface IBaseServiceConstructor {
+  /** Create new service instance with required dependencies */
   new (client: SupabaseClient<Database>, logger: Logger, errorHandler: ErrorHandler): IBaseService
+  /** Clean up service resources */
   cleanup(): Promise<void>
 }
