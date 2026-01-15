@@ -7,6 +7,10 @@
 [![Supabase](https://img.shields.io/badge/Supabase-0.7.0-3ECF8E?style=flat&logo=supabase)](https://supabase.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
+## 🌐 Live Demo
+
+**Experience YwyBase instantly:** Explore the running project at [https://ywybase.vercel.app/](https://ywybase.vercel.app/)
+
 YwyBase - A Solid Ground to Scale. A production-ready Next.js 15 application template with **clean architecture**, authentication, Material UI, and TypeScript. Built for developers who want to ship fast with best practices.
 
 This is a solo project experimenting with a myriad of AI-assisted coding tools, primarily on the free tier—including Copilot, Cursor, WindSurf, CodeRabbit, and others. As a solo endeavor spanning engineering, QA, and DevOps, all developed in my free time with AI assistance, bugs are inevitable. Use at your own risk.
@@ -207,6 +211,59 @@ nano .env.local  # or use your preferred editor
      - `instrumentation.ts` for performance monitoring
    - For detailed setup guide, see [Sentry Next.js Documentation](https://docs.sentry.io/platforms/javascript/guides/nextjs/)
 
+#### **Optional: New Relic Monitoring**
+
+1. **Sign Up and Create a New Relic Account**
+   - Go to [newrelic.com](https://newrelic.com/) and sign up for a free account.
+   - Create a new application in the New Relic dashboard.
+
+2. **Ensure New Relic Node.js Agent is Installed**
+
+   The `newrelic` package should already be present in your `package.json` and installed with your dependencies. No need to run `pnpm add newrelic` unless you are adding it for the first time.
+
+3. **Add the New Relic Config File**
+
+   Follow the instructions from the [New Relic docs](https://docs.newrelic.com/docs/apm/agents/nodejs-agent/installation-configuration/install-nodejs-agent/) to create a `newrelic.js` file in your project root. Update the `app_name` and `license_key` fields:
+
+   ```bash
+   cp node_modules/newrelic/newrelic.js .
+   ```
+
+   ```js
+   exports.config = {
+     app_name: [process.env.NEW_RELIC_APP_NAME],
+     license_key: process.env.NEW_RELIC_LICENSE_KEY,
+     logging: {
+       level: 'info',
+     },
+     // ...other config
+   }
+   ```
+
+4. **Instrument Your App**
+
+   Add this as the very first line in your `next.config.mjs` or a custom server entrypoint (if using a custom server):
+
+   ```js
+   require('newrelic')
+   ```
+
+   > **Note:** For Vercel/Serverless, see [New Relic's Next.js integration guide](https://docs.newrelic.com/docs/apm/agents/nodejs-agent/getting-started/instrument-nextjs-applications/) for best practices and limitations.
+
+5. **Set Environment Variables**
+
+   Add your New Relic license key to your `.env.local` (or use the config file):
+
+   ```env
+   NEW_RELIC_LICENSE_KEY=your_new_relic_license_key
+   NEW_RELIC_APP_NAME=your_app_name
+   ```
+
+6. **Verify Data in New Relic**
+   - Deploy your app and check the New Relic dashboard for incoming data.
+
+For advanced configuration, see the [New Relic Node.js docs](https://docs.newrelic.com/docs/apm/agents/nodejs-agent/).
+
 #### **Optional: IP Geolocation**
 
 1. **Get IPGeolocation API Key**
@@ -238,24 +295,22 @@ nano .env.local  # or use your preferred editor
    - **Required in production** - Application will fail to start without it
 
 2. **Configure Rate Limiting (Production)**
-   - For production deployments with multiple instances, configure persistent storage
-   - **Option 1: Vercel KV** (recommended for Vercel deployments):
-     - Go to [Vercel Dashboard → Storage](https://vercel.com/dashboard/stores)
-     - Create a new KV database
-     - Copy the REST API URL and Token
-     - Update your `.env.local`:
-
-     ```env
-     KV_REST_API_URL=your_vercel_kv_rest_api_url
-     KV_REST_API_TOKEN=your_vercel_kv_rest_api_token
-     ```
-
-     - **Package already included** in dependencies
-
-   - **Option 2: Redis** (for other deployments):
-     ```env
-     REDIS_URL=redis://your-redis-host:6379
-     ```
+   - For production deployments with multiple instances, configure persistent storage for rate limiting.
+   - **Recommended: Upstash Redis (via Vercel Integration)**
+     1. Go to the [Upstash Integration page](https://vercel.com/integrations/upstash).
+     2. Under "Upstash for Redis" (Redis Compatible Database), click **Install**. (Do not select Vector, QStash, or Search unless you need those products.)
+     3. If you already have an Upstash account, choose **Link Existing Upstash Account** during the integration process. You can then select your existing Redis database to connect to your Vercel project. If you do not have an account, you can create one during this step.
+     4. After setup, Upstash will provide a Redis REST URL and a token. These will be automatically added to your Vercel project as environment variables, typically:
+        - `UPSTASH_REDIS_REST_URL`
+        - `UPSTASH_REDIS_REST_TOKEN`
+     5. If you need to use custom variable names, set:
+        ```env
+        REDIS_URL=your_upstash_redis_rest_url
+        REDIS_TOKEN=your_upstash_redis_rest_token
+        ```
+        Otherwise, use the defaults provided by Upstash.
+     6. Ensure your code uses the correct environment variables for Redis connection.
+     7. Upstash also offers Vector, QStash, and Search products—install only if your project requires those features.
    - **Development**: Uses in-memory storage (no configuration needed)
 
 #### **Complete Environment Setup**

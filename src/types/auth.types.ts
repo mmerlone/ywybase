@@ -80,7 +80,7 @@ export enum AuthProvidersEnum {
    *
    * @see [Microsoft Identity Platform Documentation](https://docs.microsoft.com/en-us/azure/active-directory/develop/v2-oauth2-auth-code-flow)
    */
-  MICROSOFT = 'microsoft',
+  // MICROSOFT = 'microsoft',
 
   /**
    * Apple Sign In provider.
@@ -89,7 +89,7 @@ export enum AuthProvidersEnum {
    * Requires Apple Developer account and Sign In with Apple configuration.
    *
    */
-  APPLE = 'apple',
+  // APPLE = 'apple',
 }
 
 /**

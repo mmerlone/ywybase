@@ -16,6 +16,7 @@ import {
   AlertTitle,
   Paper,
   Skeleton,
+  Link,
 } from '@mui/material'
 import * as Sentry from '@sentry/nextjs'
 import { useState, useEffect } from 'react'
@@ -127,6 +128,7 @@ export function SentryExampleView(): JSX.Element {
         <Typography variant="h4" component="h1" sx={{ fontFamily: 'monospace', m: 4 }}>
           sentry-example-page
         </Typography>
+
         {canPushTheButton === true ? (
           <Paper sx={{ textAlign: 'center', p: 4 }}>
             <Typography
@@ -236,6 +238,17 @@ export function SentryExampleView(): JSX.Element {
             </Paper>
           </Box>
         )}
+        <Typography variant="h6" component="h2" sx={{ m: 4, color: 'text.secondary' }}>
+          <Link href="https://docs.sentry.io/product/" target="_blank" rel="noopener noreferrer">
+            What is Sentry?
+          </Link>
+        </Typography>
+        <Typography variant="body2" component="blockquote" color="text.secondary" sx={{ flexGrow: 1, m: 4 }}>
+          Sentry is a software monitoring tool that helps developers identify and debug performance issues and errors.
+          From end-to-end distributed tracing to performance monitoring, Sentry provides code-level observability that
+          makes it easy to diagnose issues and learn continuously about your application code health across systems and
+          services.
+        </Typography>
       </Box>
     </Container>
   )

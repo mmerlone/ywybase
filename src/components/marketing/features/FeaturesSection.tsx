@@ -5,12 +5,46 @@ import { FeatureCard, type Feature } from './FeatureCard'
 
 const features: Feature[] = [
   {
+    icon: <Security />,
+    title: 'Advanced Security',
+    description:
+      'Comprehensive security: RLS, CSRF, secure cookies, rate limiting, and best-practice headers. Built-in protection against common web threats.',
+    span: 2,
+    isHighlighted: true,
+  },
+  {
+    icon: <Palette />,
+    title: 'Themeable',
+    description:
+      'Fully themeable UI with dynamic theme switching, Material UI v7, and custom theme registry. Light/dark mode and easy extensibility.',
+  },
+  {
+    icon: <Article />,
+    title: 'New Relic Integration',
+    description:
+      'Optional New Relic support for observability, performance monitoring, and advanced application insights.',
+  },
+  {
+    icon: <FlashOn />,
+    title: 'UX & DX Focus',
+    description:
+      'Designed for both end-user experience and developer productivity. Fast, accessible, and delightful to use and build.',
+    span: 2,
+    isHighlighted: true,
+  },
+  {
     icon: <Star />,
     title: 'Production-Ready Foundation',
     description:
       'A complete, battle-tested starting point for any project with built-in best practices, error handling, and developer tooling.',
-    span: 3,
+    span: 2,
     isHighlighted: true,
+  },
+  {
+    icon: <Security />,
+    title: 'Robust Error Handling',
+    description:
+      'Centralized error system with Sentry integration, structured logging, and safe error boundaries for both client and server.',
   },
   {
     icon: <Security />,
@@ -49,7 +83,7 @@ const features: Feature[] = [
     icon: <Article />,
     title: 'Flexible Logging',
     description:
-      'Comprehensive logging system supporting multiple providers (pino, Sentry) with structured logging and configurable log levels.',
+      'Comprehensive logging system supporting multiple providers (pino, Sentry, New Relic) with structured logging and configurable log levels.',
     span: 2,
     isHighlighted: true,
   },

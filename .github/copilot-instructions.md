@@ -242,3 +242,35 @@ pnpm run format       # Format with Prettier
 5. **Multi-Theme Support**: Dynamic theme switching via `src/themes/` registry pattern
 6. **Validation at Edge**: Zod validation in Server Actions and API routes before database operations
 7. **Structured Logging**: All log entries include context object as first parameter with operation metadata
+
+## Required Post-Task Process
+
+After completing any coding task, you **must** follow this process before considering the work done:
+
+1. **Run Lint:**
+
+```bash
+pnpm run lint
+```
+
+- Fix all lint issues. Do not proceed until the codebase is lint-free.
+
+2. **Run Type Check:**
+
+```bash
+pnpm run type-check
+```
+
+- Fix all type errors. Do not proceed until the codebase passes type checking.
+
+3. **Run Build (if config or critical files changed):**
+
+- If your change affected configuration files (e.g., `next.config.mjs`, files in `src/config/`, or any critical infra), run:
+
+```bash
+pnpm run build
+```
+
+- Fix any build errors before submitting or merging your work.
+
+> **Note:** This process is mandatory for all contributors and applies to all PRs and direct pushes.
