@@ -9,6 +9,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { buildLogger } from '@/lib/logger/client'
 import { createClient } from '@/lib/supabase/server'
 import { ROUTES, PROTECTED_PATHS, AUTH_PATHS, VERIFIED_EMAIL_REQUIRED_PATHS, getRouteByPath } from '@/config/routes'
+import { getSupabaseEnvStatus } from '@/config/supabase-public'
+import { ConfigurationError } from '@/lib/error/errors'
 import { User, Session } from '@supabase/supabase-js'
 import { setFlashMessageInMiddleware } from '@/lib/utils/flash-messages.server'
 import { AuthOperationsEnum } from '@/types/auth.types'
@@ -35,7 +37,38 @@ export async function authenticateRequest(request: NextRequest): Promise<{
   response?: NextResponse
 }> {
   const { pathname } = request.nextUrl
-  const supabase = await createClient()
+  const supabaseEnv = getSupabaseEnvStatus()
+
+  if (!supabaseEnv.isConfigured) {
+    logger.warn(
+      { pathname, missingEnv: supabaseEnv.missing },
+      'AUTH MIDDLEWARE: Supabase config missing, skipping auth checks'
+    )
+
+    if (
+      PROTECTED_PATHS.some((path) => pathname.startsWith(path)) ||
+      AUTH_PATHS.some((path) => pathname.startsWith(path))
+    ) {
+      const redirectUrl = new URL('/error?code=configuration_error', request.url)
+      return { user: null, session: null, response: NextResponse.redirect(redirectUrl) }
+    }
+
+    return { user: null, session: null }
+  }
+
+  let supabase: Awaited<ReturnType<typeof createClient>>
+
+  try {
+    supabase = await createClient()
+  } catch (error) {
+    if (error instanceof ConfigurationError) {
+      logger.error({ pathname, error }, 'AUTH MIDDLEWARE: Supabase configuration error')
+      const redirectUrl = new URL('/error?code=configuration_error', request.url)
+      return { user: null, session: null, response: NextResponse.redirect(redirectUrl) }
+    }
+
+    throw error
+  }
 
   logger.info({ pathname, url: request.url }, 'AUTH MIDDLEWARE: Starting authentication check')
 
