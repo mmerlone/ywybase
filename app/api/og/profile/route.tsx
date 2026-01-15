@@ -4,7 +4,9 @@ import { readFile } from 'fs/promises'
 import path from 'path'
 
 import { SITE_CONFIG } from '@/config/site'
-import { serverLogger as logger } from '@/lib/logger'
+import { isValidAvatarUrl } from '@/lib/utils/isValidAvatarUrl'
+// import { serverLogger as logger } from '@/lib/logger'
+import { withApiErrorHandler } from '@/lib/error/server'
 
 /**
  * Profile Open Graph Image Generation API Route
@@ -28,178 +30,183 @@ import { serverLogger as logger } from '@/lib/logger'
  *
  * @see https://vercel.com/docs/og-image-generation
  */
-export async function GET(request: NextRequest): Promise<Response> {
-  try {
-    const { searchParams } = new URL(request.url)
+import { NextResponse } from 'next/server'
 
-    const name = searchParams.get('name')
-    if (!name) {
-      return new Response('Missing required parameter: name', { status: 400 })
-    }
+async function handler(request: NextRequest): Promise<NextResponse> {
+  const { searchParams } = new URL(request.url)
 
-    const avatar = searchParams.get('avatar')
-    const bio = searchParams.get('bio')?.slice(0, 150)
+  const name = searchParams.get('name')
+  if (!name) {
+    return NextResponse.json({ error: 'Missing required parameter: name' }, { status: 400 })
+  }
 
-    // Load Inter font
-    const fontPath = path.join(process.cwd(), 'public', 'fonts', 'Inter-SemiBold.woff')
-    const interSemiBold = await readFile(fontPath)
+  const avatar = searchParams.get('avatar')
+  const validatedAvatar = isValidAvatarUrl(avatar)
+  const bio = searchParams.get('bio')?.slice(0, 150)
 
-    return new ImageResponse(
+  // Load Inter font
+  const fontPath = path.join(process.cwd(), 'public', 'fonts', 'Inter-SemiBold.woff')
+  const interSemiBold = await readFile(fontPath)
+
+  // ImageResponse is a Response, but Next.js expects NextResponse for API routes
+  // So we wrap the ImageResponse in a NextResponse
+  const imageResponse = new ImageResponse(
+    <div
+      style={{
+        height: '100%',
+        width: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#f3f3f3',
+        backgroundImage:
+          'radial-gradient(circle at 25px 25px, rgba(59, 130, 246, 0.1) 2%, transparent 0%), radial-gradient(circle at 75px 75px, rgba(59, 130, 246, 0.1) 2%, transparent 0%)',
+        backgroundSize: '100px 100px',
+      }}>
+      {/* Main Content Card */}
       <div
         style={{
-          height: '100%',
-          width: '100%',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: '#f3f3f3',
-          backgroundImage:
-            'radial-gradient(circle at 25px 25px, rgba(59, 130, 246, 0.1) 2%, transparent 0%), radial-gradient(circle at 75px 75px, rgba(59, 130, 246, 0.1) 2%, transparent 0%)',
-          backgroundSize: '100px 100px',
+          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          borderRadius: 24,
+          padding: '60px 80px',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
         }}>
-        {/* Main Content Card */}
+        {/* Avatar */}
         <div
           style={{
             display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: 'rgba(255, 255, 255, 0.95)',
-            borderRadius: 24,
-            padding: '60px 80px',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
+            width: 180,
+            height: 180,
+            borderRadius: 90,
+            overflow: 'hidden',
+            backgroundColor: '#e2e8f0',
+            marginBottom: 32,
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
           }}>
-          {/* Avatar */}
-          <div
-            style={{
-              display: 'flex',
-              width: 180,
-              height: 180,
-              borderRadius: 90,
-              overflow: 'hidden',
-              backgroundColor: '#e2e8f0',
-              marginBottom: 32,
-              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-            }}>
-            {avatar ? (
-              // eslint-disable-next-line @next/next/no-img-element -- OG image generation requires basic img tag
-              <img
-                src={avatar}
-                alt={name}
-                width={180}
-                height={180}
-                style={{
-                  objectFit: 'cover',
-                }}
-              />
-            ) : (
-              // Placeholder avatar with initials
-              <div
-                style={{
-                  display: 'flex',
-                  width: '100%',
-                  height: '100%',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  fontSize: 64,
-                  fontWeight: 600,
-                  color: 'white',
-                }}>
-                {name
-                  .split(' ')
-                  .map((n) => n[0])
-                  .join('')
-                  .toUpperCase()
-                  .slice(0, 2)}
-              </div>
-            )}
-          </div>
-
-          {/* Name */}
-          <div
-            style={{
-              fontSize: 52,
-              fontWeight: 600,
-              color: '#1e293b',
-              marginBottom: bio ? 16 : 0,
-              textAlign: 'center',
-            }}>
-            {name}
-          </div>
-
-          {/* Bio */}
-          {bio && (
+          {validatedAvatar ? (
+            // eslint-disable-next-line @next/next/no-img-element -- OG image generation requires basic img tag
+            <img
+              src={validatedAvatar}
+              alt={name}
+              width={180}
+              height={180}
+              style={{
+                objectFit: 'cover',
+              }}
+            />
+          ) : (
+            // Placeholder avatar with initials
             <div
               style={{
-                fontSize: 24,
-                color: '#64748b',
-                textAlign: 'center',
-                maxWidth: '600px',
-                lineHeight: 1.4,
+                display: 'flex',
+                width: '100%',
+                height: '100%',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                fontSize: 64,
+                fontWeight: 600,
+                color: 'white',
               }}>
-              {bio}
+              {name
+                .split(' ')
+                .map((n) => n[0])
+                .join('')
+                .toUpperCase()
+                .slice(0, 2)}
             </div>
           )}
         </div>
 
-        {/* Footer */}
+        {/* Name */}
         <div
           style={{
-            position: 'absolute',
-            bottom: 40,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 12,
+            fontSize: 52,
+            fontWeight: 600,
+            color: '#1e293b',
+            marginBottom: bio ? 16 : 0,
+            textAlign: 'center',
           }}>
+          {name}
+        </div>
+
+        {/* Bio */}
+        {bio && (
           <div
             style={{
               fontSize: 24,
-              fontWeight: 600,
-              background: 'linear-gradient(to right, #1e293b, #3b82f6)',
-              backgroundClip: 'text',
-              color: 'transparent',
-            }}>
-            {SITE_CONFIG.name}
-          </div>
-          <div
-            style={{
-              fontSize: 20,
-              color: '#94a3b8',
-            }}>
-            •
-          </div>
-          <div
-            style={{
-              fontSize: 20,
               color: '#64748b',
+              textAlign: 'center',
+              maxWidth: '600px',
+              lineHeight: 1.4,
             }}>
-            A Solid Ground to Scale
+            {bio}
           </div>
+        )}
+      </div>
+
+      {/* Footer */}
+      <div
+        style={{
+          position: 'absolute',
+          bottom: 40,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12,
+        }}>
+        <div
+          style={{
+            fontSize: 24,
+            fontWeight: 600,
+            background: 'linear-gradient(to right, #1e293b, #3b82f6)',
+            backgroundClip: 'text',
+            color: 'transparent',
+          }}>
+          {SITE_CONFIG.name}
         </div>
-      </div>,
-      {
-        width: 1200,
-        height: 630,
-        fonts: [
-          {
-            name: 'Inter',
-            data: interSemiBold,
-            style: 'normal',
-            weight: 600,
-          },
-        ],
-      }
-    )
-  } catch (error) {
-    logger.error(
-      { err: error instanceof Error ? error : new Error(String(error)) },
-      'Failed to generate profile OG image'
-    )
-    return new Response('Failed to generate image', { status: 500 })
-  }
+        <div
+          style={{
+            fontSize: 20,
+            color: '#94a3b8',
+          }}>
+          •
+        </div>
+        <div
+          style={{
+            fontSize: 20,
+            color: '#64748b',
+          }}>
+          A Solid Ground to Scale
+        </div>
+      </div>
+    </div>,
+    {
+      width: 1200,
+      height: 630,
+      fonts: [
+        {
+          name: 'Inter',
+          data: interSemiBold,
+          style: 'normal',
+          weight: 600,
+        },
+      ],
+    }
+  )
+  // Copy headers from ImageResponse to NextResponse
+  const nextRes = new NextResponse(imageResponse.body, {
+    status: imageResponse.status,
+    headers: imageResponse.headers,
+  })
+  return nextRes
 }
+
+export const GET = withApiErrorHandler(handler)
 
 /**
  * Runtime configuration

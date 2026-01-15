@@ -423,7 +423,7 @@ export function validateSecurityConfig(): { isValid: boolean; errors: string[] }
   const errors: string[] = []
 
   // Check required environment variables
-  const requiredEnvVars = ['NEXT_PUBLIC_SUPABASE_URL', 'NEXT_PUBLIC_SUPABASE_ANON_KEY', 'NODE_ENV']
+  const requiredEnvVars = ['NEXT_PUBLIC_SUPABASE_URL', 'NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY', 'NODE_ENV']
 
   for (const envVar of requiredEnvVars) {
     if (!process.env[envVar]) {

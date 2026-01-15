@@ -57,16 +57,15 @@ export async function authenticateRequest(request: NextRequest): Promise<{
   }
 
   let supabase: Awaited<ReturnType<typeof createClient>>
-
   try {
-    supabase = await createClient()
+    const created = await createClient()
+    supabase = created
   } catch (error) {
     if (error instanceof ConfigurationError) {
       logger.error({ pathname, error }, 'AUTH MIDDLEWARE: Supabase configuration error')
       const redirectUrl = new URL('/error?code=configuration_error', request.url)
       return { user: null, session: null, response: NextResponse.redirect(redirectUrl) }
     }
-
     throw error
   }
 

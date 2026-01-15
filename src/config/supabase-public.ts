@@ -8,7 +8,7 @@ export type SupabaseEnvStatus = {
  * Server-only variables (SUPABASE_PROJECT_ID, SUPABASE_SECRET_KEY, SUPABASE_DB_PASSWORD)
  * are not included to avoid hydration mismatches.
  */
-const REQUIRED_SUPABASE_KEYS = ['NEXT_PUBLIC_SUPABASE_URL', 'NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY'] as const
+const REQUIRED_SUPABASE_KEYS = ['NEXT_PUBLIC_SUPABASE_URL', 'NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY'] as const
 
 /**
  * Lightweight Supabase environment check safe for both server and client usage.

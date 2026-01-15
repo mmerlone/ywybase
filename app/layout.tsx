@@ -27,12 +27,15 @@ export default async function RootLayout({ children }: { children: ReactNode }):
   // Check Supabase configuration on the server to avoid hydration mismatches
   const supabaseStatus = getSupabaseEnvStatus()
 
+  const isDev = process.env.NODE_ENV === 'development'
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.className} font-sans`}>
         <AppRouterCacheProvider options={{ enableCssLayer: true, key: 'mui', nonce }}>
           <InitColorSchemeScript attribute="class" nonce={nonce} />
-          <LayoutClient supabaseStatus={supabaseStatus}>{children}</LayoutClient>
+          <LayoutClient supabaseStatus={supabaseStatus} isDev={isDev}>
+            {children}
+          </LayoutClient>
         </AppRouterCacheProvider>
       </body>
     </html>

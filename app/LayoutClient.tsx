@@ -21,10 +21,47 @@ import type { SupabaseEnvStatus } from '@/config/supabase-public'
 interface LayoutClientProps {
   children: ReactNode
   supabaseStatus: SupabaseEnvStatus
+  isDev: boolean
 }
 
-export function LayoutClient({ children, supabaseStatus }: LayoutClientProps): JSX.Element {
+function MainContent({
+  children,
+  supabaseEnabled,
+  isDev,
+}: {
+  children: ReactNode
+  supabaseEnabled: boolean
+  isDev: boolean
+}): JSX.Element {
   const theme = useTheme()
+  return (
+    <Box
+      component="main"
+      sx={{
+        flex: 1,
+        pb: 3,
+        transition: theme.transitions.create('padding', {
+          easing: theme.transitions.easing.sharp,
+          duration: theme.transitions.duration.leavingScreen,
+        }),
+      }}>
+      {!supabaseEnabled && isDev && (
+        <Alert severity="warning" sx={{ mb: 2 }}>
+          Supabase configuration is missing; authentication and profile features are disabled until the required
+          environment variables are set. See the setup guide in the README.
+          {` `}
+          <Link href={`${SITE_CONFIG.github}#-quick-start`} target="_blank" rel="noreferrer">
+            View instructions
+          </Link>
+        </Alert>
+      )}
+      <PageBreadcrumbs />
+      {children}
+    </Box>
+  )
+}
+
+export function LayoutClient({ children, supabaseStatus, isDev }: LayoutClientProps): JSX.Element {
   const supabaseEnabled = supabaseStatus.isConfigured
 
   const appShell = (
@@ -35,29 +72,9 @@ export function LayoutClient({ children, supabaseStatus }: LayoutClientProps): J
           <FlashMessageHandler />
           <Box id="layout-client-container" sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
             <Header supabaseEnabled={supabaseEnabled} />
-            <Box
-              component="main"
-              sx={{
-                flex: 1,
-                pb: 3,
-                transition: theme.transitions.create('padding', {
-                  easing: theme.transitions.easing.sharp,
-                  duration: theme.transitions.duration.leavingScreen,
-                }),
-              }}>
-              {!supabaseEnabled && process.env.NODE_ENV === 'development' && (
-                <Alert severity="warning" sx={{ mb: 2 }}>
-                  Supabase configuration is missing; authentication and profile features are disabled until the required
-                  environment variables are set. See the setup guide in the README.
-                  {` `}
-                  <Link href={`${SITE_CONFIG.github}#-quick-start`} target="_blank" rel="noreferrer">
-                    View instructions
-                  </Link>
-                </Alert>
-              )}
-              <PageBreadcrumbs />
+            <MainContent supabaseEnabled={supabaseEnabled} isDev={isDev}>
               {children}
-            </Box>
+            </MainContent>
             <Footer />
             <CookieBanner />
           </Box>

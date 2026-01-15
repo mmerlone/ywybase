@@ -177,7 +177,7 @@ export const GET = withRateLimit(
 
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_publishable_key
 SUPABASE_PROJECT_ID=your_project_id
 SUPABASE_SECRET_KEY=your_secret_key  # Server-side only
 CSRF_SECRET=your_32_char_secret      # Required for production

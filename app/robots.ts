@@ -13,8 +13,8 @@ export default function robots(): MetadataRoute.Robots {
   return {
     rules: {
       userAgent: '*',
-      allow: '/',
-      disallow: ['/api/*', '!/api/og/*'],
+      allow: ['/', '/api/og/*'],
+      disallow: ['/api/*'],
     },
     sitemap: 'https://ywybase.vercel.app/sitemap.xml',
   }

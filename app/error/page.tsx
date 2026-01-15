@@ -140,7 +140,7 @@ function ErrorPageContent(): JSX.Element {
                 </ol>
                 <pre style={{ fontSize: '0.75rem', overflow: 'auto', marginTop: '0.5rem' }}>
                   {`NEXT_PUBLIC_SUPABASE_URL=https://xxxxx.supabase.co
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY=sb_publishable_xxxxx`}
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_xxxxx`}
                 </pre>
                 <Typography variant="body2" sx={{ mt: 1 }}>
                   4. Restart the development server

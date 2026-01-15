@@ -1,10 +1,11 @@
 import { ImageResponse } from 'next/og'
-import { type NextRequest } from 'next/server'
+import { type NextRequest, NextResponse } from 'next/server'
 import { readFile } from 'fs/promises'
 import path from 'path'
 
 import { SITE_CONFIG } from '@/config/site'
 import { serverLogger as logger } from '@/lib/logger'
+import { withApiErrorHandler } from '@/lib/error/server'
 
 /**
  * Open Graph Image Generation API Route
@@ -14,6 +15,7 @@ import { serverLogger as logger } from '@/lib/logger'
  *
  * Query Parameters:
  * - title: Optional custom title (max 100 chars)
+ * - description: Optional custom description (max 200 chars)
  *
  * Example:
  * - /api/og → Default site OG image
@@ -27,20 +29,18 @@ import { serverLogger as logger } from '@/lib/logger'
  *
  * @see https://vercel.com/docs/og-image-generation
  */
-export async function GET(request: NextRequest): Promise<Response> {
+async function handler(request: NextRequest): Promise<NextResponse> {
   try {
     const { searchParams } = new URL(request.url)
-
     // Get title from query params, with fallback to site config
-    const hasTitle = searchParams.has('title')
-    const title = hasTitle ? searchParams.get('title')?.slice(0, 100) : SITE_CONFIG.title
+    const title = searchParams.get('title')?.slice(0, 100) || SITE_CONFIG.title
     const description = searchParams.get('description')?.slice(0, 200) || SITE_CONFIG.description
 
     // Load Inter font (matching the project's font)
     const fontPath = path.join(process.cwd(), 'public', 'fonts', 'Inter-SemiBold.woff')
     const interSemiBold = await readFile(fontPath)
 
-    return new ImageResponse(
+    const imageResponse = new ImageResponse(
       <div
         style={{
           height: '100%',
@@ -140,11 +140,19 @@ export async function GET(request: NextRequest): Promise<Response> {
         ],
       }
     )
+    // Wrap the ImageResponse in a NextResponse
+    const nextRes = new NextResponse(imageResponse.body, {
+      status: imageResponse.status,
+      headers: imageResponse.headers,
+    })
+    return nextRes
   } catch (error) {
     logger.error({ err: error instanceof Error ? error : new Error(String(error)) }, 'Failed to generate OG image')
-    return new Response('Failed to generate image', { status: 500 })
+    return NextResponse.json({ error: 'Failed to generate image' }, { status: 500 })
   }
 }
+
+export const GET = withApiErrorHandler(handler)
 
 /**
  * Runtime configuration

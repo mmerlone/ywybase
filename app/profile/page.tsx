@@ -56,7 +56,7 @@ export async function generateMetadata(): Promise<Metadata> {
     description: bio || 'Manage your profile settings and preferences',
     openGraph: {
       title: `${displayName} - ${SITE_CONFIG.name}`,
-      description: bio || 'View profile on YwyBase',
+      description: bio || `View profile on ${SITE_CONFIG.name}`,
       images: [
         {
           url: ogImageUrl,
@@ -69,7 +69,7 @@ export async function generateMetadata(): Promise<Metadata> {
     twitter: {
       card: 'summary_large_image',
       title: `${displayName} - ${SITE_CONFIG.name}`,
-      description: bio || 'View profile on YwyBase',
+      description: bio || `View profile on ${SITE_CONFIG.name}`,
       images: [ogImageUrl],
     },
   }
