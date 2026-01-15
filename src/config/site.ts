@@ -1,9 +1,12 @@
 import * as Sentry from '@sentry/nextjs'
 import type { Metadata } from 'next'
 
+const GITHUB_URL = 'https://github.com/mmerlone/ywybase'
+
 export const SITE_CONFIG = {
   // Site URLs
   url: 'https://ywybase.vercel.app',
+  github: GITHUB_URL,
 
   // Site Info
   name: 'YwyBase',
@@ -11,6 +14,7 @@ export const SITE_CONFIG = {
   description:
     'YwyBase - A Solid Ground to Scale. A comprehensive Next.js application with authentication, Material UI, and modern best practices',
   project_key: 'ywybase',
+
   // theme: 'concrete',
   theme: 'mui',
   // theme: 'ywybase',
@@ -20,11 +24,11 @@ export const SITE_CONFIG = {
 
   // Social Images
   ogImage: {
-    url: '/images/og-image.jpg',
+    url: '/api/og',
     width: 1200,
     height: 630,
     alt: 'YwyBase - Solid Ground to Scale',
-    type: 'image/jpeg',
+    type: 'image/png',
   },
 
   // SEO
@@ -67,7 +71,7 @@ export const SITE_CONFIG = {
   navigation: [
     { label: 'About', link: '/about' },
     { label: 'Sentry', link: '/sentry-example-page' },
-    { label: 'GitHub', link: 'https://github.com/mmerlone/ywybase', target: '_blank' },
+    { label: 'GitHub', link: GITHUB_URL, target: '_blank' },
   ],
 
   logging: null,
@@ -76,6 +80,47 @@ export const SITE_CONFIG = {
 // Helper to generate full URL for a given path
 export const fullUrl = (path: string): string => {
   return new URL(path, SITE_CONFIG.url).toString()
+}
+
+/**
+ * Generate OG image URL with optional parameters
+ *
+ * @param options - Configuration for the OG image
+ * @returns Full URL to the OG image API endpoint
+ *
+ * @example
+ * ```ts
+ * getOgImageUrl() // Default site OG image
+ * getOgImageUrl({ title: 'Custom Title' }) // Custom title
+ * getOgImageUrl({ title: 'Page', description: 'Description' }) // Title + description
+ * ```
+ */
+export const getOgImageUrl = (options?: { title?: string; description?: string }): string => {
+  const params = new URLSearchParams()
+  if (options?.title) params.set('title', options.title)
+  if (options?.description) params.set('description', options.description)
+  const queryString = params.toString()
+  return fullUrl(`/api/og${queryString ? `?${queryString}` : ''}`)
+}
+
+/**
+ * Generate profile-specific OG image URL
+ *
+ * @param options - Profile configuration for the OG image
+ * @returns Full URL to the profile OG image API endpoint
+ *
+ * @example
+ * ```ts
+ * getProfileOgImageUrl({ name: 'John Doe' })
+ * getProfileOgImageUrl({ name: 'Jane', avatar: 'https://...', bio: 'Developer' })
+ * ```
+ */
+export const getProfileOgImageUrl = (options: { name: string; avatar?: string; bio?: string }): string => {
+  const params = new URLSearchParams()
+  params.set('name', options.name)
+  if (options.avatar) params.set('avatar', options.avatar)
+  if (options.bio) params.set('bio', options.bio)
+  return fullUrl(`/api/og/profile?${params.toString()}`)
 }
 
 // Generate metadata object
