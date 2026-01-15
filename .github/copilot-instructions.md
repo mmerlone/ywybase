@@ -273,4 +273,12 @@ pnpm run build
 
 - Fix any build errors before submitting or merging your work.
 
+4. **Commit Grouping Rules:**
+
+- **Group commits by feature or domain.**
+- Each commit should address a single logical change (e.g., docs, theming, middleware, removals).
+- Do **not** combine unrelated changes into a single commit.
+- Use clear, all-lowercase, one-line, semantic commit messages (e.g., `feat(theme): consistent gradients`, `fix(rate-limit): correct reset time`, `docs: update roadmap`).
+- Stage and commit each group separately before pushing.
+
 > **Note:** This process is mandatory for all contributors and applies to all PRs and direct pushes.
