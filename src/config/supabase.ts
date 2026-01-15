@@ -119,13 +119,10 @@ export function validateSupabaseConfigAtStartup(): void {
       errorMessage
     )
 
-    // Throw error to prevent application startup
-    // This works in both Edge Runtime (middleware) and Node.js runtime
-    // In production, this will cause the build/startup to fail
-    // In development, Next.js will catch and display the error
-    if (process.env.NODE_ENV === 'production') {
-      throw new Error(errorMessage)
-    }
+    // Do NOT throw error to prevent application startup
+    // Always log the error, but allow the app to start so UX fallback can be shown
+    // This enables graceful degradation and never 500s due to missing Supabase config
+    // (If you want to enforce fail-fast in CI, do so in a separate script)
   } else if (validation.warnings.length > 0) {
     logger.warn(
       {
