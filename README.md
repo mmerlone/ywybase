@@ -9,6 +9,8 @@
 
 YwyBase - A Solid Ground to Scale. A production-ready Next.js 15 application template with **clean architecture**, authentication, Material UI, and TypeScript. Built for developers who want to ship fast with best practices.
 
+This is a solo project experimenting with a myriad of AI-assisted coding tools, primarily on the free tier—including Copilot, Cursor, WindSurf, CodeRabbit, and others. As a solo endeavor spanning engineering, QA, and DevOps, all developed in my free time with AI assistance, bugs are inevitable. Use at your own risk.
+
 ## 📑 **Table of Contents**
 
 - [Key Features](#-key-features)
