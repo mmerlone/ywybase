@@ -19,9 +19,6 @@ export default function HomePage(): JSX.Element {
       <Box component="section">
         <FeaturesSection />
       </Box>
-      {/* <Box component="section">
-        <Ywy />
-      </Box> */}
       <Box component="section">
         <CTASection />
       </Box>

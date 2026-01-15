@@ -15,8 +15,8 @@ export const SITE_CONFIG = {
     'YwyBase - A Solid Ground to Scale. A comprehensive Next.js application with authentication, Material UI, and modern best practices',
   project_key: 'ywybase',
 
-  // theme: 'concrete',
-  theme: 'mui',
+  theme: 'concrete',
+  // theme: 'mui',
   // theme: 'ywybase',
 
   // Author/Creator Info

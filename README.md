@@ -7,6 +7,10 @@
 [![Supabase](https://img.shields.io/badge/Supabase-0.7.0-3ECF8E?style=flat&logo=supabase)](https://supabase.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
+## 🌐 Live Demo
+
+**Experience YwyBase instantly:** Explore the running project at [https://ywybase.vercel.app/](https://ywybase.vercel.app/)
+
 YwyBase - A Solid Ground to Scale. A production-ready Next.js 15 application template with **clean architecture**, authentication, Material UI, and TypeScript. Built for developers who want to ship fast with best practices.
 
 This is a solo project experimenting with a myriad of AI-assisted coding tools, primarily on the free tier—including Copilot, Cursor, WindSurf, CodeRabbit, and others. As a solo endeavor spanning engineering, QA, and DevOps, all developed in my free time with AI assistance, bugs are inevitable. Use at your own risk.
@@ -238,24 +242,22 @@ nano .env.local  # or use your preferred editor
    - **Required in production** - Application will fail to start without it
 
 2. **Configure Rate Limiting (Production)**
-   - For production deployments with multiple instances, configure persistent storage
-   - **Option 1: Vercel KV** (recommended for Vercel deployments):
-     - Go to [Vercel Dashboard → Storage](https://vercel.com/dashboard/stores)
-     - Create a new KV database
-     - Copy the REST API URL and Token
-     - Update your `.env.local`:
-
-     ```env
-     KV_REST_API_URL=your_vercel_kv_rest_api_url
-     KV_REST_API_TOKEN=your_vercel_kv_rest_api_token
-     ```
-
-     - **Package already included** in dependencies
-
-   - **Option 2: Redis** (for other deployments):
-     ```env
-     REDIS_URL=redis://your-redis-host:6379
-     ```
+   - For production deployments with multiple instances, configure persistent storage for rate limiting.
+   - **Recommended: Upstash Redis (via Vercel Integration)**
+     1. Go to the [Upstash Integration page](https://vercel.com/integrations/upstash).
+     2. Under "Upstash for Redis" (Redis Compatible Database), click **Install**. (Do not select Vector, QStash, or Search unless you need those products.)
+     3. If you already have an Upstash account, choose **Link Existing Upstash Account** during the integration process. You can then select your existing Redis database to connect to your Vercel project. If you do not have an account, you can create one during this step.
+     4. After setup, Upstash will provide a Redis REST URL and a token. These will be automatically added to your Vercel project as environment variables, typically:
+        - `UPSTASH_REDIS_REST_URL`
+        - `UPSTASH_REDIS_REST_TOKEN`
+     5. If you need to use custom variable names, set:
+        ```env
+        REDIS_URL=your_upstash_redis_rest_url
+        REDIS_TOKEN=your_upstash_redis_rest_token
+        ```
+        Otherwise, use the defaults provided by Upstash.
+     6. Ensure your code uses the correct environment variables for Redis connection.
+     7. Upstash also offers Vector, QStash, and Search products—install only if your project requires those features.
    - **Development**: Uses in-memory storage (no configuration needed)
 
 #### **Complete Environment Setup**

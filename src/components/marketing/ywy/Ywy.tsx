@@ -52,7 +52,7 @@ export function Ywy(): JSX.Element {
               identity of its birthplace while symbolizing the high-performance, resilient &quot;ground&quot; provided
               to developers as a starting point for their applications.
             </Typography>
-            <Typography variant="body1" color="text.secondary" sx={{ fontSize: '1.1rem', lineHeight: 1.7 }}>
+            <Typography variant="body1" color="text.secondary" sx={{ fontSize: '1.1rem', lineHeight: 1.7, mb: 3 }}>
               Beyond its linguistic origin, the name reflects the geological stability of the Paraná Shield (Escudo
               Paranaense), the ancient crystalline basement that has sustained the region&apos;s landscape for billions
               of years. Just as the Guarani concept of Ywyrupa represents a continuous terrestrial platform where
@@ -60,6 +60,9 @@ export function Ywy(): JSX.Element {
               to support the weight of complex software ecosystems. The combination of the indigenous root for earth
               with the technical term &quot;Base&quot; signals a project that is both deeply rooted in history and
               engineered for modern scalability.
+            </Typography>
+            <Typography variant="body1" color="text.secondary" sx={{ fontSize: '1.1rem', lineHeight: 1.7 }}>
+              The Araucária tree is emblematic of the region’s landscape, showcasing its natural beauty and resilience. This species dates back to the Mesozoic era. Just as the Araucária has withstood the test of time, YwyBase is designed to provide a stable and enduring foundation for developers to build upon.
             </Typography>
           </Paper>
         </Grid>

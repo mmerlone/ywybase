@@ -83,6 +83,8 @@
   "[json]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
+  "chat.mcp.enabled": true,
+  "chat.mcp.discovery.enabled": true,
   "kiroAgent.configureMCP": "Disabled",
   "codium.codeCompletion.enable": false
 }

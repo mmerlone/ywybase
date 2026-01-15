@@ -3,6 +3,11 @@
     "Sentry": {
       "url": "https://mcp.sentry.dev/mcp/mmerlones-org/ywybase",
       "type": "http"
+    },
+    "mui-mcp": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@mui/mcp@latest"]
     }
   }
 }

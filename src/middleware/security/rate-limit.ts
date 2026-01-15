@@ -21,6 +21,7 @@ import type {
   ValidationResult,
 } from '@/types/security.types'
 import { NextRequest, NextResponse } from 'next/server'
+import { Redis } from '@upstash/redis'
 
 const logger = buildLogger('security-rate-limit')
 
@@ -114,76 +115,29 @@ class MemoryRateLimitStore implements RateLimitStore {
 }
 
 /**
- * Vercel KV client interface for type safety
+ * Upstash Redis rate limit store (for production deployments)
+ *
+ * Uses atomic Redis operations for rate limiting, compatible with Upstash Redis REST API.
  */
-interface VercelKVClient {
-  get(key: string): Promise<string | RateLimitEntry | null>
-  setex(key: string, seconds: number, value: string): Promise<unknown>
-  del(key: string): Promise<number>
-  incr(key: string): Promise<number>
-  expire(key: string, seconds: number): Promise<number>
-  ttl(key: string): Promise<number>
-  eval(script: string, keys: string[], args: string[]): Promise<unknown>
-}
+class UpstashRedisRateLimitStore implements RateLimitStore {
+  private redis: Redis
 
-/**
- * Vercel KV rate limit store (for Vercel deployments)
- *
- * **Algorithm**: Atomic counter with TTL using Redis commands
- * - Uses Redis INCR for atomic increment (thread-safe across instances)
- * - Sets expiration on first increment to start the window
- * - Calculates remaining time using TTL command
- * - All operations are atomic to prevent race conditions
- *
- * **Benefits**:
- * - Thread-safe across multiple server instances
- * - Persistent storage (survives server restarts)
- * - Automatic expiration using Redis TTL
- * - Scales horizontally with Vercel KV
- *
- * **Implementation Details**:
- * - First increment (count=1): Sets TTL for the window
- * - Subsequent increments: Only increments counter
- * - Reset time calculated from remaining TTL
- * - Graceful fallback on errors (allows request)
- *
- * @example
- * ```typescript
- * import { kv } from '@vercel/kv'
- * const store = new VercelKVRateLimitStore(kv)
- *
- * // Increment counter atomically
- * const entry = await store.increment('rate-limit-auth:user@example.com', 900000)
- *
- * // Entry contains current count and reset time
- * console.log(`Attempt ${entry.count}, resets at ${new Date(entry.resetTime)}`)
- * ```
- *
- * @requires @vercel/kv package
- */
-class VercelKVRateLimitStore implements RateLimitStore {
-  private kv: VercelKVClient
-
-  constructor(kvClient: VercelKVClient) {
-    this.kv = kvClient
+  constructor(redisClient: Redis) {
+    this.redis = redisClient
   }
 
   async get(key: string): Promise<RateLimitEntry | null> {
     try {
-      const data = await this.kv.get(key)
+      const data = await this.redis.get<string>(key)
       if (!data) return null
-
       const entry: RateLimitEntry = typeof data === 'string' ? JSON.parse(data) : data
-
-      // Check if expired
       if (Date.now() > entry.resetTime) {
-        await this.kv.del(key)
+        await this.redis.del(key)
         return null
       }
-
       return entry
     } catch (err) {
-      logger.error({ err, key }, 'Error getting rate limit entry from Vercel KV')
+      logger.error({ err, key }, 'Error getting rate limit entry from Upstash Redis')
       return null
     }
   }
@@ -191,43 +145,36 @@ class VercelKVRateLimitStore implements RateLimitStore {
   async set(key: string, value: RateLimitEntry, ttl: number): Promise<void> {
     try {
       const ttlSeconds = Math.ceil(ttl / 1000)
-      await this.kv.setex(key, ttlSeconds, JSON.stringify(value))
+      await this.redis.set(key, JSON.stringify(value), { ex: ttlSeconds })
     } catch (err) {
-      logger.error({ err, key, ttl }, 'Error setting rate limit entry in Vercel KV')
+      logger.error({ err, key, ttl }, 'Error setting rate limit entry in Upstash Redis')
     }
   }
 
   async increment(key: string, windowMs: number = 15 * 60 * 1000): Promise<RateLimitEntry> {
     try {
-      // Use atomic increment to avoid race conditions
-      const currentCount = await this.kv.incr(key)
-
-      // If this is the first increment (count === 1), set the expiration
+      const currentCount = await this.redis.incr(key)
       if (currentCount === 1) {
         const ttlSeconds = Math.ceil(windowMs / 1000)
-        await this.kv.expire(key, ttlSeconds)
+        await this.redis.expire(key, ttlSeconds)
       }
-
-      // Get remaining TTL to calculate reset time
-      const ttl = await this.kv.ttl(key)
+      const ttl = await this.redis.ttl(key)
       const resetTime = Date.now() + (ttl > 0 ? ttl * 1000 : windowMs)
-
       return {
         count: currentCount,
         resetTime,
       }
     } catch (err) {
-      logger.error({ err, key }, 'Error incrementing rate limit in Vercel KV')
-      // Fallback to allowing request
-      return { count: 1, resetTime: Date.now() + 15 * 60 * 1000 }
+      logger.error({ err, key }, 'Error incrementing rate limit in Upstash Redis')
+      return { count: 1, resetTime: Date.now() + windowMs }
     }
   }
 
   async delete(key: string): Promise<void> {
     try {
-      await this.kv.del(key)
+      await this.redis.del(key)
     } catch (err) {
-      logger.error({ err, key }, 'Error deleting rate limit entry from Vercel KV')
+      logger.error({ err, key }, 'Error deleting rate limit entry from Upstash Redis')
     }
   }
 }
@@ -236,17 +183,17 @@ class VercelKVRateLimitStore implements RateLimitStore {
  * Initialize rate limit store based on environment
  */
 async function initializeRateLimitStore(): Promise<RateLimitStore> {
-  // Check for Vercel KV
-  if (process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN) {
+  // Check for Upstash Redis
+  if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
     try {
-      // Use dynamic import to avoid TypeScript module resolution issues, catching if module missing
-      const kvModule = await import('@vercel/kv').catch(() => null)
-      if (kvModule && 'kv' in kvModule) {
-        logger.info({}, 'Using Vercel KV for rate limiting')
-        return new VercelKVRateLimitStore(kvModule.kv as VercelKVClient)
-      }
+      const redis = Redis.fromEnv()
+      logger.info({}, 'Using Upstash Redis for rate limiting')
+      return new UpstashRedisRateLimitStore(redis)
     } catch (err) {
-      logger.warn({ err }, 'Vercel KV environment variables found but @vercel/kv package not installed')
+      logger.warn(
+        { err },
+        'Upstash Redis environment variables found but @upstash/redis package not installed or misconfigured'
+      )
     }
   }
 
@@ -254,7 +201,7 @@ async function initializeRateLimitStore(): Promise<RateLimitStore> {
   if (process.env.NODE_ENV === 'production') {
     logger.warn(
       {},
-      'Using in-memory rate limiting in production. This is not recommended for multi-instance deployments. Consider using Vercel KV.'
+      'Using in-memory rate limiting in production. This is not recommended for multi-instance deployments. Consider using Upstash Redis.'
     )
   } else {
     logger.info({}, 'Using in-memory rate limiting for development')
