@@ -18,7 +18,7 @@ export default function Page(): JSX.Element {
           <Alert severity="warning">
             Sentry configuration is missing; error tracking features are disabled until the required environment
             variables are set. See the setup guide in the README.{' '}
-            <MuiLink href={`${SITE_CONFIG.github}#-sentry-error-tracking`} target="_blank" rel="noreferrer">
+            <MuiLink href={`${SITE_CONFIG.github}#quick-start`} target="_blank" rel="noreferrer">
               View instructions
             </MuiLink>
           </Alert>
