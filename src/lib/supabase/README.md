@@ -331,7 +331,7 @@ Primary interface for all database operations:
 ```bash
 # Required
 NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your-supabase-publishable-key
 
 # Optional
 LOG_LEVEL=info

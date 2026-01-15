@@ -9,6 +9,8 @@
 
 YwyBase - A Solid Ground to Scale. A production-ready Next.js 15 application template with **clean architecture**, authentication, Material UI, and TypeScript. Built for developers who want to ship fast with best practices.
 
+This is a solo project experimenting with a myriad of AI-assisted coding tools, primarily on the free tier—including Copilot, Cursor, WindSurf, CodeRabbit, and others. As a solo endeavor spanning engineering, QA, and DevOps, all developed in my free time with AI assistance, bugs are inevitable. Use at your own risk.
+
 ## 📑 **Table of Contents**
 
 - [Key Features](#-key-features)
@@ -167,7 +169,7 @@ nano .env.local  # or use your preferred editor
    - Update your `.env.local`:
    ```env
    NEXT_PUBLIC_SUPABASE_URL=https://your_supabase_project_id.supabase.co
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
    SUPABASE_PROJECT_ID=your_supabase_project_id
    ```
 
@@ -263,7 +265,7 @@ Your `.env.local` should look like this:
 ```env
 # Required
 NEXT_PUBLIC_SUPABASE_URL=https://your_project_id.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
 SUPABASE_PROJECT_ID=your_project_id
 
 # Optional
@@ -456,7 +458,7 @@ git push origin main
 ```bash
 # Supabase Configuration
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
 SUPABASE_PROJECT_ID=your_supabase_project_id
 ```
 

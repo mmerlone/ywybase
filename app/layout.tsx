@@ -8,6 +8,7 @@ import { headers } from 'next/headers'
 import { LayoutClient } from './LayoutClient'
 
 import { getSiteMetadata } from '@/config/site'
+import { getSupabaseEnvStatus } from '@/config/supabase-public'
 import './globals.css'
 
 const inter = Inter({
@@ -23,12 +24,18 @@ export default async function RootLayout({ children }: { children: ReactNode }):
   const headersList = await headers()
   const nonce = headersList.get('x-nonce') || undefined
 
+  // Check Supabase configuration on the server to avoid hydration mismatches
+  const supabaseStatus = getSupabaseEnvStatus()
+
+  const isDev = process.env.NODE_ENV === 'development'
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.className} font-sans`}>
         <AppRouterCacheProvider options={{ enableCssLayer: true, key: 'mui', nonce }}>
           <InitColorSchemeScript attribute="class" nonce={nonce} />
-          <LayoutClient>{children}</LayoutClient>
+          <LayoutClient supabaseStatus={supabaseStatus} isDev={isDev}>
+            {children}
+          </LayoutClient>
         </AppRouterCacheProvider>
       </body>
     </html>

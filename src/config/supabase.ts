@@ -17,14 +17,14 @@ export interface ValidationResult {
  *
  * Required environment variables:
  * - NEXT_PUBLIC_SUPABASE_URL: Your Supabase project URL
- * - NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY: Your publishable API key (sb_publishable_...)
+ * - NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: Your publishable API key (sb_publishable_...)
  */
 export function validateSupabaseConfig(): ValidationResult {
   const errors: string[] = []
   const warnings: string[] = []
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY
+  const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
 
   // Validate URL
   if (!url) {
@@ -37,9 +37,9 @@ export function validateSupabaseConfig(): ValidationResult {
 
   // Validate publishable key
   if (!publishableKey) {
-    errors.push('Missing required environment variable: NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY')
+    errors.push('Missing required environment variable: NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY')
   } else if (!publishableKey.startsWith('sb_publishable_')) {
-    warnings.push('NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY should start with "sb_publishable_"')
+    warnings.push('NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY should start with "sb_publishable_"')
   }
 
   if (errors.length > 0) {
@@ -95,7 +95,7 @@ export function validateSupabaseConfigAtStartup(): void {
       '',
       'Required environment variables:',
       '  • NEXT_PUBLIC_SUPABASE_URL - Your Supabase project URL',
-      '  • NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY - Your publishable API key (sb_publishable_...)',
+      '  • NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY - Your publishable API key (sb_publishable_...)',
       '',
       'Setup instructions:',
       '  1. Copy .env.sample to .env.local',
@@ -105,7 +105,7 @@ export function validateSupabaseConfigAtStartup(): void {
       '',
       'Example .env.local:',
       '  NEXT_PUBLIC_SUPABASE_URL=https://xxxxx.supabase.co',
-      '  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY=sb_publishable_xxxxx',
+      '  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_xxxxx',
       '',
     ].join('\n')
 
@@ -119,13 +119,10 @@ export function validateSupabaseConfigAtStartup(): void {
       errorMessage
     )
 
-    // Throw error to prevent application startup
-    // This works in both Edge Runtime (middleware) and Node.js runtime
-    // In production, this will cause the build/startup to fail
-    // In development, Next.js will catch and display the error
-    if (process.env.NODE_ENV === 'production') {
-      throw new Error(errorMessage)
-    }
+    // Do NOT throw error to prevent application startup
+    // Always log the error, but allow the app to start so UX fallback can be shown
+    // This enables graceful degradation and never 500s due to missing Supabase config
+    // (If you want to enforce fail-fast in CI, do so in a separate script)
   } else if (validation.warnings.length > 0) {
     logger.warn(
       {

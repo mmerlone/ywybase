@@ -1,6 +1,7 @@
 'use client'
 
-import { Box, useTheme } from '@mui/material'
+import { Alert, Box, useTheme } from '@mui/material'
+import Link from 'next/link'
 import { ReactNode } from 'react'
 
 import { CookieBanner } from '@/components/cookie/CookieBanner'
@@ -14,41 +15,73 @@ import { FlashMessageHandler } from '@/components/providers/FlashMessageHandler'
 import { QueryProvider } from '@/components/providers/QueryProvider'
 import { ThemeProvider } from '@/components/providers/ThemeProvider'
 import { SnackbarProvider } from '@/contexts/SnackbarContext'
+import { SITE_CONFIG } from '@/config/site'
+import type { SupabaseEnvStatus } from '@/config/supabase-public'
 
-export function LayoutClient({ children }: { children: ReactNode }): JSX.Element {
+interface LayoutClientProps {
+  children: ReactNode
+  supabaseStatus: SupabaseEnvStatus
+  isDev: boolean
+}
+
+function MainContent({
+  children,
+  supabaseEnabled,
+  isDev,
+}: {
+  children: ReactNode
+  supabaseEnabled: boolean
+  isDev: boolean
+}): JSX.Element {
   const theme = useTheme()
-
   return (
-    <QueryProvider>
-      <AuthProvider>
-        <GlobalErrorBoundary>
-          <ThemeProvider>
-            <SnackbarProvider>
-              <NavigationProgress />
-              <FlashMessageHandler />
-              <Box id="layout-client-container" sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-                <Header />
-                <Box
-                  component="main"
-                  sx={{
-                    flex: 1,
-                    // pt: '56px',
-                    pb: 3,
-                    transition: theme.transitions.create('padding', {
-                      easing: theme.transitions.easing.sharp,
-                      duration: theme.transitions.duration.leavingScreen,
-                    }),
-                  }}>
-                  <PageBreadcrumbs />
-                  {children}
-                </Box>
-                <Footer />
-                <CookieBanner />
-              </Box>
-            </SnackbarProvider>
-          </ThemeProvider>
-        </GlobalErrorBoundary>
-      </AuthProvider>
-    </QueryProvider>
+    <Box
+      component="main"
+      sx={{
+        flex: 1,
+        pb: 3,
+        transition: theme.transitions.create('padding', {
+          easing: theme.transitions.easing.sharp,
+          duration: theme.transitions.duration.leavingScreen,
+        }),
+      }}>
+      {!supabaseEnabled && isDev && (
+        <Alert severity="warning" sx={{ mb: 2 }}>
+          Supabase configuration is missing; authentication and profile features are disabled until the required
+          environment variables are set. See the setup guide in the README.
+          {` `}
+          <Link href={`${SITE_CONFIG.github}#-quick-start`} target="_blank" rel="noreferrer">
+            View instructions
+          </Link>
+        </Alert>
+      )}
+      <PageBreadcrumbs />
+      {children}
+    </Box>
   )
+}
+
+export function LayoutClient({ children, supabaseStatus, isDev }: LayoutClientProps): JSX.Element {
+  const supabaseEnabled = supabaseStatus.isConfigured
+
+  const appShell = (
+    <GlobalErrorBoundary>
+      <ThemeProvider>
+        <SnackbarProvider>
+          <NavigationProgress />
+          <FlashMessageHandler />
+          <Box id="layout-client-container" sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+            <Header supabaseEnabled={supabaseEnabled} />
+            <MainContent supabaseEnabled={supabaseEnabled} isDev={isDev}>
+              {children}
+            </MainContent>
+            <Footer />
+            <CookieBanner />
+          </Box>
+        </SnackbarProvider>
+      </ThemeProvider>
+    </GlobalErrorBoundary>
+  )
+
+  return <QueryProvider>{supabaseEnabled ? <AuthProvider>{appShell}</AuthProvider> : appShell}</QueryProvider>
 }

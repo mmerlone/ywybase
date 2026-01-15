@@ -1,9 +1,79 @@
 import { Container, Typography, Box, Alert } from '@mui/material'
 import { redirect } from 'next/navigation'
+import type { Metadata } from 'next'
 import { getProfile } from '@/lib/actions/profile'
 import { ProfileForm } from '@/components/profile/ProfileForm'
 import { createClient } from '@/lib/supabase/server'
 import { serverLogger as logger } from '@/lib/logger'
+import { getProfileOgImageUrl, fullUrl, SITE_CONFIG } from '@/config/site'
+
+/**
+ * Generate metadata for the profile page
+ *
+ * Creates dynamic OG images based on user profile data.
+ * Falls back to default site metadata if user is not authenticated.
+ */
+export async function generateMetadata(): Promise<Metadata> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  // If no user, return default metadata
+  if (!user) {
+    return {
+      title: 'Profile',
+      description: 'Manage your profile settings and preferences',
+    }
+  }
+
+  // Fetch profile data for OG image
+  let profile = null
+  try {
+    const result = await getProfile(user.id)
+    if (result.success) {
+      profile = result.data
+    }
+  } catch (err) {
+    logger.error(
+      { err: err instanceof Error ? err : new Error('Unknown error'), userId: user.id },
+      'Failed to load profile for metadata'
+    )
+  }
+
+  const displayName = profile?.display_name || user.email?.split('@')[0] || 'User'
+  const bio = profile?.bio || undefined
+  const avatarUrl = profile?.avatar_url || undefined
+
+  const ogImageUrl = getProfileOgImageUrl({
+    name: displayName,
+    avatar: avatarUrl ? fullUrl(avatarUrl) : undefined,
+    bio,
+  })
+
+  return {
+    title: `${displayName} - Profile`,
+    description: bio || 'Manage your profile settings and preferences',
+    openGraph: {
+      title: `${displayName} - ${SITE_CONFIG.name}`,
+      description: bio || `View profile on ${SITE_CONFIG.name}`,
+      images: [
+        {
+          url: ogImageUrl,
+          width: 1200,
+          height: 630,
+          alt: `${displayName}'s Profile`,
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${displayName} - ${SITE_CONFIG.name}`,
+      description: bio || `View profile on ${SITE_CONFIG.name}`,
+      images: [ogImageUrl],
+    },
+  }
+}
 
 export default async function ProfilePage(): Promise<JSX.Element> {
   const supabase = await createClient()

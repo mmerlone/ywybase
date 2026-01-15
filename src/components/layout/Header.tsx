@@ -8,7 +8,11 @@ import { ThemeToggle } from './ThemeToggle'
 
 import { SITE_CONFIG } from '@/config/site'
 
-export function Header(): JSX.Element {
+interface HeaderProps {
+  supabaseEnabled?: boolean
+}
+
+export function Header({ supabaseEnabled = true }: HeaderProps): JSX.Element {
   return (
     <AppBar position={SITE_CONFIG.layout.fixedHeader ? 'sticky' : 'static'} elevation={2}>
       <Toolbar>
@@ -47,7 +51,7 @@ export function Header(): JSX.Element {
             )
           })}
           <ThemeToggle />
-          <UserMenu />
+          {supabaseEnabled && <UserMenu />}
         </Box>
       </Toolbar>
     </AppBar>
