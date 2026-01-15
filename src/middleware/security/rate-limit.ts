@@ -166,7 +166,7 @@ class UpstashRedisRateLimitStore implements RateLimitStore {
       }
     } catch (err) {
       logger.error({ err, key }, 'Error incrementing rate limit in Upstash Redis')
-      return { count: 1, resetTime: Date.now() + 15 * 60 * 1000 }
+      return { count: 1, resetTime: Date.now() + windowMs }
     }
   }
 

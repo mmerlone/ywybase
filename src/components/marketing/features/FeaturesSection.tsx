@@ -14,15 +14,9 @@ const features: Feature[] = [
   },
   {
     icon: <Palette />,
-    title: 'Themeable',
+    title: 'Fully Themeable UI',
     description:
-      'Fully themeable UI with dynamic theme switching, Material UI v7, and custom theme registry. Light/dark mode and easy extensibility.',
-  },
-  {
-    icon: <Article />,
-    title: 'New Relic Integration',
-    description:
-      'Optional New Relic support for observability, performance monitoring, and advanced application insights.',
+      'Dynamic theme switching, Material UI v7, custom theme registry, and light/dark mode for easy extensibility.',
   },
   {
     icon: <FlashOn />,
@@ -83,7 +77,7 @@ const features: Feature[] = [
     icon: <Article />,
     title: 'Flexible Logging',
     description:
-      'Comprehensive logging system supporting multiple providers (pino, Sentry, New Relic) with structured logging and configurable log levels.',
+      'Comprehensive logging system supporting multiple providers (pino, Sentry) with structured logging and configurable log levels.',
     span: 2,
     isHighlighted: true,
   },

@@ -71,7 +71,7 @@ const theme = responsiveFontSizes(
     },
     // Custom theme extensions for gradients and effects
     gradients: {
-      primary: 'linear-gradient(90deg, #1976d2, #9c27b0)',
+      primary: 'linear-gradient(90deg, var(--mui-palette-primary-main), var(--mui-palette-primary-light))',
       primaryToSecondary: 'linear-gradient(90deg, var(--mui-palette-primary-main), var(--mui-palette-secondary-main))',
       fadeToBackground: 'linear-gradient(to bottom, transparent, var(--mui-palette-background-default))',
       overlaySubtle: 'linear-gradient(to top, rgba(0,0,0,0.1), transparent)',

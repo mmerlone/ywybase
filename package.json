@@ -60,7 +60,6 @@
     "lru-cache": "^11.2.2",
     "moment-timezone": "^0.6.0",
     "motion": "^12.23.22",
-    "newrelic": "^13.9.1",
     "next": "15.5.9",
     "next-themes": "latest",
     "pino": "^10.0.0",

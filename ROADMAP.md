@@ -14,7 +14,6 @@
 - Implement `AuditStorageService` for database operations
 - Update audit trail creation to persist entries
 - Add audit log querying capabilities
-- **Gap**: Audit logs currently only go to console/New Relic (ephemeral)
 
 #### Audit Report Generation
 
