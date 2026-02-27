@@ -10,7 +10,39 @@ Development and build scripts for the YwyBase project.
 
 Generates TypeScript types from your Supabase database schema.
 
-````bash
+```bash
+pnpm run gen:types
+```
+
+#### **generate-supabase-config.ts**
+
+Updates `supabase/config.toml` when the Supabase CLI version changes.
+
+```bash
+# Check if config needs update
+npx tsx scripts/generate-supabase-config.ts
+
+# Force update even if versions match
+npx tsx scripts/generate-supabase-config.ts --force
+
+# Check only (exit code 1 if update needed)
+npx tsx scripts/generate-supabase-config.ts --check
+```
+
+**What it does:**
+
+- Compares CLI version with version stored in `config.toml`
+- Generates fresh config from current CLI if versions differ
+- Preserves project-specific customizations (project_id, auth settings)
+- Adds `# CLI Version: x.x.x` header for tracking
+
+**Preserved Settings:**
+
+- `project_id` - Your project identifier
+- `auth.email.enable_confirmations` - Email verification requirement
+- `auth.email.secure_password_change` - Password change security
+- `auth.email.max_frequency` - Email rate limiting
+
 ### **💾 Database Management Scripts**
 
 #### **init-database.ts**
@@ -23,7 +55,7 @@ pnpm run db:init
 
 # Check migration status
 pnpm run db:init --status
-````
+```
 
 **What it does:**
 

@@ -124,4 +124,7 @@ ${themeEntries.join('\n')}
   themeNames.forEach((name) => console.log(`  - ${name}`))
 }
 
-generateThemes()
+generateThemes().catch((error) => {
+  console.error('Failed to generate themes:', error)
+  process.exit(1)
+})

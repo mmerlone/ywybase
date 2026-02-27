@@ -21,8 +21,10 @@
  * @since 1.0.0
  */
 
-import { readFileSync, writeFileSync } from 'fs'
-import { join } from 'path'
+import { readFileSync, writeFileSync } from 'node:fs'
+import { join } from 'node:path'
+
+import { safeJsonParse } from '@/lib/utils/json'
 import { format } from 'prettier'
 
 const LOCALES_PATH = join(process.cwd(), 'src/locales')
@@ -42,7 +44,11 @@ const TYPES_PATH = join(process.cwd(), 'src/types/generated/i18n.types.ts')
  */
 function parseJsonFile<T = unknown>(path: string): T {
   const content = readFileSync(path, 'utf-8')
-  return JSON.parse(content) as T
+  const parsed = safeJsonParse(content)
+  if (parsed === null) {
+    throw new Error(`Failed to parse JSON file: ${path}`)
+  }
+  return parsed as T
 }
 
 /**
