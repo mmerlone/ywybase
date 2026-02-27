@@ -46,7 +46,6 @@
 - **Utilities**: `camelCase.ts` (e.g., `formatDate.ts`)
 - **Routes**: `kebab-case` directories (e.g., `user-profile/`)
 - **Types**: `PascalCase.ts` (e.g., `UserType.ts`)
-- **Config**: `camelCase.ts` (e.g., `siteConfig.ts`)
 
 ### Import Order & Aliases
 

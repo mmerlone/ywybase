@@ -7,6 +7,7 @@
 - Node.js >= 18.0.0
 - pnpm package manager
 - Git with SSH keys configured
+- Next.js 15.5.9
 
 ### Initial Setup
 
@@ -104,8 +105,18 @@ pnpm run format:check
 # Generate TypeScript types from database
 pnpm run gen:types
 
-# Run migrations (if needed)
-supabase db push
+# Initialize database (apply migrations)
+pnpm run db:init
+
+# Initialize database with fresh schema (use --reset flag)
+# WARNING! This will destroy and reset the database!
+pnpm run db:init --reset
+
+# Check migration status
+pnpm run db:init --status
+
+# Generate database backup
+pnpm run backup:db
 ```
 
 ### Type Generation
@@ -122,11 +133,10 @@ supabase db push
 # Run all tests
 pnpm test
 
-# Run tests in watch mode
-pnpm test:watch
-
-# Run tests with coverage
-pnpm test:coverage
+# Note: test:watch and test:coverage scripts are not currently defined in package.json
+# To add them, include these scripts in package.json:
+# "test:watch": "tsx --test --watch",
+# "test:coverage": "tsx --test --coverage"
 ```
 
 ### Test Structure
@@ -165,7 +175,8 @@ pnpm build
 # Supabase Configuration
 NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your-supabase-publishable-key
-SUPABASE_SECRET_KEY=your-secret-key
+SUPABASE_SECRET_KEY=your-supabase-secret-key
+SUPABASE_PROJECT_ID=your-supabase-project-id
 
 # Development (optional)
 NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL=http://localhost:3000
@@ -175,11 +186,21 @@ SENTRY_AUTH_TOKEN=your-sentry-token
 NEXT_PUBLIC_SENTRY_DSN=your-sentry-dsn
 
 # Logging
-LOG_LEVEL=debug
+LOG_LEVEL=info
 NODE_ENV=development
 
 # Additional Services
 IPGEOLOCATION_API_KEY=your-api-key
+
+# Security
+CSRF_SECRET=your-csrf-secret-32-chars-minimum
+
+# Upstash Redis / KV (Recommended for Vercel deployments)
+KV_REST_API_READ_ONLY_TOKEN=your-upstash-read-only-token
+KV_REST_API_TOKEN=your-upstash-api-token
+KV_REST_API_URL=https://your-upstash-instance.upstash.io
+KV_URL=rediss://default:your_upstash_api_token@your-upstash-instance.upstash.io:6379
+REDIS_URL=rediss://default:your_upstash_api_token@your-upstash-instance.upstash.io:6379
 ```
 
 ## Debugging

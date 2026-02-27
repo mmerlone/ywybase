@@ -14,9 +14,9 @@
 
 ## Project Structure
 
-Follow the structure defined in `STRUCTURE.md` at all times. Before making any changes:
+Follow the structure defined in `docs/structure.md` at all times. Before making any changes:
 
-1. Always check `STRUCTURE.md` for the canonical structure
+1. Always check `docs/structure.md` for the canonical structure
 2. Follow Next.js 15 App Router conventions
 3. Maintain separation of concerns
 
@@ -38,9 +38,10 @@ Follow the structure defined in `STRUCTURE.md` at all times. Before making any c
 
 ### Authentication
 
-- Use `@supabase/ssr` for server components
-- Protect routes with middleware
-- Store auth logic in `/src/lib/auth`
+- Use `@/lib/supabase/server` for Server Components and Server Actions
+- Use `@/lib/supabase/client` for Client Components
+- Protect routes with middleware and `src/middleware/auth.ts`
+- Rate limiting is handled by `src/middleware/security/rate-limit.ts`
 
 ### Error Handling
 
@@ -89,7 +90,7 @@ const getUser = (id: string): User => {
 
 ### Version
 
-- Using **MUI v7.3.4**
+- Using **MUI v7.3.4** (verified current)
 
 ### Component Usage
 
@@ -275,7 +276,7 @@ async function fetchUserData(userId) {
 
 ## When In Doubt
 
-1. Check `STRUCTURE.md`
+1. Check `docs/structure.md`
 2. Reference Next.js 15 documentation
 3. Follow existing patterns in the codebase
 4. Ask for clarification if needed
