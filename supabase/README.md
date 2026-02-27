@@ -208,22 +208,6 @@ export interface YourCustomType {
 }
 ```
 
-#### **Update Service Layer**
-
-```typescript
-// src/lib/supabase/services/your-service.ts
-export class YourService extends BaseService {
-  async getNewData() {
-    const { data, error } = await this.client
-      .from('new_table') // New table from migration
-      .select('*')
-
-    if (error) throw error
-    return data
-  }
-}
-```
-
 #### **Update Components**
 
 ```typescript
