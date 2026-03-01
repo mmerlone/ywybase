@@ -14,6 +14,27 @@ import type { SerializeOptions } from 'cookie'
 const isProduction = process.env.NODE_ENV === 'production'
 const isDevelopment = process.env.NODE_ENV === 'development'
 
+const toKebabCase = (key: string): string => key.replace(/[A-Z]/g, (m) => `-${m.toLowerCase()}`)
+
+type NoncePlaceholder = "'nonce-{NONCE}'"
+
+type ScriptSrcValue = NoncePlaceholder | string
+
+type CSPConfigStrict = {
+  defaultSrc?: readonly string[]
+  scriptSrc?: readonly ScriptSrcValue[]
+  styleSrc?: readonly string[]
+  imgSrc?: readonly string[]
+  fontSrc?: readonly string[]
+  connectSrc?: readonly string[]
+  frameSrc?: readonly string[]
+  objectSrc?: readonly string[]
+  baseUri?: readonly string[]
+  formAction?: readonly string[]
+  frameAncestors?: readonly string[]
+  upgradeInsecureRequests?: boolean
+}
+
 /**
  * Content Security Policy (CSP) Configuration
  *
@@ -383,34 +404,35 @@ export const AUDIT_CONFIG = {
 /**
  * Generate CSP header string from configuration
  */
-export function generateCSPHeader(nonce?: string): string {
-  const directives = Object.entries(CSP_CONFIG).map(([key, value]) => {
-    if (key === 'upgradeInsecureRequests' && value === true) {
-      return 'upgrade-insecure-requests'
-    }
+export function generateCSPHeader(config: CSPConfigStrict, nonce?: string): string {
+  return (Object.keys(config) as Array<keyof CSPConfigStrict>)
+    .flatMap((directive) => {
+      const value = config[directive]
+      if (!value) return []
 
-    const directiveName = key.replace(/([A-Z])/g, '-$1').toLowerCase()
+      const name = toKebabCase(String(directive))
 
-    if (Array.isArray(value)) {
-      const sources = value
-        .map((source) => (nonce && source === "'nonce-{NONCE}'" ? `'nonce-${nonce}'` : source))
-        .join(' ')
-      return `${directiveName} ${sources}`
-    }
+      // Boolean directive (upgrade-insecure-requests)
+      if (typeof value === 'boolean') {
+        return value ? [name] : []
+      }
 
-    return `${directiveName} ${value}`
-  })
+      if (value.length === 0) return []
 
-  return directives.join('; ')
+      const sources = value.map((v) => (directive === 'scriptSrc' && nonce ? v.replace('{NONCE}', nonce) : v)).join(' ')
+
+      return [`${name} ${sources}`]
+    })
+    .join('; ')
 }
 
 /**
  * Get security headers with generated CSP
  */
-export function getSecurityHeaders(nonce?: string): Record<string, string> {
+export function getSecurityHeaders(nonce: string): Record<string, string> {
   return {
     ...SECURITY_HEADERS,
-    'Content-Security-Policy': generateCSPHeader(nonce),
+    'Content-Security-Policy': generateCSPHeader(CSP_CONFIG, nonce),
   }
 }
 
@@ -475,6 +497,7 @@ export const SECURITY_CONFIG = {
 // Type exports for TypeScript support
 export type SecurityConfig = typeof SECURITY_CONFIG
 export type CSPConfig = typeof CSP_CONFIG
+export type CSPValue = readonly string[] | boolean | undefined
 export type SecurityHeaders = typeof SECURITY_HEADERS
 export type CookieConfig = typeof COOKIE_CONFIG
 export type RateLimitConfig = typeof RATE_LIMIT_CONFIG

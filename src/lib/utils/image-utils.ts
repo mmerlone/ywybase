@@ -176,7 +176,7 @@ export function getOptimalAvatarSize(containerSize: number): ImageTransformOptio
  * ```
  */
 export function parseSupabaseStorageUrl(url: string | null): { bucket: string; filePath: string } | null {
-  if (!url) return null
+  if (url === null || url === '') return null
 
   // Supabase URLs follow the pattern: https://{project}.supabase.co/storage/v1/object/public/{bucket}/{path}
   const urlParts = url.split('/storage/v1/object/public/')

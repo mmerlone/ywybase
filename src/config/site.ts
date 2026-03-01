@@ -1,7 +1,17 @@
 import * as Sentry from '@sentry/nextjs'
 import type { Metadata } from 'next'
 
-const GITHUB_URL = 'https://github.com/mmerlone/ywybase'
+import { ROUTES } from '@/config/routes'
+
+export const GITHUB_URL = 'https://github.com/mmerlone/ywybase'
+// Maximum number of social links per profile
+
+type NavigationItemTarget = '_self' | '_blank' | '_parent' | '_top'
+export interface NavigationItem {
+  label: string
+  link: string
+  target?: NavigationItemTarget
+}
 
 export const SITE_CONFIG = {
   // Site URLs
@@ -47,9 +57,13 @@ export const SITE_CONFIG = {
 
   // Support and Contact
   support: {
-    // TODO: Replace with actual support URL when available
-    url: '/about',
+    url: GITHUB_URL + '/issues',
   },
+
+  // Auth Configuration
+  auth: {
+    resendVerificationCooldown: 60, // seconds
+  } as const,
 
   // Password requirements
   passwordRequirements: {
@@ -70,9 +84,10 @@ export const SITE_CONFIG = {
 
   navigation: [
     { label: 'About', link: '/about' },
-    { label: 'Sentry', link: '/sentry-example-page' },
+    { label: 'Dashboard', link: ROUTES.DASHBOARD.path },
+    { label: 'Demos', link: '/demos' },
     { label: 'GitHub', link: GITHUB_URL, target: '_blank' },
-  ],
+  ] satisfies readonly NavigationItem[],
 
   logging: null,
 }

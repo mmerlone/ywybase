@@ -30,26 +30,16 @@ export async function GET(request: NextRequest) {
 
 ### In Server Actions
 
-```typescript
-import { redirect } from 'next/navigation'
-import { setFlashMessage } from '@/lib/utils/flash-messages'
-
-export async function myServerAction() {
-  'use server'
-
-  // ... do something ...
-
-  // For redirects, use cookies via Response headers
-  // Note: Server Actions with redirect need different approach
-  redirect('/dashboard?message=Success&severity=success')
-}
-```
+Server Actions cannot attach cookies to a `NextResponse` directly. Prefer setting flash
+messages in **route handlers** or **middleware** where you can return a response. For
+Server Actions, use the returned `successMessage` for UI feedback or redirect to a route
+that sets a flash message.
 
 ### In Middleware
 
 ```typescript
 import { NextRequest, NextResponse } from 'next/server'
-import { setFlashMessageInMiddleware } from '@/lib/utils/flash-messages'
+import { setFlashMessageInMiddleware } from '@/lib/utils/flash-messages.server'
 
 export function middleware(request: NextRequest) {
   const response = NextResponse.redirect(new URL('/login', request.url))

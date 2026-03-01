@@ -9,7 +9,7 @@
  * @module contexts/SnackbarContext
  */
 
-import { Alert, AlertColor, Snackbar } from '@mui/material'
+import { Alert, type AlertColor, Snackbar } from '@mui/material'
 import { createContext, useCallback, useContext, useState } from 'react'
 
 /**

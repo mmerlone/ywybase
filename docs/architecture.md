@@ -147,9 +147,7 @@ export const authService = {
 }
 ```
 
-#### **Service Layer (Reference Implementation)**
-
-> **Note**: Service classes exist in `src/lib/supabase/services/` as reference implementations, but **are not actively used** in the application. The primary pattern is **Server Actions** directly accessing the database via Supabase client.
+#### **Server Actions (Primary Pattern)**
 
 **Current Pattern** (Server Actions - actively used):
 
@@ -164,24 +162,7 @@ export const getProfile = withServerActionErrorHandling(
 )
 ```
 
-**Alternative Pattern** (Service Layer - reference only):
-
-```typescript
-// src/lib/supabase/services/database/profiles/profile.service.ts
-export abstract class ProfileService extends BaseService {
-  async getProfile(userId: string): Promise<Profile | null> {
-    // Shared business logic
-  }
-}
-```
-
-The service layer provides:
-
-- Complete dependency injection (client, logger, error handler)
-- Maximum testability with mockable dependencies
-- Reusable business logic across client/server contexts
-
-However, for most use cases, **Server Actions provide sufficient abstraction** with simpler implementation.
+Server Actions provide the right balance of abstraction and simplicity for this codebase.
 
 ## 📊 **Architecture Diagram**
 
@@ -231,8 +212,8 @@ However, for most use cases, **Server Actions provide sufficient abstraction** w
 └───────────────────────────────────────────────────────────────┘
 
 Data Flow:
-  Server Component → Action/Service → Database
-  Client Component → Hook → Action/Service → Database
+  Server Component → Action → Database
+  Client Component → Hook → Action → Database
   Server Action → Database (via Supabase Client)
 ```
 

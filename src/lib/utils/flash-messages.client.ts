@@ -7,7 +7,8 @@
 
 import type { AlertColor } from '@mui/material'
 
-import { FLASH_COOKIE_NAME, FLASH_COOKIE_MAX_AGE } from './flash-messages.constants'
+import { FLASH_COOKIE_NAME } from './flash-messages.constants'
+import { safeJsonParse } from './json'
 
 /**
  * Flash message data structure.
@@ -55,7 +56,7 @@ export const flashClient = {
     const cookies = document.cookie.split(';')
     const flashCookie = cookies.find((c) => c.trim().startsWith(`${FLASH_COOKIE_NAME}=`))
 
-    if (!flashCookie) return null
+    if (flashCookie === undefined) return null
 
     try {
       const equalIndex = flashCookie.indexOf('=')
@@ -64,7 +65,17 @@ export const flashClient = {
       const value = flashCookie.substring(equalIndex + 1).trim()
       if (!value || value.length === 0) return null
 
-      return JSON.parse(decodeURIComponent(value)) as FlashMessage
+      const parsed = safeJsonParse<FlashMessage>(
+        decodeURIComponent(value),
+        (obj): obj is FlashMessage =>
+          typeof obj === 'object' &&
+          obj !== null &&
+          'message' in obj &&
+          typeof (obj as Record<string, unknown>).message === 'string' &&
+          'severity' in obj &&
+          typeof (obj as Record<string, unknown>).severity === 'string'
+      )
+      return parsed
     } catch {
       return null
     }
@@ -83,6 +94,6 @@ export const flashClient = {
   clear(): void {
     if (typeof document === 'undefined') return
 
-    document.cookie = `${FLASH_COOKIE_NAME}=; path=/; max-age=${FLASH_COOKIE_MAX_AGE}`
+    document.cookie = `${FLASH_COOKIE_NAME}=; path=/; max-age=0`
   },
 }

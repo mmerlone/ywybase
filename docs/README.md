@@ -11,7 +11,12 @@ Welcome to the YwyBase documentation! This directory contains all the technical 
 - [Rate Limiting](./rate-limiting.md) - API rate limiting and storage setup
 - [Authentication Flows](./authentication-flows.md) - Email authentication and verification flows
 - [Flash Messages](./flash-messages.md) - Temporary notifications system
-- [Database Recreation](./database-recreation.md) - Guide for recreating the database
+- [Database Documentation](./database/) - Database operations and schema management
+  - [Profile-Auth Sync](./database/profile-auth-sync.md) - Profile-auth synchronization system
+  - [Database Recreation](./database/database-recreation.md) - Guide for recreating database
+- [Component Documentation](./components/) - UI component library documentation
+  - [Avatar Components](./components/avatar.md) - Profile picture management
+  - [Timezone Globe](./components/timezone-globe.md) - Location picker component
 
 ## Supabase
 

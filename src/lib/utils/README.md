@@ -369,25 +369,13 @@ export function LocationSelector() {
 ### Profile Management
 
 ```typescript
-import { ProfileService } from '@/lib/supabase/services/database/profiles/profile.service'
-import { convertDbProfile, convertAppProfileForUpdate } from '@/lib/utils/profile-utils'
+import { getProfile } from '@/lib/actions/profile'
+import { convertDbProfile } from '@/lib/utils/profile-utils'
 
-export class ProfileManager {
-  private profileService: ProfileService
-
-  constructor() {
-    this.profileService = ProfileService.create()
-  }
-
-  async getUserProfile(userId: string) {
-    const dbProfile = await this.profileService.getProfile(userId)
-    return convertDbProfile(dbProfile)
-  }
-
-  async updateUserProfile(userId: string, updates: Partial<Profile>) {
-    const updateData = convertAppProfileForUpdate(updates)
-    return await this.profileService.updateProfile(userId, updateData)
-  }
+export async function getUserProfile(userId: string) {
+  const result = await getProfile(userId)
+  if (!result.success || !result.data) return null
+  return convertDbProfile(result.data)
 }
 ```
 

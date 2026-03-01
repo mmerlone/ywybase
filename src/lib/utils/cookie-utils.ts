@@ -43,8 +43,8 @@ export const mergeCookiePreferences = (
   overrides?: Partial<CookiePreferences> | null
 ): CookiePreferences => ({
   ...DEFAULT_COOKIE_PREFERENCES,
-  ...(base || {}),
-  ...(overrides || {}),
+  ...(base ?? {}),
+  ...(overrides ?? {}),
 })
 
 /**
@@ -59,5 +59,5 @@ export const mergeCookiePreferences = (
  */
 export const ensureCookiePreferences = (prefs?: Partial<CookiePreferences> | null): CookiePreferences => ({
   ...DEFAULT_COOKIE_PREFERENCES,
-  ...(prefs || {}),
+  ...(prefs ?? {}),
 })

@@ -2,6 +2,75 @@
 
 import React, { useState, useEffect, useMemo } from 'react'
 import { Box, Stack, Typography } from '@mui/material'
+import { clientLogger } from '@/lib/logger'
+
+// Theme constants for consistent styling
+const CLOCK_CONTAINER_SX = {
+  position: 'relative' as const,
+  display: 'inline-flex',
+  flexDirection: 'column',
+  gap: 0.25,
+  px: 1.5,
+  py: 1,
+  borderRadius: 1.5,
+  border: '1px solid',
+  borderColor: 'divider',
+  bgcolor: 'action.hover',
+  width: 'fit-content',
+  transition: 'border-color 0.2s ease',
+  '&:hover': {
+    borderColor: 'primary.main',
+  },
+}
+
+const TIMEZONE_BADGE_SX = {
+  fontSize: '0.65rem',
+  fontWeight: 600,
+  color: 'primary.main',
+  bgcolor: 'primary.contrastText',
+  border: '1px solid',
+  borderColor: 'primary.light',
+  borderRadius: 0.75,
+  px: 0.75,
+  py: 0.125,
+  lineHeight: 1.4,
+  letterSpacing: '0.04em',
+  textTransform: 'uppercase' as const,
+}
+
+const TIME_DISPLAY_SX = {
+  fontFamily: 'monospace',
+  fontSize: '1rem',
+  fontWeight: 700,
+  lineHeight: 1.2,
+  color: 'text.primary',
+  letterSpacing: '0.02em',
+}
+
+const SECONDS_DISPLAY_SX = {
+  fontFamily: 'monospace',
+  fontSize: '0.75rem',
+  fontWeight: 500,
+  color: 'text.secondary',
+  lineHeight: 1.2,
+  minWidth: 18,
+  transition: 'opacity 0.3s ease',
+}
+
+const LIVE_INDICATOR_SX = {
+  position: 'absolute' as const,
+  bottom: 6,
+  right: 6,
+  width: 6,
+  height: 6,
+  borderRadius: '50%',
+  bgcolor: 'success.main',
+  animation: 'tzClockPulse 2s ease-in-out infinite',
+  '@keyframes tzClockPulse': {
+    '0%, 100%': { opacity: 1, transform: 'scale(1)' },
+    '50%': { opacity: 0.4, transform: 'scale(0.8)' },
+  },
+}
 
 interface TzClockDateUxProps {
   /** IANA timezone identifier (e.g. "America/New_York"). Falls back to local timezone. */
@@ -31,7 +100,8 @@ function getTimezoneAbbr(tz?: string): string {
       timeZoneName: 'short',
     }).formatToParts(new Date())
     return parts.find((p) => p.type === 'timeZoneName')?.value ?? ''
-  } catch {
+  } catch (error) {
+    clientLogger.error({ error, timezone: tz }, 'Failed to compute timezone abbreviation')
     return ''
   }
 }
@@ -63,7 +133,7 @@ function computeOffsetLabel(tz?: string): string {
       if (!match?.[1]) return 0
       const hours = parseInt(match[1], 10)
       const minuteStr = match[2]
-      const minutes = minuteStr ? parseInt(minuteStr, 10) * Math.sign(hours || 1) : 0
+      const minutes = minuteStr ? parseInt(minuteStr, 10) * Math.sign(hours ?? 1) : 0
       return hours * 60 + minutes
     }
 
@@ -78,7 +148,8 @@ function computeOffsetLabel(tz?: string): string {
     const label = isWholeHour ? `${Math.floor(absDiffHours)}h` : `${absDiffHours.toFixed(1)}h`
 
     return diffMin > 0 ? `${label} ahead of you` : `${label} behind you`
-  } catch {
+  } catch (error) {
+    clientLogger.error({ error, timezone: tz }, 'Failed to compute timezone offset')
     return ''
   }
 }
@@ -102,32 +173,35 @@ export function TzClockDateUx({ timezone, showDate = false }: TzClockDateUxProps
   // Compute offset label once (doesn't change while mounted)
   const offsetLabel = useMemo(() => computeOffsetLabel(timezone), [timezone])
 
-  useEffect(() => {
+  // Memoize Intl formatters for performance
+  const timeFormatters = useMemo(() => {
     const is24Hour = !new Intl.DateTimeFormat(navigator.language, { hour: 'numeric' })
       .formatToParts(new Date())
       .find((part) => part.type === 'dayPeriod')
 
-    const fullTimeFormatter = new Intl.DateTimeFormat(navigator.language, {
-      timeZone: timezone,
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: !is24Hour,
-    })
+    return {
+      fullTime: new Intl.DateTimeFormat(navigator.language, {
+        timeZone: timezone,
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: !is24Hour,
+      }),
+      date: new Intl.DateTimeFormat(navigator.language, {
+        timeZone: timezone,
+        weekday: 'short',
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+      }),
+      tzAbbr: getTimezoneAbbr(timezone),
+    }
+  }, [timezone])
 
-    const dateFormatter = new Intl.DateTimeFormat(navigator.language, {
-      timeZone: timezone,
-      weekday: 'short',
-      month: 'long',
-      day: 'numeric',
-      year: 'numeric',
-    })
-
-    const tzAbbr = getTimezoneAbbr(timezone)
-
+  useEffect(() => {
     const updateClock = (): void => {
       const now = new Date()
-      const parts = fullTimeFormatter.formatToParts(now)
+      const parts = timeFormatters.fullTime.formatToParts(now)
 
       // Extract individual part values by type
       const hour = parts.find((p) => p.type === 'hour')?.value ?? ''
@@ -139,8 +213,8 @@ export function TzClockDateUx({ timezone, showDate = false }: TzClockDateUxProps
         timePre: `${hour}:${minute}`,
         seconds: second,
         timePost: dayPeriod ? ` ${dayPeriod}` : '',
-        tzAbbr,
-        date: showDate ? dateFormatter.format(now) : '',
+        tzAbbr: timeFormatters.tzAbbr,
+        date: showDate ? timeFormatters.date.format(now) : '',
         offsetLabel,
       })
     }
@@ -148,94 +222,38 @@ export function TzClockDateUx({ timezone, showDate = false }: TzClockDateUxProps
     updateClock()
     const interval = setInterval(updateClock, 1000)
     return (): void => clearInterval(interval)
-  }, [timezone, showDate, offsetLabel])
+  }, [timezone, showDate, offsetLabel, timeFormatters])
 
   if (!clock.timePre) return <Box sx={{ height: 40 }} />
 
   return (
     <Box
-      sx={{
-        position: 'relative',
-        display: 'inline-flex',
-        flexDirection: 'column',
-        gap: 0.25,
-        px: 1.5,
-        py: 1,
-        borderRadius: 1.5,
-        border: '1px solid',
-        borderColor: 'divider',
-        bgcolor: 'action.hover',
-        width: 'fit-content',
-        transition: 'border-color 0.2s ease',
-        '&:hover': {
-          borderColor: 'primary.main',
-        },
-      }}>
+      sx={CLOCK_CONTAINER_SX}
+      role="timer"
+      aria-live="polite"
+      aria-label={`Current time in ${timezone ?? 'local'} timezone`}>
       {/* Main time row */}
       <Stack direction="row" alignItems="baseline" spacing={1}>
         {/* Timezone badge */}
         {clock.tzAbbr && (
-          <Typography
-            component="span"
-            sx={{
-              fontSize: '0.65rem',
-              fontWeight: 600,
-              color: 'primary.main',
-              bgcolor: 'primary.contrastText',
-              border: '1px solid',
-              borderColor: 'primary.light',
-              borderRadius: 0.75,
-              px: 0.75,
-              py: 0.125,
-              lineHeight: 1.4,
-              letterSpacing: '0.04em',
-              textTransform: 'uppercase',
-            }}>
+          <Typography component="span" sx={TIMEZONE_BADGE_SX} aria-label={`Timezone: ${clock.tzAbbr}`}>
             {clock.tzAbbr}
           </Typography>
         )}
         <Box sx={{ display: 'inline-flex', alignItems: 'baseline' }}>
           {/* HH:MM */}
-          <Typography
-            component="span"
-            sx={{
-              fontFamily: 'monospace',
-              fontSize: '1rem',
-              fontWeight: 700,
-              lineHeight: 1.2,
-              color: 'text.primary',
-              letterSpacing: '0.02em',
-            }}>
+          <Typography component="span" sx={TIME_DISPLAY_SX} aria-label="Hours and minutes">
             {clock.timePre}
           </Typography>
 
           {/* :SS — smaller, dimmer */}
-          <Typography
-            component="span"
-            sx={{
-              fontFamily: 'monospace',
-              fontSize: '0.75rem',
-              fontWeight: 500,
-              color: 'text.secondary',
-              lineHeight: 1.2,
-              minWidth: 18,
-              transition: 'opacity 0.3s ease',
-            }}>
+          <Typography component="span" sx={SECONDS_DISPLAY_SX} aria-label="Seconds">
             :{clock.seconds}
           </Typography>
 
           {/* AM/PM (empty for 24h locales) */}
           {clock.timePost && (
-            <Typography
-              component="span"
-              m={1}
-              sx={{
-                fontFamily: 'monospace',
-                fontSize: '1rem',
-                fontWeight: 700,
-                lineHeight: 1.2,
-                color: 'text.primary',
-              }}>
+            <Typography component="span" m={1} sx={TIME_DISPLAY_SX} aria-label="Time period">
               {clock.timePost}
             </Typography>
           )}
@@ -243,22 +261,7 @@ export function TzClockDateUx({ timezone, showDate = false }: TzClockDateUxProps
       </Stack>
 
       {/* Pulsing live dot — bottom-right corner */}
-      <Box
-        sx={{
-          position: 'absolute',
-          bottom: 6,
-          right: 6,
-          width: 6,
-          height: 6,
-          borderRadius: '50%',
-          bgcolor: 'success.main',
-          animation: 'tzClockPulse 2s ease-in-out infinite',
-          '@keyframes tzClockPulse': {
-            '0%, 100%': { opacity: 1, transform: 'scale(1)' },
-            '50%': { opacity: 0.4, transform: 'scale(0.8)' },
-          },
-        }}
-      />
+      <Box sx={LIVE_INDICATOR_SX} aria-label="Live indicator" title="Live updating clock" />
 
       {/* Date row */}
       {showDate && clock.date && (
@@ -268,7 +271,8 @@ export function TzClockDateUx({ timezone, showDate = false }: TzClockDateUxProps
             color: 'text.secondary',
             lineHeight: 1.3,
             fontSize: '0.75rem',
-          }}>
+          }}
+          aria-label="Date">
           {clock.date}
         </Typography>
       )}
@@ -282,7 +286,8 @@ export function TzClockDateUx({ timezone, showDate = false }: TzClockDateUxProps
             lineHeight: 1.3,
             fontSize: '0.7rem',
             fontStyle: 'italic',
-          }}>
+          }}
+          aria-label="Time offset from your timezone">
           {clock.offsetLabel}
         </Typography>
       )}

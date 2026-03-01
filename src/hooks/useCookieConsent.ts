@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 
 import { logger } from '@/lib/logger/client'
+import { safeJsonParse } from '@/lib/utils/json'
 import { ensureCookiePreferences } from '@/lib/utils/cookie-utils'
 import type { CookiePreferences } from '@/types/cookie.types'
 
@@ -16,6 +17,10 @@ interface CookieConsentState {
   hasConsent: boolean | null
   /** Current cookie preferences for each category */
   preferences: CookiePreferences
+  /** Whether the consent banner is currently visible */
+  isBannerOpen: boolean
+  /** Whether preferences are currently loading from localStorage */
+  isLoading: boolean
 }
 
 /**
@@ -127,67 +132,72 @@ type UseCookieConsentReturn = {
  * ```
  */
 export function useCookieConsent(): UseCookieConsentReturn {
-  // Split state to avoid cyclic dependencies and complex updates
-  const [isBannerOpen, setIsBannerOpen] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
-
-  const [state, setState] = useState<CookieConsentState>(() => {
-    // Always return default state on initial render (server and client)
-    // This ensures server and client produce identical output during SSR
-    return {
-      preferences: { ...defaultPreferences },
-      hasConsent: null,
-    }
+  const [state, setState] = useState<CookieConsentState>({
+    hasConsent: null,
+    preferences: { ...defaultPreferences },
+    isBannerOpen: false,
+    isLoading: true,
   })
 
   // Load actual values from localStorage after mount
-  useEffect(() => {
-    try {
-      const savedConsent = localStorage.getItem(COOKIE_CONSENT_KEY)
-      const savedPrefs = localStorage.getItem(COOKIE_PREFERENCES_KEY)
+  useEffect((): (() => void) | void => {
+    let mounted = true
 
-      const hasConsent = savedConsent !== null && savedConsent !== undefined ? Boolean(JSON.parse(savedConsent)) : null
+    const loadFromStorage = (): void => {
+      try {
+        const rawConsent = localStorage.getItem(COOKIE_CONSENT_KEY)
+        const rawPrefs = localStorage.getItem(COOKIE_PREFERENCES_KEY)
 
-      const parsedPrefs = ((): CookiePreferences => {
-        if (savedPrefs === null || savedPrefs === undefined) return { ...defaultPreferences }
-        try {
-          const raw = JSON.parse(savedPrefs) as CookiePreferences
-          return ensureCookiePreferences(raw)
-        } catch (err) {
-          logger.error({ err }, 'Failed to parse saved cookie preferences')
-          return { ...defaultPreferences }
+        // Robust parsing: handle null, "null", "true", "false" correctly
+        const parsedConsent = rawConsent !== null ? safeJsonParse(rawConsent) : null
+        const hasConsent = typeof parsedConsent === 'boolean' ? parsedConsent : null
+
+        const preferences = ((): CookiePreferences => {
+          if (!rawPrefs) return { ...defaultPreferences }
+          try {
+            return ensureCookiePreferences(safeJsonParse(rawPrefs) as CookiePreferences)
+          } catch {
+            return { ...defaultPreferences }
+          }
+        })()
+
+        if (mounted) {
+          setState({
+            hasConsent,
+            preferences,
+            isBannerOpen: hasConsent === null,
+            isLoading: false,
+          })
         }
-      })()
+      } catch (err) {
+        logger.error({ err }, 'Error loading cookie preferences from localStorage')
+        if (mounted) {
+          setState((prev) => ({ ...prev, isLoading: false }))
+        }
+      }
+    }
 
-      // Syncing from external system (localStorage) to state
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setState({
-        hasConsent,
-        preferences: parsedPrefs,
-      })
-      // Reflect consent decision in banner visibility
-      setIsBannerOpen(hasConsent === null)
-      setIsLoading(false)
-    } catch (err) {
-      logger.error({ err }, 'Error loading cookie preferences from localStorage')
-      setIsLoading(false)
+    loadFromStorage()
+    return () => {
+      mounted = false
     }
   }, [])
 
-  const savePreferences = useCallback(async (preferences: CookiePreferences, consent: boolean) => {
+  const savePreferences = useCallback(async (preferences: CookiePreferences, consent: boolean): Promise<void> => {
     try {
       const validPrefs = ensureCookiePreferences(preferences)
 
-      // Save to localStorage first (this is a client-only hook, so window is always available)
+      // Save to localStorage (client-only)
       localStorage.setItem(COOKIE_PREFERENCES_KEY, JSON.stringify(validPrefs))
       localStorage.setItem(COOKIE_CONSENT_KEY, JSON.stringify(consent))
 
-      // Then update state
+      // Update state atomically
       setState({
         preferences: validPrefs,
         hasConsent: consent,
+        isBannerOpen: false,
+        isLoading: false,
       })
-      setIsBannerOpen(false)
 
       logger.debug({ preferences: validPrefs, consent }, 'Cookie preferences saved')
     } catch (err) {
@@ -196,7 +206,7 @@ export function useCookieConsent(): UseCookieConsentReturn {
     }
   }, [])
 
-  const acceptAll = useCallback(async () => {
+  const acceptAll = useCallback(async (): Promise<void> => {
     const allAccepted: CookiePreferences = {
       necessary: true,
       functional: true,
@@ -208,18 +218,18 @@ export function useCookieConsent(): UseCookieConsentReturn {
 
   // Accept selected cookie categories
   const acceptSelected = useCallback(
-    async (prefs: Partial<CookiePreferences>) => {
+    async (prefs: Partial<CookiePreferences>): Promise<void> => {
       const newPreferences = {
         ...state.preferences,
         ...prefs,
-        necessary: true, // Always keep necessary cookies enabled
+        necessary: true,
       }
       await savePreferences(newPreferences, true)
     },
     [savePreferences, state.preferences]
   )
 
-  const decline = useCallback(async () => {
+  const decline = useCallback(async (): Promise<void> => {
     await savePreferences(
       {
         necessary: true,
@@ -232,18 +242,16 @@ export function useCookieConsent(): UseCookieConsentReturn {
   }, [savePreferences])
 
   // Show/hide banner
-  const showBanner = useCallback(() => {
-    setIsBannerOpen(true)
+  const showBanner = useCallback((): void => {
+    setState((prev) => ({ ...prev, isBannerOpen: true }))
   }, [])
 
-  const hideBanner = useCallback(() => {
-    setIsBannerOpen(false)
+  const hideBanner = useCallback((): void => {
+    setState((prev) => ({ ...prev, isBannerOpen: false }))
   }, [])
 
   return {
     ...state,
-    isBannerOpen,
-    isLoading,
     acceptAll,
     acceptSelected,
     decline,

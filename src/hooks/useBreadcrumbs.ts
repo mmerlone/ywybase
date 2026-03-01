@@ -99,7 +99,7 @@ export function useBreadcrumbs(): BreadcrumbItem[] {
       currentPath += `/${segment}`
 
       // Get label from map or use formatted segment as fallback
-      const label = breadcrumbLabels[segment] || segment.charAt(0).toUpperCase() + segment.slice(1)
+      const label = breadcrumbLabels[segment] ?? segment.charAt(0).toUpperCase() + segment.slice(1)
 
       // Only add if not the last segment (last segment is current page)
       if (index < segments.length - 1) {

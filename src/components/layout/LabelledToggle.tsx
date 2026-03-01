@@ -53,7 +53,7 @@ function LabelledToggleInner<T extends string | number>(
   const uniqueName = name ?? uniqueId
 
   // Sync internal value with controlled value without using effects
-  const effectiveValue = value !== undefined ? value : internalValue
+  const effectiveValue = value ?? internalValue
 
   const selectedIndex = useMemo(() => {
     if (effectiveValue === undefined) return -1
@@ -139,7 +139,7 @@ function LabelledToggleInner<T extends string | number>(
               <FormControlLabel
                 key={optionId}
                 value={String(opt.value)}
-                disabled={disabled || opt.disabled}
+                disabled={disabled ?? opt.disabled}
                 control={
                   <Radio
                     id={optionId}
@@ -168,7 +168,7 @@ function LabelledToggleInner<T extends string | number>(
                 className={cn(
                   'relative z-1 cursor-pointer',
                   'flex items-center justify-center w-full h-full',
-                  opt.disabled || disabled ? 'opacity-50 cursor-not-allowed' : undefined
+                  (opt.disabled ?? disabled) ? 'opacity-50 cursor-not-allowed' : undefined
                 )}
                 sx={{
                   m: 0,

@@ -1,3 +1,5 @@
+import { type ProfilesQueryOptions } from '@/types/admin.types'
+
 /**
  * React Query Configuration
  *
@@ -32,6 +34,14 @@ export const QUERY_CONFIG = {
   auth: {
     staleTime: 2 * 60 * 1000, // 2 minutes
     gcTime: 5 * 60 * 1000, // 5 minutes
+  },
+
+  /**
+   * Admin dashboard cache times
+   */
+  admin: {
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
   },
 
   /**
@@ -75,6 +85,16 @@ export const QUERY_CONFIG = {
 } as const
 
 /**
+ * Shared pagination settings to keep defaults/allowed sizes consistent.
+ */
+export const PAGINATION_CONFIG = {
+  adminProfiles: {
+    defaultPageSize: 10,
+    allowedPageSizes: [10, 25, 50, 100] as const,
+  },
+} as const
+
+/**
  * Query keys for consistent cache management
  */
 export const QUERY_KEYS = {
@@ -82,6 +102,16 @@ export const QUERY_KEYS = {
   auth: ['auth'] as const,
   session: ['session'] as const,
   geoLocation: (ip?: string) => ['geoLocation', ip] as const,
+  // Admin dashboard keys
+  dashboardStats: ['dashboard', 'stats'] as const,
+  /**
+   * Admin profiles list cache key.
+   * @remarks
+   * - `options` must be serializable (no functions, Dates, etc.).
+   * - Reuse a memoized object when possible so React Query doesn't treat every render as a new cache entry.
+   */
+  adminProfiles: (options?: ProfilesQueryOptions) => ['admin', 'profiles', options] as const,
+  adminProfile: (profileId?: string) => ['admin', 'profile', profileId] as const,
 } as const
 
 // Type exports

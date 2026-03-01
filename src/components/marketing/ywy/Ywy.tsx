@@ -62,7 +62,9 @@ export function Ywy(): JSX.Element {
               engineered for modern scalability.
             </Typography>
             <Typography variant="body1" color="text.secondary" sx={{ fontSize: '1.1rem', lineHeight: 1.7 }}>
-              The Araucária tree is emblematic of the region’s landscape, showcasing its natural beauty and resilience. This species dates back to the Mesozoic era. Just as the Araucária has withstood the test of time, YwyBase is designed to provide a stable and enduring foundation for developers to build upon.
+              The Araucária tree is emblematic of the region’s landscape, showcasing its natural beauty and resilience.
+              This species dates back to the Mesozoic era. Just as the Araucária has withstood the test of time, YwyBase
+              is designed to provide a stable and enduring foundation for developers to build upon.
             </Typography>
           </Paper>
         </Grid>

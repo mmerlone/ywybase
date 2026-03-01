@@ -5,7 +5,8 @@ import Link from 'next/link'
 import { SITE_CONFIG } from '@/config/site'
 
 export function CTASection(): JSX.Element {
-  const githubUrl = SITE_CONFIG.navigation.find((item) => item.label === 'GitHub')?.link || ''
+  const siteName = SITE_CONFIG.name
+  const githubUrl = SITE_CONFIG.github
 
   return (
     <Container maxWidth="md">
@@ -14,7 +15,7 @@ export function CTASection(): JSX.Element {
           Ready to get started?
         </Typography>
         <Typography variant="h6" color="text.secondary" component="p" sx={{ mb: 4 }}>
-          Join thousands of developers building amazing applications with {SITE_CONFIG.name}
+          Join thousands of developers building amazing applications with {siteName}
         </Typography>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="center" alignItems="center">
           <Button component={Link} href="/auth?op=sign-up" variant="contained" size="large">

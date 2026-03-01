@@ -1,6 +1,6 @@
 # Project Structure
 
-Canonical structure for the Next.js 15.5.6 App Router application. Follow this structure for consistency.
+Canonical structure for the Next.js 15.5.9 App Router application. Follow this structure for consistency.
 
 ## 🏗️ **Core Principles**
 
@@ -15,16 +15,24 @@ Canonical structure for the Next.js 15.5.6 App Router application. Follow this s
 
 ## 📁 **Directory Structure**
 
+// TODO: Add demo pages and move sentry
+
 ```
 /
 ├── app/                         # Next.js App Router
 │   ├── (auth)/                  # Auth routes (grouped)
-│   │   └── auth/                # Authentication pages
+│   │   └── auth/                # Authentication page (op=login/sign-up/etc.)
 │   ├── api/                     # API routes
 │   │   ├── auth/                # Auth API endpoints
 │   │   │   ├── confirm/         # Email confirmation handler
 │   │   │   └── reset-password/  # Password reset handler
-│   │   └── sentry-example-api/  # Sentry integration example
+│   │   ├── og/                   # Open Graph image generation
+│   │   │   ├── profile/          # Profile OG image generation
+│   │   │   └── route.tsx         # Generic OG image generation
+│   │   ├── sentry-example-api/   # Sentry integration example
+│   │   └── social-metadata/      # Social metadata fetcher
+│   ├── auth/                     # OAuth callback handler
+│   │   └── callback/             # OAuth redirect/callback endpoint
 │   ├── about/                   # About page
 │   ├── cookies/                 # Cookie policy
 │   ├── copyright/               # Copyright page
@@ -189,9 +197,9 @@ export * from './apiTypes'
 
 ### **Frontend Layer**
 
-- **Next.js 15.5.6** - Framework
+- **Next.js 15.5.9** - Framework
 - **React 18.3.1** - UI library
-- **Material UI 7.3.4** - Components
+- **Material UI 7.3.4** - Components (verified current)
 - **TypeScript 5.x** - Type safety
 
 ### **Data Layer**
@@ -275,7 +283,7 @@ NODE_ENV=production
 ## 📱 **File Organization Best Practices**
 
 1. **Colocate related files** - Keep components, styles, and tests together
-2. **Use barrel exports** - Create `index.ts` files for cleaner imports
+2. **Use explicit imports** - Import directly from source files for better tree-shaking and clarity
 3. **Feature-based structure** - Group by feature, not by file type
 4. **Consistent naming** - Follow established naming conventions
 5. **Type safety first** - Always include proper TypeScript types

@@ -1,9 +1,13 @@
 import { Box, Container, Grid, Link, Typography } from '@mui/material'
-
 import { SITE_CONFIG } from '@/config/site'
 
 export function Footer(): JSX.Element {
-  if (SITE_CONFIG.layout.smallFooter) {
+  const siteName = SITE_CONFIG.name
+  const siteDescription = SITE_CONFIG.description
+  const isSmallFooter = SITE_CONFIG.layout.smallFooter
+  const isFixedFooter = SITE_CONFIG.layout.fixedFooter
+
+  if (isSmallFooter) {
     return (
       <Box
         component="footer"
@@ -13,7 +17,7 @@ export function Footer(): JSX.Element {
           borderTop: '1px solid var(--mui-palette-divider)',
           position: 'relative',
           backgroundColor: 'var(--mui-palette-background-paper)',
-          ...(SITE_CONFIG.layout.fixedFooter
+          ...(isFixedFooter
             ? {
                 position: 'sticky',
                 bottom: 0,
@@ -33,7 +37,7 @@ export function Footer(): JSX.Element {
               gap: 1,
             }}>
             <Typography variant="body2">
-              © {new Date().getFullYear()} {SITE_CONFIG.name}. All rights reserved.
+              © {new Date().getFullYear()} {siteName}. All rights reserved.
             </Typography>
             <Box sx={{ display: 'flex', gap: 2 }}>
               <Link href="/terms" underline="hover" variant="body2">
@@ -61,7 +65,7 @@ export function Footer(): JSX.Element {
         borderTop: '1px solid var(--mui-palette-divider)',
         position: 'relative',
         backgroundColor: 'var(--mui-palette-background-paper)',
-        ...(SITE_CONFIG.layout.fixedFooter
+        ...(isFixedFooter
           ? {
               position: 'sticky',
               bottom: 0,
@@ -75,10 +79,10 @@ export function Footer(): JSX.Element {
         <Grid container spacing={4}>
           <Grid size={{ xs: 12, md: 6 }}>
             <Typography variant="h6" gutterBottom>
-              {SITE_CONFIG.name}
+              {siteName}
             </Typography>
             <Typography variant="body2" sx={{ mb: 2 }}>
-              {SITE_CONFIG.description}
+              {siteDescription}
             </Typography>
             <Typography variant="body2">Built with ❤️ using Next.js, Material UI, and Supabase.</Typography>
           </Grid>
@@ -99,7 +103,7 @@ export function Footer(): JSX.Element {
             </Box>
             <Box sx={{ mt: 2 }}>
               <Typography variant="body2">
-                © {new Date().getFullYear()} {SITE_CONFIG.name}. All rights reserved.
+                © {new Date().getFullYear()} {siteName}. All rights reserved.
               </Typography>
             </Box>
           </Grid>

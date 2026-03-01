@@ -24,7 +24,7 @@ export async function handleEmailAuthCode(
 
 **Features:**
 
-- Supports both `'signup'` and `'recovery'` auth types
+- Supports `AuthOperationsEnum.SIGN_UP` and `AuthOperationsEnum.FORGOT_PASSWORD` auth types
 - PKCE code validation and exchange
 - Automatic session creation via `exchangeCodeForSession()`
 - Security event logging
@@ -36,11 +36,11 @@ export async function handleEmailAuthCode(
 
 1. **Email Verification:** [`/app/api/auth/confirm/route.ts`](../app/api/auth/confirm/route.ts)
    - Handles sign-up email verification links
-   - Uses `handleEmailAuthCode` with type: `'signup'`
+   - Uses `handleEmailAuthCode` with type: `AuthOperationsEnum.SIGN_UP`
 
 2. **Password Reset:** [`/app/api/auth/reset-password/route.ts`](../app/api/auth/reset-password/route.ts)
    - Handles password reset email links
-   - Uses `handleEmailAuthCode` with type: `'recovery'`
+   - Uses `handleEmailAuthCode` with type: `AuthOperationsEnum.FORGOT_PASSWORD`
 
 ### Server Actions
 
@@ -92,7 +92,7 @@ This flow allows users to create an account and verify their email address.
 │ GET /api/auth/confirm               │
 │ - Rate limited (emailVerification)  │
 │ - Calls handleEmailAuthCode()       │
-│   with type: 'signup'               │
+│   with type: AuthOperationsEnum.SIGN_UP │
 └──────────┬──────────────────────────┘
            │
            ▼
@@ -158,7 +158,7 @@ This flow allows users to reset their password if they forgot it.
 │ GET /api/auth/reset-password        │
 │ - Rate limited (emailVerification)  │
 │ - Calls handleEmailAuthCode()       │
-│   with type: 'recovery'             │
+│   with type: AuthOperationsEnum.FORGOT_PASSWORD │
 └──────────┬──────────────────────────┘
            │
            ▼

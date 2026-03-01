@@ -1,5 +1,6 @@
-import { Box, BoxProps, Typography, SxProps, Theme } from '@mui/material'
-import { ReactNode } from 'react'
+import { Box, type BoxProps, Typography, type SxProps, type Theme } from '@mui/material'
+import { type ReactNode } from 'react'
+import { mergeSx } from 'merge-sx'
 
 interface FormSectionProps extends Omit<BoxProps, 'title' | 'sx'> {
   title: string
@@ -20,7 +21,7 @@ export function FormSection({
     <Box
       component="section"
       id={id}
-      sx={[
+      sx={mergeSx(
         {
           mb: 4,
           '&:last-child': { mb: 0 },
@@ -29,8 +30,8 @@ export function FormSection({
             pointerEvents: 'none',
           }),
         },
-        ...(Array.isArray(sx) ? sx : ([sx] as const)),
-      ]}
+        sx
+      )}
       {...props}>
       <Typography
         component="h2"

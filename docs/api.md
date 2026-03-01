@@ -277,147 +277,17 @@ const country = await detectCountry('192.168.1.1')
 
 The application uses Supabase Auth with PKCE (Proof Key for Code Exchange) for secure email-based authentication flows. All email verification and password reset operations use the shared `handleEmailAuthCode` utility located in `/src/lib/utils/email-auth-handler.ts`.
 
-#### Complete Authentication Flows
+#### Authentication Flows
 
-##### Email Verification Flow (Sign-Up)
+For complete authentication flow diagrams and detailed implementation, see **[Authentication Flows Documentation](./authentication-flows.md)**.
 
-```
-┌─────────────┐
-│ User visits │
-│  /auth?op=  │
-│   sign-up   │
-└──────┬──────┘
-       │
-       ▼
-┌─────────────────────────────────────┐
-│ User fills sign-up form:            │
-│ - Email                             │
-│ - Password                          │
-│ - Name                              │
-│ - Accepts terms                     │
-└──────────┬──────────────────────────┘
-           │
-           ▼
-┌─────────────────────────────────────┐
-│ signUpWithEmail() server action     │
-│ - Validates form data               │
-│ - Creates Supabase account          │
-│ - Sends verification email          │
-└──────────┬──────────────────────────┘
-           │
-           ▼
-┌─────────────────────────────────────┐
-│ Supabase sends email with link:     │
-│ /api/auth/confirm?code={PKCE_CODE}  │
-└──────────┬──────────────────────────┘
-           │
-           ▼ User clicks link
-┌─────────────────────────────────────┐
-│ GET /api/auth/confirm               │
-│ - Rate limited (emailVerification)  │
-│ - Calls handleEmailAuthCode()       │
-│   with type: 'signup'               │
-└──────────┬──────────────────────────┘
-           │
-           ▼
-┌─────────────────────────────────────┐
-│ handleEmailAuthCode() utility       │
-│ 1. Validates PKCE code              │
-│ 2. exchangeCodeForSession()         │
-│ 3. Creates authenticated session    │
-│ 4. Logs security event              │
-│ 5. Sets flash message               │
-└──────────┬──────────────────────────┘
-           │
-           ▼
-┌─────────────────────────────────────┐
-│ ✅ User auto-logged in              │
-│ Redirects to: /profile              │
-│ Flash message: "Email verified      │
-│ successfully! Welcome to your       │
-│ profile."                           │
-└─────────────────────────────────────┘
-```
+The authentication system supports:
 
-##### Password Reset Flow (Forgot Password)
-
-```
-┌─────────────┐
-│ User visits │
-│  /auth?op=  │
-│forgot-pass  │
-└──────┬──────┘
-       │
-       ▼
-┌─────────────────────────────────────┐
-│ User enters email address           │
-└──────────┬──────────────────────────┘
-           │
-           ▼
-┌─────────────────────────────────────┐
-│ forgotPassword() server action      │
-│ - Validates email                   │
-│ - Sends reset email via Supabase    │
-│ - redirectTo: /auth/reset-password  │
-└──────────┬──────────────────────────┘
-           │
-           ▼
-┌─────────────────────────────────────┐
-│ Supabase sends email with link:     │
-│ /api/auth/reset-password?           │
-│ code={PKCE_CODE}                    │
-└──────────┬──────────────────────────┘
-           │
-           ▼ User clicks link
-┌─────────────────────────────────────┐
-│ GET /api/auth/reset-password        │
-│ - Rate limited (emailVerification)  │
-│ - Calls handleEmailAuthCode()       │
-│   with type: 'recovery'             │
-└──────────┬──────────────────────────┘
-           │
-           ▼
-┌─────────────────────────────────────┐
-│ handleEmailAuthCode() utility       │
-│ 1. Validates PKCE code              │
-│ 2. exchangeCodeForSession()         │
-│ 3. Creates authenticated session    │
-│ 4. Logs security event              │
-│ 5. Sets flash message               │
-└──────────┬──────────────────────────┘
-           │
-           ▼
-┌─────────────────────────────────────┐
-│ ✅ User auto-logged in              │
-│ Redirects to: /auth?op=set-password │
-│ Flash message: "Password reset      │
-│ verified. Please set your new       │
-│ password."                          │
-└──────────┬──────────────────────────┘
-           │
-           ▼
-┌─────────────────────────────────────┐
-│ User enters new password            │
-│ - Password                          │
-│ - Confirm password                  │
-└──────────┬──────────────────────────┘
-           │
-           ▼
-┌─────────────────────────────────────┐
-│ setPassword() server action         │
-│ - Validates password strength       │
-│ - Updates password via Supabase     │
-│ - Logs security event               │
-└──────────┬──────────────────────────┘
-           │
-           ▼
-┌─────────────────────────────────────┐
-│ ✅ Password updated                 │
-│ Redirects to: /profile              │
-│ Flash message: "Password updated    │
-│ successfully"                       │
-└─────────────────────────────────────┘
-```
+- **Email Verification Flow** - Sign-up with email verification
+- **Password Reset Flow** - Forgot password with secure reset
+- **PKCE Security** - Proof Key for Code Exchange for enhanced security
+- **Rate Limiting** - Protection against brute force attacks
+- **Audit Logging** - Complete security event tracking
 
 #### Shared Email Authentication Utility
 
@@ -553,6 +423,72 @@ GET /api/sentry-example-api
 
 ---
 
+### Open Graph Image Generation
+
+Dynamic Open Graph (OG) image generation routes used for social sharing previews.
+
+#### Default OG Image
+
+**Endpoint:** `GET /api/og`
+
+**Query Parameters:**
+
+- `title` (string, optional) — Custom title (max 100 chars)
+- `description` (string, optional) — Custom description (max 200 chars)
+
+**Behavior:**
+
+- Returns a 1200x630 OG image via `next/og`
+- Uses the project font assets from `public/fonts`
+- Responds with an image body and proper cache headers
+
+#### Profile OG Image
+
+**Endpoint:** `GET /api/og/profile`
+
+**Query Parameters:**
+
+- `name` (string, optional) — Display name
+- `bio` (string, optional) — Short bio
+- `avatar` (string, optional) — Absolute avatar URL
+
+**Behavior:**
+
+- Returns a 1200x630 OG image tailored for profile previews
+- Used by `getProfileOgImageUrl` in `src/config/site.ts`
+
+---
+
+### Social Metadata Preview
+
+Fetches Open Graph metadata for a given external social URL.
+
+#### Social Metadata Endpoint
+
+**Endpoint:** `GET /api/social-metadata`
+
+**Query Parameters:**
+
+- `url` (string, required) — The external URL to preview
+
+**Response:**
+
+```json
+{
+  "title": "Example",
+  "description": "Example description",
+  "image": "https://example.com/image.jpg"
+}
+```
+
+**Notes:**
+
+- Validates URLs and blocks insecure/private targets
+- Uses platform-specific OG endpoints when available
+- Caches results in-memory (LRU, 1 hour)
+
+---
+
 ## API Development Guidelines
 
 ### Adding New Endpoints
@@ -642,7 +578,7 @@ describe('/api/endpoint', () => {
 
 ## Related Documentation
 
-- [Authentication System](../src/lib/auth/README.md) - Authentication implementation details
+- [Authentication System](../src/lib/actions/auth/README.md) - Authentication implementation details
 - [Error Handling](../src/lib/error/README.md) - Centralized error handling system
 - [Logging](../src/lib/logger/README.md) - Logging patterns and configuration
 - [Supabase Integration](../src/lib/supabase/README.md) - Database and auth integration
