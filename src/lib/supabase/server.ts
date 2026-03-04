@@ -1,10 +1,8 @@
 'use server'
 
 import { createServerClient } from '@supabase/ssr'
-import { type SupabaseClient } from '@supabase/supabase-js'
+import { createClient as createSupabaseClient, type SupabaseClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
-import { createClient as createSupabaseClient } from '@supabase/supabase-js'
-import { type NextRequest } from 'next/server'
 
 import { getSupabaseConfig } from '@/config/supabase'
 import { ConfigurationError } from '@/lib/error/errors'
@@ -13,44 +11,31 @@ import { logger } from '@/lib/logger/server'
 import type { Database } from '@/types/supabase'
 
 /**
- * Creates a Supabase client for server-side usage
+ * Creates a Supabase client for server-side usage (Server Components and Server Actions).
  *
- * @param request Optional NextRequest object for middleware context
  * @returns Configured Supabase client
  *
  * @example
- * // In middleware (with request context)
- * const supabase = await createClient(request)
- *
- * @example
- * // In server components/actions (no request context)
+ * ```typescript
+ * // In a Server Action or API route
  * const supabase = await createClient()
+ * const { data } = await supabase.from('profiles').select('*')
+ * ```
  *
  * @throws {ConfigurationError} If Supabase configuration is invalid
  */
-export const createClient = async (request?: NextRequest): Promise<SupabaseClient<Database>> => {
+export const createClient = async (): Promise<SupabaseClient<Database>> => {
   try {
     const config = getSupabaseConfig()
-
-    // Handle middleware context (with NextRequest)
-    if (request) {
-      return createServerClient<Database>(config.url, config.publishableKey, {
-        cookies: {
-          getAll() {
-            return request.cookies.getAll()
-          },
-          setAll(cookiesToSet) {
-            cookiesToSet.forEach(({ name, value, options }) => {
-              request.cookies.set({ name, value, ...options })
-            })
-          },
-        },
-      })
-    }
-
-    // Handle server components/actions context (existing implementation)
     const cookieStore = await cookies()
+
     return createServerClient<Database>(config.url, config.publishableKey, {
+      auth: {
+        // PKCE is required for email-link flows (sign-up verification, password reset).
+        // @supabase/ssr routes the code verifier through the cookies adapter below,
+        // so no custom auth.storage override is needed (and would break session longevity).
+        flowType: 'pkce',
+      },
       cookies: {
         getAll() {
           return cookieStore.getAll()
@@ -61,16 +46,18 @@ export const createClient = async (request?: NextRequest): Promise<SupabaseClien
               cookieStore.set(name, value, options)
             })
           } catch (err) {
+            // setAll is called from a Server Component — cookie writes are ignored.
+            // Middleware handles session refresh for the next request.
             logger.warn({ err }, 'Supabase cookie set failed (ignorable in Server Components)')
           }
         },
       },
     })
   } catch (error) {
-    // Convert generic error to ConfigurationError
+    if (error instanceof ConfigurationError) throw error
     throw new ConfigurationError({
       code: ErrorCodes.config.missingEnvVar(),
-      message: 'Supabase configuration is invalid. Please check your environment variables.',
+      message: `Supabase server client initialization failed: ${error instanceof Error ? error.message : String(error)}`,
       context: {
         originalError: error instanceof Error ? error.message : String(error),
       },
@@ -112,7 +99,16 @@ export const createClient = async (request?: NextRequest): Promise<SupabaseClien
  * ```
  */
 export const createAdminClient = async (): Promise<SupabaseClient<Database>> => {
-  return await createSupabaseClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SECRET_KEY!, {
+  const config = getSupabaseConfig()
+  const secretKey = process.env.SUPABASE_SECRET_KEY
+  if (!secretKey) {
+    throw new ConfigurationError({
+      code: ErrorCodes.config.missingEnvVar(),
+      message: 'Missing required environment variable: SUPABASE_SECRET_KEY',
+      statusCode: 500,
+    })
+  }
+  return createSupabaseClient(config.url, secretKey, {
     auth: {
       persistSession: false,
       autoRefreshToken: false,

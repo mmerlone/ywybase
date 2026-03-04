@@ -50,7 +50,7 @@ const logger = buildLogger('supabase-middleware')
  */
 export async function updateSession(request: NextRequest, incomingResponse?: NextResponse): Promise<NextResponse> {
   // Use incoming response if provided, otherwise create a new one
-  const response = incomingResponse || NextResponse.next({ request })
+  const response = incomingResponse ?? NextResponse.next({ request })
 
   try {
     const config = getSupabaseConfig()
@@ -61,7 +61,7 @@ export async function updateSession(request: NextRequest, incomingResponse?: Nex
           return request.cookies.getAll()
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, ...options }) => {
+          cookiesToSet.forEach(({ name, value, options }) => {
             // Skip if this is an error response (status >= 400)
             if (response.status >= 400) {
               return
@@ -70,18 +70,10 @@ export async function updateSession(request: NextRequest, incomingResponse?: Nex
             // Update request cookies for current request
             request.cookies.set(name, value)
 
-            // Set secure, httpOnly, and sameSite defaults for auth cookies
-            const secure = process.env.NODE_ENV === 'production'
-            const cookieOptions = {
-              ...options,
-              httpOnly: true,
-              secure,
-              sameSite: 'lax' as const,
-              path: '/',
-            }
-
-            // Set response cookies with secure options
-            response.cookies.set(name, value, cookieOptions)
+            // Use Supabase-provided options verbatim — overriding fields like
+            // httpOnly or secure would prevent the browser client from reading
+            // refreshed auth cookies in client components.
+            response.cookies.set({ name, value, ...options })
           })
         },
       },
@@ -99,8 +91,21 @@ export async function updateSession(request: NextRequest, incomingResponse?: Nex
 
     if (error) {
       logger.error({ message: error.message }, 'Failed to verify user')
-      // Don't override existing error responses
-      return response.status >= 400 ? response : response
+
+      // For invalid JWT tokens (not missing session), clear the session
+      if (error.name !== 'AuthSessionMissingError') {
+        try {
+          await supabase.auth.signOut({ scope: 'local' })
+          logger.info(
+            { module: 'supabase-middleware', action: 'clear-invalid-session' },
+            'Cleared invalid session due to JWT verification failure'
+          )
+        } catch (signOutError) {
+          logger.warn({ err: signOutError }, 'Failed to clear invalid session')
+        }
+      }
+
+      return response
     }
 
     if (user) {
@@ -142,7 +147,6 @@ export async function updateSession(request: NextRequest, incomingResponse?: Nex
     }
 
     logger.error({ err: error }, 'Unexpected error in session management')
-    // Preserve existing error responses
-    return response.status >= 400 ? response : response
+    return response
   }
 }
