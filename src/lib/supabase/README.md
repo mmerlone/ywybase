@@ -1,6 +1,6 @@
 # Supabase Integration
 
-A production-ready Supabase integration with explicit client injection and clean service architecture.
+A production-ready Supabase integration with explicit client injection and clean client/server separation.
 
 ## Overview
 
@@ -8,7 +8,6 @@ This Supabase integration provides:
 
 - **Client/Server Separation** - Proper environment-specific client creation
 - **Explicit Client Injection** - No magic, clear dependencies
-- **Simplified Service Layer** - Direct service instantiation
 - **Optional Hooks** - Custom hooks for client state management when needed
 - **Type Safety** - Full TypeScript integration with database types
 
@@ -19,63 +18,10 @@ src/lib/supabase/
 ├── client.ts              # Browser-side Supabase client
 ├── server.ts              # Server-side Supabase client
 ├── middleware.ts          # Session management middleware
-├── index.ts               # Main exports and types
-└── services/              # Service layer architecture
-    ├── base.service.ts           # Abstract base service with shared logic
-    ├── base.client.service.ts    # Client-side service base
-    ├── base.server.service.ts    # Server-side service base
-    ├── base.interface.ts         # Service interface definitions
-    └── database/
-        └── profiles/
-            └── profile.service.ts           # Abstract base profile service
+└── index.ts               # Main exports and types
 ```
 
-## Service Layer Architecture
-
-The service layer features a **unified base service** with complete dependency injection and zero code duplication:
-
-### Key Features
-
-- **🔄 Zero Code Duplication**: Single universal implementation with thin environment wrappers
-- **💉 Complete Dependency Injection**: Client, logger, and error handler all injected
-- **🎯 Consistent Naming**: Clear `*.client.service.ts` and `*.server.service.ts` pattern
-- **🧪 Maximum Testability**: All dependencies can be mocked independently
-- **🔒 Type Safety**: Full TypeScript support with proper interfaces
-
-### Architecture Overview
-
-```typescript
-// Abstract base ProfileService with shared business logic
-abstract class ProfileService extends BaseService {
-  // All profile operations implemented once
-  async getProfile(userId: string): Promise<Profile | null> {
-    /* ... */
-  }
-}
-
-// In Next.js 15, we typically use Server Actions for data operations
-// that interact with this service layer or the database directly.
-```
-
-### Service Naming Convention
-
-```
-src/lib/supabase/services/database/[domain]/
-├── [domain].service.ts           # Abstract base service with shared business logic
-├── [domain].client.service.ts    # Client-side service (browser environment)
-└── [domain].server.service.ts    # Server-side service (Node.js environment)
-```
-
-**Examples:**
-
-- `profile.service.ts` - Abstract base with all profile operations
-- `profile.client.service.ts` - Client-side profile service
-- `profile.server.service.ts` - Server-side profile service
-- `user.service.ts` - Abstract base with all user operations
-- `user.client.service.ts` - Client-side user service
-- `user.server.service.ts` - Server-side user service
-
-### Server Actions Usage
+## Server Actions Usage
 
 ```typescript
 // Server actions are the primary interface for database operations
@@ -139,6 +85,23 @@ export default async function ServerProfile({ userId }: { userId: string }) {
   return <div>{profile?.display_name}</div>
 }
 ```
+
+### Cookie Writes and Server Components
+
+- Next.js App Router restricts modifying cookies in Server Components. Attempting to write cookies from a Server Component will throw a `ReadonlyRequestCookiesError`.
+- Use `createClient()` (no args) in Server Components when you only need to read the current session or user. In this mode the helper provides `getAll()` for incoming cookies but cookie writes are intentionally a no-op.
+- When you need to persist Supabase auth cookies (for example during OAuth code exchange or PKCE flows), call `createClient(request)` from a Route Handler (`app/.../route.ts`) or from a Server Action and pass the `Request`/`NextRequest`. That gives the helper a mutable cookie store and allows writes.
+
+Example (Route Handler — cookie writes allowed):
+
+```ts
+export async function GET(request: Request) {
+  const supabase = await createClient(request)
+  // supabase.auth.exchangeCodeForSession(code) may write cookies
+}
+```
+
+If you see `ReadonlyRequestCookiesError` in logs, move cookie-writing logic out of Server Components into a Server Action or Route Handler and pass the incoming `request` to `createClient()`.
 
 ### Server Action Usage
 
@@ -809,36 +772,31 @@ export const getProfile = withServerActionErrorHandling(async (userId: string): 
   return createServerActionSuccess(data)
 })
 
-// Usage - Client components
-const profileService = new ProfileClientService()
-
 // Usage - Server components (recommended)
 const result = await getProfile(userId)
 const profile = result.success ? result.data : null
 ```
 
-> **Note**: This project primarily uses server actions for server-side operations. Service classes exist but are not the primary pattern.
+> **Note**: This project uses server actions as the primary server-side data access pattern.
 
 ## Contributing
 
-When adding new services or features:
+When adding new features:
 
-1. **Extend BaseService** for new service classes
-2. **Use proper client separation** (client vs server)
-3. **Include comprehensive error handling**
-4. **Add TypeScript types** for all operations
-5. **Write tests** for service methods
-6. **Update documentation** with examples
+1. **Use proper client separation** (client vs server)
+2. **Include comprehensive error handling**
+3. **Add TypeScript types** for all operations
+4. **Write tests** for core logic
+5. **Update documentation** with examples
 
 ### Adding a New Data Domain
 
 1.  **Create Validator**: Define the schema in `src/lib/validators/[domain].ts`.
-2.  **Create Abstract Service** (Optional): If you have shared business logic, extend `BaseService` in `src/lib/supabase/services/database/`.
-3.  **Create Server Actions**: Implement CRUD operations in `src/lib/actions/[domain].ts` using `withServerActionErrorHandling`.
-4.  **Create Hooks**: If needed for client-side state, create a hook in `src/hooks/use[Domain].ts`.
+2.  **Create Server Actions**: Implement CRUD operations in `src/lib/actions/[domain].ts` using `withServerActionErrorHandling`.
+3.  **Create Hooks**: If needed for client-side state, create a hook in `src/hooks/use[Domain].ts`.
 
 ---
 
-**Last Updated**: 2025-11-30  
-**Version**: 1.0.0  
+**Last Updated**: 2026-02-05  
+**Version**: 1.1.0  
 **Dependencies**: @supabase/supabase-js, @supabase/ssr
