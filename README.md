@@ -1,10 +1,10 @@
 # YwyBase
 
-[![Next.js](https://img.shields.io/badge/Next.js-15.5.6-000000?style=flat&logo=next.js)](https://nextjs.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-15.5.9-000000?style=flat&logo=next.js)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-18.3.1-61DAFB?style=flat&logo=react)](https://react.dev/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=flat&logo=typescript)](https://www.typescriptlang.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.3.0-3178C6?style=flat&logo=typescript)](https://www.typescriptlang.org/)
 [![MUI](https://img.shields.io/badge/MUI-7.3.4-007FFF?style=flat&logo=mui)](https://mui.com/)
-[![Supabase](https://img.shields.io/badge/Supabase-0.7.0-3ECF8E?style=flat&logo=supabase)](https://supabase.com/)
+[![Supabase](https://img.shields.io/badge/@supabase/ssr-0.7.0-3ECF8E?style=flat&logo=supabase)](https://supabase.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## 🌐 Live Demo
@@ -13,7 +13,9 @@
 
 YwyBase - A Solid Ground to Scale. A production-ready Next.js 15 application template with **clean architecture**, authentication, Material UI, and TypeScript. Built for developers who want to ship fast with best practices.
 
-This is a solo project experimenting with a myriad of AI-assisted coding tools, primarily on the free tier—including Copilot, Cursor, WindSurf, CodeRabbit, and others. As a solo endeavor spanning engineering, QA, and DevOps, all developed in my free time with AI assistance, bugs are inevitable. Use at your own risk.
+This is a solo project born from experimenting with a myriad of AI-assisted coding tools, primarily using the free tiers of Copilot, Cursor, WindSurf, CodeRabbit, and others. As a solo endeavor spanning engineering, QA, and DevOps, developed in my free time with AI collaboration, bugs are inevitable.
+
+While I originally created this project for my own use, fun, amusement, study and exercise, I decided to share it with the community. Use at your own risk, and if you do, contributions are more thean welcome!
 
 ## 📑 **Table of Contents**
 
@@ -36,7 +38,7 @@ This is a solo project experimenting with a myriad of AI-assisted coding tools, 
 
 ### **🏗️ Clean Architecture**
 
-- **Layered Architecture** - Components → Services → Database
+- **Layered Architecture** - Components → Hooks → Server Actions → Database
 - **Explicit Dependencies** - No magic, clear client injection
 - **KISS Principle** - Clean, maintainable code
 - **Service Layer** - Clean database operations with error handling
@@ -81,7 +83,7 @@ This is a solo project experimenting with a myriad of AI-assisted coding tools, 
 ### **🏗️ Architecture Pattern**
 
 ```
-Components → Services → Database
+Components → Hooks → Server Actions → Database
 ```
 
 **Key Principles:**
@@ -89,22 +91,41 @@ Components → Services → Database
 - **Explicit Injection**: Services require explicit Supabase client
 - **Direct Instantiation**: No factories or magic patterns
 - **Clear Boundaries**: Server vs client code separation
-- **Optional Hooks**: Use custom hooks for client state management when needed
+- **React Query Hooks**: Use custom hooks for client state management when needed
 
 ## 📚 **Documentation**
 
-### **🏗️ Core Architecture**
+### **🚀 Getting Started**
 
+- **[Setup Guide](./docs/getting-started/setup.md)** - Complete setup and configuration
 - **[Architecture Guide](./docs/architecture.md)** - Clean architecture patterns
 - **[Project Structure](./docs/structure.md)** - Directory layout and conventions
-- **[API Documentation](./docs/api.md)** - Complete API endpoint reference
+
+### **👤 User Guides**
+
+- **[Server Actions Reference](./docs/user-guides/server-actions.md)** - Server-side operations
+- **[API Endpoints Reference](./docs/user-guides/api-reference.md)** - HTTP API documentation
 - **[Authentication Flows](./docs/authentication-flows.md)** - Email auth and verification flows
+
+### **🛠️ Developer Guides**
+
+- **[API Development Guide](./docs/developer-guides/api-development.md)** - Development patterns and best practices
 - **[Library Architecture](./src/lib/README.md)** - Core libraries and utilities
 - **[Hooks Library](./src/hooks/README.md)** - Custom React hooks
+
+### **🔒 Security & Operations**
+
 - **[Security Documentation](./docs/security.md)** - Security best practices and configuration
 - **[Rate Limiting](./docs/rate-limiting.md)** - API rate limiting and storage setup
 - **[Flash Messages](./docs/flash-messages.md)** - Temporary notifications system
-- **[Database Recreation](./docs/database-recreation.md)** - Guide for database wipe and restore
+
+### **🗄️ Database & Components**
+
+- **[Database Documentation](./docs/database/)** - Database operations and schema management
+  - **[Profile-Auth Sync](./docs/database/profile-auth-sync-report.md)** - Profile-auth synchronization system
+  - **[Database Recreation](./docs/database/database-recreation.md)** - Guide for recreating database
+- **[Component Documentation](./docs/components/)** - UI component library documentation
+  - **[Avatar Components](./docs/components/avatar.md)** - Profile picture management
 
 ### **🔧 Library Documentation**
 
@@ -116,6 +137,12 @@ Components → Services → Database
 - **[Security Utilities](./src/middleware/security/README.md)** - Security middleware and utilities
 - **[Auth Actions](./src/lib/actions/auth/README.md)** - Authentication server actions
 
+Auth consumption (client)
+
+- **Use `useCurrentUser()`** in client components to read authentication state (user object, loading state). Import from `@/components/providers`.
+- **Use `useAuthContext()`** for full auth context including `signOut` and other auth actions.
+- `useAuth()` builds the auth instance and is used internally by `AuthProvider`.
+
 ### **🛠️ Development Tools**
 
 - **[Scripts Directory](./scripts/README.md)** - Type generation and build scripts
@@ -123,12 +150,15 @@ Components → Services → Database
 
 ### **📋 Project Management**
 
-- **[Roadmap](./ROADMAP.md)** - Development backlog and future features
+- **[Roadmap](./docs/ROADMAP.md)** - Development backlog and future features
 - **[Changelog](./CHANGELOG.md)** - Version history and changes
 
 ### **📋 General Guides**
 
 - **[Contributing Guidelines](./CONTRIBUTING.md)** - How to contribute
+- **[Development Guidelines](./AGENTS.md)** - AI development context and patterns (Source of Truth)
+- **[API Documentation](./docs/api.md)** - Complete API reference
+- **[Authentication Providers](./docs/authentication-providers.md)** - Authentication options
 - **[Error Handling](./src/lib/error/README.md)** - Error management patterns
 
 ## 🎯 **Using YwyBase as a Starting Point**
@@ -392,7 +422,6 @@ export const updateProfile = withServerActionErrorHandling(
 // Add new pages in app/
 // Add new components in src/components/
 // Add new hooks in src/hooks/ - use hooks for client state management
-// Add new services in src/lib/supabase/services/
 ```
 
 ### **4. Development Workflow**
@@ -418,7 +447,7 @@ pnpm build
 
 ### **Frontend**
 
-- **Next.js 15.5.6** - React framework
+- **Next.js 15.5.9** - React framework
 - **React 18.3.1** - UI library
 - **Material UI 7.3.4** - Component library
 - **TypeScript 5.x** - Type safety

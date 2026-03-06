@@ -87,4 +87,7 @@ pnpm run gen:types
 
 ---
 
+**Last Updated**: March 6, 2026
+**Version**: 1.0.0
+
 Keep your migrations up to date and the database can always be recreated safely from source control.

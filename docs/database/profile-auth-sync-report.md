@@ -30,7 +30,7 @@ The profile-auth sync system maintains data consistency between the canonical `p
    - `handle_new_user()` - Enhanced new user creation with improved provider detection
    - `update_updated_at_column()`
 
-**Last Updated**: 2025-02-27  
+**Last Updated**: 2025-02-27
 **Version**: 2.1.0 (Updated for schema migration 20250105000000 - Enhanced sync functions, new 'root' role, and avatar ownership security)
 
 2. **Manual Functions**: Administrative sync operations
@@ -389,5 +389,5 @@ ORDER BY sa.created_at DESC;
 
 ---
 
-**Last Updated**: 2025-02-27  
+**Last Updated**: 2025-02-27
 **Version**: 2.1.0 (Updated for schema migration 20250105000000 - Enhanced sync functions, new 'root' role, and avatar ownership security)

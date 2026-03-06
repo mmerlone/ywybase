@@ -593,3 +593,8 @@ All API endpoints include:
 - **Security Logging**: Authentication attempts and security events
 
 For monitoring setup and configuration, see the [Architecture Documentation](./architecture.md).
+
+---
+
+**Last Updated**: March 6, 2026
+**Version**: 1.0.0

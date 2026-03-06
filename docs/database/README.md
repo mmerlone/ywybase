@@ -297,10 +297,10 @@ LIMIT 10;
 
 - **[Profile-Auth Sync Report](./profile-auth-sync-report.md)** - Detailed sync reporting
 - **[Database Recreation Guide](./database-recreation.md)** - Complete recreation procedures
-- **[Security Documentation](../security.md)** - Security best practices
-- **[API Development Guide](../developer-guides/api-development.md)** - Database patterns
+- **[Security Documentation](/docs/security.md)** - Security best practices
+- **[API Development Guide](/docs/developer-guides/api-development.md)** - Database patterns
 
 ---
 
-**Last Updated**: 2025-02-27  
+**Last Updated**: March 6, 2026
 **Version**: 2.0.0 (Updated for schema migration 20250105000000)

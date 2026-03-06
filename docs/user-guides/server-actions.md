@@ -494,11 +494,11 @@ export function ProfileEditor({ userId }: { userId: string }) {
 ## Related Documentation
 
 - [API Endpoints Reference](./api-reference.md) - HTTP API endpoints
-- [Authentication Flows](../authentication-flows.md) - Complete auth flow documentation
-- [Error Handling](../src/lib/error/README.md) - Centralized error handling system
-- [Supabase Integration](../src/lib/supabase/README.md) - Database and auth integration
+- [Authentication Flows](/docs/authentication-flows.md) - Complete auth flow documentation
+- [Error Handling](/src/lib/error/README.md) - Centralized error handling system
+- [Supabase Integration](/src/lib/supabase/README.md) - Database and auth integration
 
 ---
 
-**Last Updated**: 2025-02-27  
+**Last Updated**: March 6, 2026
 **Version**: 1.0.0

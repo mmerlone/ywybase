@@ -124,10 +124,8 @@ With this configuration, Windsurf can:
 - Follow proper file naming and organization
 - Implement correct authentication patterns
 - Use proper error handling and logging
-- Follow security best practices
 - Maintain consistent code style
 - Generate proper TypeScript types
-- Use correct component patterns
 
 ## Maintenance
 
@@ -140,3 +138,5 @@ This configuration should be updated when:
 - Adding new development guidelines
 
 Keep this configuration in sync with the actual project to ensure Windsurf provides the most accurate and helpful assistance.
+
+**Source of Truth**: All development guidelines should reference `AGENTS.md` as the canonical source of truth for YwyBase development patterns and rules.

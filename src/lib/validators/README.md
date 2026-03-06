@@ -32,8 +32,8 @@ const profileResult = profileFormSchema.safeParse(profileData)
 import { privacySettingsSchema } from '@/lib/validators/privacy'
 
 const privacyData = {
-  cookie_preferences: { necessary: true, analytics: false },
-  data_sharing: { third_parties: false, analytics: true },
+  data_sharing: { third_parties: false, analytics: true, marketing: false },
+  communication_preferences: { email: true, push: false, sms: false },
 }
 const privacyResult = privacySettingsSchema.safeParse(privacyData)
 ```
@@ -44,7 +44,8 @@ This validators library provides:
 
 - **Authentication Validation** - Login, registration, and password management schemas
 - **Profile Validation** - User profile data validation with complex field types
-- **Privacy Validation** - GDPR-compliant privacy and cookie preference validation
+- **Privacy Validation** - GDPR-compliant data sharing and communication preference validation
+- **Cookie Validation** - Client-side cookie consent validation (localStorage only, not stored in database)
 - **Common Validation** - Reusable schemas for email, password, and other common fields
 - **Type Safety** - Full TypeScript integration with inferred types
 
@@ -81,9 +82,10 @@ const result = profileFormSchema.safeParse(profileData)
 ### Privacy Settings Validation
 
 ```typescript
-import { privacySettingsSchema, cookiePreferencesSchema } from '@/lib/validators/privacy'
+import { privacySettingsSchema } from '@/lib/validators/privacy'
+import { cookiePreferencesSchema } from '@/lib/validators/cookie'
 
-// Cookie preferences validation
+// Cookie preferences validation (client-side only, not stored in database)
 const cookiePrefs = {
   necessary: true,
   analytics: false,
@@ -92,9 +94,8 @@ const cookiePrefs = {
 }
 const cookieResult = cookiePreferencesSchema.safeParse(cookiePrefs)
 
-// Full privacy settings validation
+// Privacy settings validation (stored in database)
 const privacySettings = {
-  cookie_preferences: cookiePrefs,
   data_sharing: {
     third_parties: false,
     analytics: true,
@@ -290,6 +291,8 @@ export const profileFormSchema = z.object({
 
 Validates GDPR cookie preference settings.
 
+Note: Cookie preferences are client-side only (localStorage) and not stored in the database.
+
 ```typescript
 export const cookiePreferencesSchema = z.object({
   necessary: z.boolean(),
@@ -301,11 +304,12 @@ export const cookiePreferencesSchema = z.object({
 
 #### privacySettingsSchema
 
-Comprehensive privacy settings validation.
+Comprehensive privacy settings validation for database storage.
+
+Note: Cookie preferences are validated separately and stored in localStorage only.
 
 ```typescript
 export const privacySettingsSchema = z.object({
-  cookie_preferences: cookiePreferencesSchema.optional(),
   data_sharing: dataSharingSchema.optional(),
   communication_preferences: communicationPreferencesSchema.optional(),
 })

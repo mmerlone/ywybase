@@ -4,10 +4,10 @@ Flash messages are temporary notifications that survive server-side redirects. T
 
 ## Why Flash Messages?
 
-✅ **Clean URLs** - No ugly query parameters  
-✅ **Secure** - Can't be bookmarked, shared, or manipulated  
-✅ **Transient** - Automatically cleared after being shown once  
-✅ **Works with redirects** - Survives server-side redirects  
+✅ **Clean URLs** - No ugly query parameters
+✅ **Secure** - Can't be bookmarked, shared, or manipulated
+✅ **Transient** - Automatically cleared after being shown once
+✅ **Works with redirects** - Survives server-side redirects
 ✅ **Path-agnostic** - Works on any page globally
 
 ## Usage
@@ -171,3 +171,8 @@ return response
 
 - Check for double redirects in your flow
 - Ensure only one `FlashMessageHandler` instance exists
+
+---
+
+**Last Updated**: March 6, 2026
+**Version**: 1.0.0

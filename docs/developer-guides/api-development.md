@@ -585,13 +585,13 @@ app/api/
 
 ## Related Documentation
 
-- [Server Actions Reference](../user-guides/server-actions.md) - Complete API reference
-- [API Endpoints Reference](../user-guides/api-reference.md) - HTTP endpoint documentation
-- [Error Handling](../../src/lib/error/README.md) - Centralized error handling
-- [Security Documentation](../security.md) - Security best practices
-- [Logging System](../../src/lib/logger/README.md) - Logging patterns
+- [Server Actions Reference](/docs/user-guides/server-actions.md) - Complete API reference
+- [API Endpoints Reference](/docs/user-guides/api-reference.md) - HTTP endpoint documentation
+- [Error Handling](/src/lib/error/README.md) - Centralized error handling
+- [Security Documentation](/docs/security.md) - Security best practices
+- [Logging System](/src/lib/logger/README.md) - Logging patterns
 
 ---
 
-**Last Updated**: 2025-02-27  
+**Last Updated**: March 6, 2026
 **Version**: 1.0.0

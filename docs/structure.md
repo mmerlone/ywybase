@@ -15,8 +15,6 @@ Canonical structure for the Next.js 15.5.9 App Router application. Follow this s
 
 ## 📁 **Directory Structure**
 
-// TODO: Add demo pages and move sentry
-
 ```
 /
 ├── app/                         # Next.js App Router
@@ -289,5 +287,8 @@ NODE_ENV=production
 5. **Type safety first** - Always include proper TypeScript types
 
 ---
+
+**Last Updated**: March 6, 2026
+**Version**: 1.0.0
 
 **Follow this structure for consistency across the project.**

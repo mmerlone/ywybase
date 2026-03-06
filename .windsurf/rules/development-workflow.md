@@ -365,7 +365,7 @@ grep -E "SUPABASE|SENTRY" .env.local
 
 ### Resources
 
-- Project documentation: `STRUCTURE.md`
+- Project documentation: `docs/structure.md`
 - Next.js documentation: https://nextjs.org/docs
 - MUI documentation: https://mui.com/
 - Supabase documentation: https://supabase.com/docs
@@ -376,3 +376,7 @@ grep -E "SUPABASE|SENTRY" .env.local
 - Include context in PR descriptions
 - Ask questions in team channels
 - Document decisions in project files
+
+---
+
+**Note**: For complete development guidelines and project patterns, see **[AGENTS.md](../../AGENTS.md)** as the source of truth.

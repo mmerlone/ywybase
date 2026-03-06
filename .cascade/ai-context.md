@@ -2,7 +2,7 @@
 
 ## Package Management
 
-⚠️ **IMPORTANT**: This project uses pnpm as the package manager. Never use npm or yarn for any package management tasks.
+⚠️ **IMPORTANT**: This project uses pnpm as package manager. Never use npm or yarn for any package management tasks.
 
 ### Always use pnpm commands:
 
@@ -22,8 +22,8 @@ Follow structure defined in `docs/structure.md` at all times. Before making any 
 
 ## Key Rules
 
-1. **Never** create new files in the wrong location
-2. **Always** use the App Router (`/app`) for all routes
+1. **Never** create new files in wrong location
+2. **Always** use App Router (`/app`) for all routes
 3. **Never** mix Pages Router (`/pages`) with App Router
 4. **Always** validate input with Zod
 5. **Always** generate and use TypeScript types and interfaces
@@ -32,7 +32,7 @@ Follow structure defined in `docs/structure.md` at all times. Before making any 
 
 ### API Routes
 
-- Use `route.ts` in the appropriate `/app/api` subdirectory
+- Use `route.ts` in appropriate `/app/api` subdirectory
 - Always validate request/response types
 - Use proper HTTP methods and status codes
 
@@ -120,25 +120,25 @@ Follow structure defined in `docs/structure.md` at all times. Before making any 
 
 1. Check `docs/structure.md`
 2. Reference Next.js 15 documentation
-3. Follow existing patterns in the codebase
+3. Follow existing patterns in codebase
 4. Ask for clarification if needed
 
 These examples should be used as guidance when configuring Sentry functionality within a project.
 
 # Exception Catching
 
-Use `Sentry.captureException(error)` to capture an exception and log the error in Sentry.
+Use `Sentry.captureException(error)` to capture an exception and log error in Sentry.
 Use this in try catch blocks or areas where exceptions are expected
 
 # Tracing Examples
 
 Spans should be created for meaningful actions within applications like button clicks, API calls, and function calls
-Use the `Sentry.startSpan` function to create a span
+Use `Sentry.startSpan` function to create a span
 Child spans can exist within a parent span
 
 ## Custom Span instrumentation in component actions
 
-The `name` and `op` properties should be meaningful for the activities in the call.
+The `name` and `op` properties should be meaningful for activities in the call.
 Attach attributes based on relevant information and metrics from the request
 
 ```javascript
@@ -170,7 +170,7 @@ function TestComponent() {
 
 ## Custom span instrumentation in API calls
 
-The `name` and `op` properties should be meaningful for the activities in the call.
+The `name` and `op` properties should be meaningful for activities in the call.
 Attach attributes based on relevant information and metrics from the request
 
 ```javascript
@@ -197,7 +197,7 @@ async function fetchUserData(userId) {
 
 - **Always** include explicit return types for all functions and methods
 - Use TypeScript types and interfaces for all function parameters and return values
-- Follow the project's ESLint and TypeScript configuration
+- Follow project's ESLint and TypeScript configuration
 
 ### Function Definitions
 
@@ -227,3 +227,7 @@ const getUser = (id: string): User => {
   return { id, name: 'John' }
 }
 ```
+
+---
+
+**Note**: For complete development guidelines and project patterns, see **[AGENTS.md](../AGENTS.md)** as the source of truth.

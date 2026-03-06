@@ -1,8 +1,10 @@
 # AI Development Guidelines for YwyBase
 
+This file provides AI development guidelines. For complete source of truth, see **[AGENTS.md](../../AGENTS.md)**.
+
 ## Package Management
 
-⚠️ **IMPORTANT**: This project uses pnpm as the package manager. Never use npm or yarn for any package management tasks.
+⚠️ **IMPORTANT**: This project uses pnpm as package manager. Never use npm or yarn for any package management tasks.
 
 ### Always use pnpm commands:
 
@@ -14,16 +16,16 @@
 
 ## Project Structure
 
-Follow the structure defined in `docs/structure.md` at all times. Before making any changes:
+Follow structure defined in `docs/structure.md` at all times. Before making any changes:
 
-1. Always check `docs/structure.md` for the canonical structure
+1. Always check `docs/structure.md` for canonical structure
 2. Follow Next.js 15 App Router conventions
 3. Maintain separation of concerns
 
 ## Key Rules
 
-1. **Never** create new files in the wrong location
-2. **Always** use the App Router (`/app`) for all routes
+1. **Never** create new files in wrong location
+2. **Always** use App Router (`/app`) for all routes
 3. **Never** mix Pages Router (`/pages`) with App Router
 4. **Always** validate input with Zod
 5. **Always** generate and use TypeScript types and interfaces
@@ -32,7 +34,7 @@ Follow the structure defined in `docs/structure.md` at all times. Before making 
 
 ### API Routes
 
-- Use `route.ts` in the appropriate `/app/api` subdirectory
+- Use `route.ts` in appropriate `/app/api` subdirectory
 - Always validate request/response types
 - Use proper HTTP methods and status codes
 
@@ -121,7 +123,7 @@ const getUser = (id: string): User => {
 
 ### Save Button States
 
-Save buttons must follow their state: "Save", "Saving...", "Saved", and must be disabled during state changes or if the form was not changed yet.
+Save buttons must follow their state: "Save", "Saving...", "Saved", and must be disabled during state changes or if form was not changed yet.
 
 ## Logging Patterns
 
@@ -194,13 +196,13 @@ The database should handle the management of `created_at` and `updated_at` times
 3. Atomic updates to both the record data and its timestamps
 4. Prevention of race conditions in timestamp updates
 
-**Do not manually set these fields in application code** when creating or updating records. The database's default values and triggers should manage these timestamps.
+**Do not manually set these fields in the application code** when creating or updating records. The database's default values and triggers should manage these timestamps.
 
 ## Sentry Integration
 
 ### Exception Catching
 
-Use `Sentry.captureException(error)` to capture an exception and log the error in Sentry. Use this in try catch blocks or areas where exceptions are expected.
+Use `Sentry.captureException(error)` to capture an exception and log an error in Sentry. Use this in try catch blocks or areas where exceptions are expected.
 
 ### Tracing Examples
 
@@ -280,3 +282,7 @@ async function fetchUserData(userId) {
 2. Reference Next.js 15 documentation
 3. Follow existing patterns in the codebase
 4. Ask for clarification if needed
+
+---
+
+**Note**: For complete development guidelines, see **[AGENTS.md](../../AGENTS.md)** as the source of truth.

@@ -28,7 +28,7 @@ code --install-extension bradlc.vscode-tailwindcss
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/ywybase.git
+git clone https://github.com/mmerlone/ywybase.git
 cd ywybase
 
 # Install dependencies
@@ -44,20 +44,26 @@ Edit `.env.local` with your configuration:
 
 ```bash
 # Supabase Configuration
-NEXT_PUBLIC_SUPABASE_URL=your-supabase-project-url
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your-supabase-anon-key
-SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-key
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
+SUPABASE_PROJECT_ID=your_supabase_project_id
 
-# Application Configuration
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-NEXT_PUBLIC_SITE_NAME=YwyBase
+# Optional: Supabase Secret Key (Server-side only)
+SUPABASE_SECRET_KEY=your_supabase_secret_key
 
 # Optional: Sentry for error tracking
-NEXT_PUBLIC_SENTRY_DSN=your-sentry-dsn
-SENTRY_AUTH_TOKEN=your-sentry-auth-token
+NEXT_PUBLIC_SENTRY_DSN=your_sentry_dsn
+SENTRY_AUTH_TOKEN=your_sentry_auth_token
 
-# Optional: Redis for rate limiting (production)
-REDIS_URL=your-redis-url
+# Optional: IP Geolocation
+IPGEOLOCATION_API_KEY=your_ipgeolocation_api_key
+
+# Security Configuration (Required in production)
+CSRF_SECRET=your_csrf_secret_32_chars_minimum
+
+# Optional: Upstash Redis/KV for rate limiting (production)
+KV_REST_API_URL=your_upstash_rest_api_url
+KV_REST_API_TOKEN=your_upstash_rest_api_token
 ```
 
 ### 3. Database Setup
@@ -418,5 +424,5 @@ After setup:
 
 ---
 
-**Last Updated**: 2025-02-27  
+**Last Updated**: March 6, 2026
 **Version**: 1.0.0

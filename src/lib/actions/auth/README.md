@@ -54,7 +54,7 @@ const updateResult = await updatePassword({ currentPassword, newPassword, confir
 
 ## 💻 **Client Service** (`@/lib/actions/auth/client`)
 
-The client service now only provides read operations and OAuth flows. All write operations have been migrated to server actions.
+The client service now only provides read operations and OAuth flows. All write operations are performed by server actions.
 
 **Available Operations:**
 

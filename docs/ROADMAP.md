@@ -1,7 +1,7 @@
 # YwyBase Development Backlog
 
-**Last Updated**: February 5, 2026  
-**Version**: 2.1  
+**Last Updated**: February 5, 2026
+**Version**: 2.1
 **Status**: Active Development
 
 ## WIP
@@ -242,8 +242,8 @@
 
 ---
 
-**Document Status**: ✅ Active  
-**Next Update**: As needed  
+**Document Status**: ✅ Active
+**Next Update**: As needed
 **Version History**:
 
 - v1.0 (December 21, 2025) - Initial roadmap
@@ -317,8 +317,8 @@
 - Pagination count mismatch remains when auth users are missing.
 - Large user details page still needs component extraction.# YwyBase Development Backlog
 
-**Last Updated**: January 11, 2026  
-**Version**: 2.0  
+**Last Updated**: January 11, 2026
+**Version**: 2.0
 **Status**: Active Development
 
 ### **Compliance & Audit Infrastructure**
@@ -514,8 +514,8 @@
 
 ---
 
-**Document Status**: ✅ Active  
-**Next Update**: As needed  
+**Document Status**: ✅ Active
+**Next Update**: As needed
 **Version History**:
 
 - v1.0 (December 21, 2025) - Initial roadmap
@@ -562,3 +562,12 @@ Priority 3 (Enhancement)
 Implement session-based rate limiting (roadmap item)
 Add admin rate limit management dashboard
 Implement adaptive rate limiting based on traffic patterns
+
+useIsMobile opportunities
+
+useIsMobile is currently not used anywhere in runtime code (only in useIsMobile.ts:53 and docs).
+Best opportunity #1: header navigation adaptation in Header.tsx:51-71.
+On mobile, switch from full button row to compact menu/drawer; this is a clear JS-level branching case for useIsMobile.
+Best opportunity #2: users table mobile fallback in UsersTable.tsx:36-125.
+On mobile, render a stacked card/list view instead of dense table columns/actions.
+Lower-priority opportunities (already mostly handled via responsive sx): ProfileForm.tsx and UserFilters.tsx because they rely on layout breakpoints, not logic branching.

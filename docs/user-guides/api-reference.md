@@ -456,12 +456,12 @@ Each request includes this context in logs:
 ## Related Documentation
 
 - [Server Actions Reference](./server-actions.md) - Server-side operations
-- [Authentication Flows](../authentication-flows.md) - Complete auth flow documentation
-- [API Development Guide](../developer-guides/api-development.md) - Development patterns
-- [Security Documentation](../security.md) - Security best practices
-- [Error Handling](../../src/lib/error/README.md) - Centralized error handling
+- [Authentication Flows](/docs/authentication-flows.md) - Complete auth flow documentation
+- [API Development Guide](/docs/developer-guides/api-development.md) - Development patterns
+- [Security Documentation](/docs/security.md) - Security best practices
+- [Error Handling](/src/lib/error/README.md) - Centralized error handling
 
 ---
 
-**Last Updated**: 2025-02-27  
+**Last Updated**: March 6, 2026
 **Version**: 1.0.0
