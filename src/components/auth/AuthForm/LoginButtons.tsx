@@ -4,56 +4,98 @@ import { GitHub, Google } from '@mui/icons-material'
 import { Button, CircularProgress, Stack } from '@mui/material'
 import { useState } from 'react'
 
-import { useAuthContext } from '@/components/providers'
+import { useAuthContext } from '@/components/providers/AuthProvider'
 import { logger } from '@/lib/logger/client'
-import { AuthProvidersEnum } from '@/types/auth.types'
+import { AuthProvidersEnum, type SerializableError } from '@/types/auth.types'
 
 interface LoginButtonsProps {
   disabled?: boolean
+  onError?: (error: SerializableError) => void
+  /** Called with `true` when a provider sign-in starts, `false` when it settles. */
+  onLoadingChange?: (loading: boolean) => void
 }
 
-export function LoginButtons({ disabled = false }: LoginButtonsProps): JSX.Element {
+export function LoginButtons({ disabled = false, onError, onLoadingChange }: LoginButtonsProps): JSX.Element {
   const { signInWithProvider, isLoading } = useAuthContext()
-  // Only support Google and GitHub providers
-  const providerValues = [AuthProvidersEnum.GOOGLE, AuthProvidersEnum.GITHUB]
-  const initialLoadingStates = {
-    [AuthProvidersEnum.GOOGLE]: false,
-    [AuthProvidersEnum.GITHUB]: false,
-  }
-  const [loadingStates, setLoadingStates] = useState<Record<AuthProvidersEnum, boolean>>(initialLoadingStates)
+  const providerValues = [AuthProvidersEnum.GOOGLE, AuthProvidersEnum.GITHUB] as const
+  type AvailableProvider = (typeof providerValues)[number]
+  const [loadingProvider, setLoadingProvider] = useState<AvailableProvider | null>(null)
+  const [isRedirecting, setIsRedirecting] = useState(false)
+  // Track providers that are known to be disabled to prevent retry loops
+  const [disabledProviders, setDisabledProviders] = useState<Set<AvailableProvider>>(new Set())
 
-  const handleSignIn = async (provider: AuthProvidersEnum): Promise<void> => {
+  const handleSignIn = async (provider: AvailableProvider): Promise<void> => {
     try {
-      setLoadingStates((prev) => ({ ...prev, [provider]: true }))
+      setLoadingProvider(provider)
+      onLoadingChange?.(true)
 
       const { error } = await signInWithProvider(provider)
       if (error) {
-        // Convert SerializableError to Error for logging
-        const errorMsg = typeof error === 'string' ? error : error.message
-        logger.error({ err: new Error(errorMsg), provider }, 'Login failed')
+        const normalizedError: SerializableError =
+          typeof error === 'string'
+            ? {
+                code: 'AUTH/UNKNOWN',
+                message: error,
+                isOperational: false,
+                errorType: 'AppError',
+              }
+            : error
+
+        if (normalizedError.code === 'AUTH/PROVIDER_DISABLED') {
+          setDisabledProviders((prev) => {
+            const newSet = new Set(prev)
+            newSet.add(provider)
+            return newSet
+          })
+        }
+
+        logger.error(
+          {
+            err: new Error(normalizedError.message),
+            provider,
+            code: normalizedError.code,
+          },
+          'Login failed'
+        )
+
+        onError?.(normalizedError)
+        // Reset loading state — stay disabled only for permanently disabled providers
+        setLoadingProvider(null)
+        onLoadingChange?.(false)
+      } else {
+        // OAuth redirect initiated successfully — keep buttons locked until navigation
+        setIsRedirecting(true)
       }
     } catch (err) {
       logger.error({ err, provider }, 'Login failed')
-    } finally {
-      setLoadingStates((prev) => ({ ...prev, [provider]: false }))
+      onError?.({
+        code: 'AUTH/UNKNOWN',
+        message: err instanceof Error ? err.message : 'An unexpected error occurred',
+        isOperational: false,
+        errorType: 'AppError',
+      })
+      setLoadingProvider(null)
+      onLoadingChange?.(false)
     }
   }
   const getProviderConfig = (
-    provider: AuthProvidersEnum
+    provider: AvailableProvider
   ): {
     icon: JSX.Element
     text: string
     loadingText: string
     variant: 'contained' | 'outlined'
+    ariaLabel: string
     sx?: Record<string, unknown>
   } => {
     const configs: Record<
-      AuthProvidersEnum,
+      AvailableProvider,
       {
         icon: JSX.Element
         text: string
         loadingText: string
         variant: 'contained' | 'outlined'
+        ariaLabel: string
         sx?: Record<string, unknown>
       }
     > = {
@@ -62,6 +104,7 @@ export function LoginButtons({ disabled = false }: LoginButtonsProps): JSX.Eleme
         text: 'Login with Google',
         loadingText: 'Logging in...',
         variant: 'contained',
+        ariaLabel: 'Sign in with Google',
         sx: {
           borderRadius: 3,
           backgroundColor: '#4285F4',
@@ -76,6 +119,7 @@ export function LoginButtons({ disabled = false }: LoginButtonsProps): JSX.Eleme
         text: 'Login with GitHub',
         loadingText: 'Logging in...',
         variant: 'outlined',
+        ariaLabel: 'Sign in with GitHub',
         sx: {
           borderRadius: 3,
         },
@@ -93,18 +137,18 @@ export function LoginButtons({ disabled = false }: LoginButtonsProps): JSX.Eleme
       }}>
       {providerValues.map((provider): JSX.Element => {
         const config = getProviderConfig(provider)
-        const isProviderLoading = loadingStates[provider]
-
+        const isProviderDisabled = disabledProviders.has(provider)
         return (
           <Button
             key={provider}
             variant={config.variant}
             onClick={() => handleSignIn(provider)}
-            disabled={disabled || isLoading || isProviderLoading}
-            startIcon={isProviderLoading ? <CircularProgress size={20} color="inherit" /> : config.icon}
+            disabled={disabled || isLoading || loadingProvider !== null || isRedirecting || isProviderDisabled}
+            startIcon={loadingProvider === provider ? <CircularProgress size={20} color="inherit" /> : config.icon}
             fullWidth
+            aria-label={config.ariaLabel}
             sx={config.sx}>
-            {isProviderLoading ? config.loadingText : config.text}
+            {loadingProvider === provider ? config.loadingText : isProviderDisabled ? 'Not Available' : config.text}
           </Button>
         )
       })}

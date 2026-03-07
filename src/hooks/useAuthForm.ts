@@ -1,27 +1,30 @@
-import { zodResolver } from '@hookform/resolvers/zod'
-import type { DefaultValues, UseFormReturn } from 'react-hook-form'
-import { useForm } from 'react-hook-form'
-import { ZodType } from 'zod'
+import { useForm, type DefaultValues, type UseFormReturn, type Resolver } from 'react-hook-form'
+import type { MutableRefObject } from 'react'
+import type { ZodType } from 'zod'
 
 import {
+  addPasswordSchema,
   forgotPasswordEmailSchema,
   forgotPasswordPassSchema,
   loginSchema,
   signUpSchema,
   updatePasswordSchema,
-} from '@/lib/validators'
-import type { FormTypeMap } from '@/types/auth.types'
-import { AuthOperationsEnum } from '@/types/auth.types'
+} from '@/lib/validators/auth'
+import { AuthOperationsEnum, type FormTypeMap } from '@/types/auth.types'
+import { createSafeResolver } from '@/lib/utils/forms'
 
 // Only form operations are included - SIGN_OUT and RESEND_VERIFICATION are not form operations
 type FormOperation = keyof FormTypeMap
 
-const schemaMap: Record<FormOperation, ZodType<unknown>> = {
+// Keyed mapped type so that schemaMap[K] preserves ZodType<FormTypeMap[K]> on lookup
+const schemaMap: { [K in FormOperation]: ZodType<FormTypeMap[K]> } = {
   [AuthOperationsEnum.LOGIN]: loginSchema,
   [AuthOperationsEnum.SIGN_UP]: signUpSchema,
   [AuthOperationsEnum.FORGOT_PASSWORD]: forgotPasswordEmailSchema,
   [AuthOperationsEnum.SET_PASSWORD]: forgotPasswordPassSchema,
   [AuthOperationsEnum.UPDATE_PASSWORD]: updatePasswordSchema,
+  [AuthOperationsEnum.RESEND_VERIFICATION]: forgotPasswordEmailSchema,
+  [AuthOperationsEnum.ADD_PASSWORD]: addPasswordSchema,
 }
 
 const defaultValuesMap: { [K in FormOperation]: FormTypeMap[K] } = {
@@ -48,6 +51,13 @@ const defaultValuesMap: { [K in FormOperation]: FormTypeMap[K] } = {
     newPassword: '',
     confirmPassword: '',
   },
+  [AuthOperationsEnum.RESEND_VERIFICATION]: {
+    email: '',
+  },
+  [AuthOperationsEnum.ADD_PASSWORD]: {
+    password: '',
+    confirmPassword: '',
+  },
 }
 
 /**
@@ -59,6 +69,8 @@ const defaultValuesMap: { [K in FormOperation]: FormTypeMap[K] } = {
  *
  * @template {AuthOperationsEnum} T - The authentication operation type
  * @param {T} operation - The authentication operation type (login, sign-up, etc.)
+ * @param {MutableRefObject<boolean>} [isTransitioning] - Optional ref to track operation transitions
+ * @param {MutableRefObject<boolean>} [isDirtyRef] - Optional ref to track if form has been modified
  * @returns {UseFormReturn<FormTypeMap[T]>} React Hook Form instance with:
  * - Form state and validation
  * - Form methods (register, handleSubmit, etc.)
@@ -105,13 +117,42 @@ const defaultValuesMap: { [K in FormOperation]: FormTypeMap[K] } = {
  * }
  * ```
  */
-export function useAuthForm<T extends FormOperation>(operation: T): UseFormReturn<FormTypeMap[T]> {
+export function useAuthForm<T extends FormOperation>(
+  operation: T,
+  isTransitioning?: MutableRefObject<boolean>,
+  isDirtyRef?: MutableRefObject<boolean>
+): UseFormReturn<FormTypeMap[T]> {
   const schema = schemaMap[operation]
   const defaultValues = defaultValuesMap[operation]
 
+  // Safe resolver that catches ZodErrors thrown by zodResolver in onTouched mode
+  const safeZodResolver = createSafeResolver(schema)
+
+  /**
+   * Custom resolver that skips validation during operation transitions
+   * and before the user has made any changes (isDirty=false).
+   * This prevents validation errors on untouched forms and during morph animations.
+   */
+  const conditionalResolver: Resolver<FormTypeMap[T]> = async (values, context, options) => {
+    // Skip validation during operation transitions to prevent validation
+    // errors on stale values when switching between auth operations
+    if (isTransitioning?.current) {
+      return { values: values, errors: {} }
+    }
+
+    // Skip validation until user has modified the form (isDirty becomes true)
+    if (isDirtyRef && !isDirtyRef.current) {
+      return { values: values, errors: {} }
+    }
+
+    // Use safe zodResolver (handles thrown ZodErrors)
+    return safeZodResolver(values, context, options)
+  }
+
   return useForm<FormTypeMap[T]>({
-    resolver: zodResolver(schema),
-    mode: 'onChange',
+    resolver: conditionalResolver,
+    // Use 'onTouched' mode for better UX - validation runs on blur/touch
+    mode: 'onTouched',
     defaultValues: defaultValues as DefaultValues<FormTypeMap[T]>,
   })
 }

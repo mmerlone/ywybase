@@ -22,25 +22,25 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
-import { useAuthContext } from '@/components/providers'
+import { useAuthContext, useCurrentUser } from '@/components/providers/AuthProvider'
 import { useProfile } from '@/hooks/useProfile'
 import { logger } from '@/lib/logger/client'
-import { SignOutReasonEnum } from '@/types'
+import { SignOutReasonEnum } from '@/types/auth.types'
 
 /**
  * User menu component that displays different UI based on authentication state
  * Shows login/sign up buttons when not authenticated, and user avatar with menu when authenticated
  */
 export function UserMenu(): JSX.Element {
-  const context = useAuthContext()
-  const { authUser, signOut } = context
+  const { user: authUser, isLoading: authLoading } = useCurrentUser()
+  const { signOut } = useAuthContext()
   const { profile, isLoading: isProfileLoading } = useProfile(authUser?.id)
-  const isLoading = context.isLoading || isProfileLoading
+  const isLoading = authLoading ?? isProfileLoading
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const router = useRouter()
   const open = Boolean(anchorEl)
-  const displayName = profile?.display_name || authUser?.email?.split('@')[0] || 'User'
-  const avatarUrl = (profile?.avatar_url || authUser?.user_metadata?.avatar_url || '') as string
+  const displayName = profile?.display_name ?? authUser?.email?.split('@')[0] ?? 'User'
+  const avatarUrl = (profile?.avatar_url ?? authUser?.user_metadata?.avatar_url ?? '') as string
 
   const handleClick = (event: React.MouseEvent<HTMLElement>): void => {
     setAnchorEl(event.currentTarget)
@@ -57,8 +57,8 @@ export function UserMenu(): JSX.Element {
         logger.error({ error }, 'Error signing out')
         return
       }
-      router.push('/')
       router.refresh()
+      router.push('/')
     } catch (error) {
       logger.error({ error }, 'Unexpected error during sign out')
     } finally {
@@ -115,7 +115,7 @@ export function UserMenu(): JSX.Element {
           aria-expanded={open ? 'true' : undefined}>
           <Avatar
             alt={displayName}
-            src={avatarUrl || undefined}
+            src={avatarUrl ?? undefined}
             sx={{
               width: 32,
               height: 32,

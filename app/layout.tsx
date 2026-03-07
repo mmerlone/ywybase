@@ -2,13 +2,14 @@ import InitColorSchemeScript from '@mui/material/InitColorSchemeScript'
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter'
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
-import { ReactNode } from 'react'
+import { type ReactNode } from 'react'
 import { headers } from 'next/headers'
 
 import { LayoutClient } from './LayoutClient'
 
 import { getSiteMetadata } from '@/config/site'
 import { getSupabaseEnvStatus } from '@/config/supabase-public'
+import { getFlashMessage } from '@/lib/utils/flash-messages.server'
 import './globals.css'
 
 const inter = Inter({
@@ -17,23 +18,27 @@ const inter = Inter({
   variable: '--font-inter',
 })
 
-export const metadata: Metadata = getSiteMetadata()
+export async function generateMetadata(): Promise<Metadata> {
+  return getSiteMetadata()
+}
 
 export default async function RootLayout({ children }: { children: ReactNode }): Promise<JSX.Element> {
   // Get the CSP nonce from headers set by middleware
   const headersList = await headers()
-  const nonce = headersList.get('x-nonce') || undefined
+  const nonce = headersList.get('x-nonce') ?? undefined
+
+  const initialFlash = await getFlashMessage()
 
   // Check Supabase configuration on the server to avoid hydration mismatches
   const supabaseStatus = getSupabaseEnvStatus()
 
   const isDev = process.env.NODE_ENV === 'development'
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en">
       <body className={`${inter.className} font-sans`}>
         <AppRouterCacheProvider options={{ enableCssLayer: true, key: 'mui', nonce }}>
           <InitColorSchemeScript attribute="class" nonce={nonce} />
-          <LayoutClient supabaseStatus={supabaseStatus} isDev={isDev}>
+          <LayoutClient supabaseStatus={supabaseStatus} isDev={isDev} initialFlash={initialFlash}>
             {children}
           </LayoutClient>
         </AppRouterCacheProvider>

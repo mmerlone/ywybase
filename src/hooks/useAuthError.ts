@@ -2,7 +2,8 @@
 
 import { useCallback } from 'react'
 
-import type { SerializableError, AuthErrorContext } from '@/types'
+import type { SerializableError } from '@/types/auth.types'
+import type { AuthErrorContext } from '@/types/error.types'
 
 /**
  * Authentication error utilities hook.
@@ -15,6 +16,9 @@ import type { SerializableError, AuthErrorContext } from '@/types'
  * - Check error types (auth, validation, network)
  * - Extract error codes
  * - Clear error state
+ *
+ * @internal This hook is used internally by `useAuth` in `src/hooks/useAuth.ts`.
+ * For authentication in components, use `useAuthContext` from `@/components/providers`.
  *
  * @param params - Configuration object
  * @param params.error - Current error state

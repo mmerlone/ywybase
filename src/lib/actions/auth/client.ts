@@ -19,21 +19,43 @@
  */
 
 import { createClient } from '@/lib/supabase/client'
-import type { AuthUser, Session } from '@supabase/supabase-js'
+import { buildLogger } from '@/lib/logger/client'
+import type { AuthUser, Session, AuthError, SupabaseClient } from '@supabase/supabase-js'
+
+const logger = buildLogger('auth-client')
+
+/**
+ * Handle invalid JWT token errors consistently across auth methods.
+ * Clears the session and returns null without throwing.
+ *
+ * @param error - The error from Supabase auth operation
+ * @param operation - The operation name for logging
+ * @param supabase - Supabase client instance
+ * @returns Always returns null
+ */
+const handleInvalidJwtError = async (error: AuthError, operation: string, supabase: SupabaseClient): Promise<null> => {
+  // Don't clear session for missing session errors - this is normal
+  if (error.name === 'AuthSessionMissingError') {
+    return null
+  }
+
+  try {
+    await supabase.auth.signOut({ scope: 'global' })
+    logger.info(
+      { operation, action: 'clear-invalid-session', error: error.message },
+      'Cleared invalid client session due to JWT verification failure'
+    )
+  } catch (signOutError) {
+    logger.warn({ err: signOutError }, 'Failed to clear invalid client session')
+  }
+
+  return null
+}
 
 /**
  * Client-side authentication service.
  * Provides read operations and OAuth flows for browser/client code.
  *
- * @remarks
- * **Migration**: Write operations moved to Server Actions:
- * - loginWithEmail → /lib/actions/auth/server.ts
- * - signUpWithEmail → /lib/actions/auth/server.ts
- * - forgotPassword → /lib/actions/auth/server.ts
- * - updatePassword → /lib/actions/auth/server.ts
- * - signOut → /lib/actions/auth/server.ts
- *
- * **Remaining Client Operations**:
  * - Session/user reading
  * - OAuth redirects (require client-side)
  * - Auth state subscriptions
@@ -77,7 +99,7 @@ export const authService = {
     } = await supabase.auth.getSession()
 
     if (error) {
-      throw error
+      return handleInvalidJwtError(error, 'getSession', supabase)
     }
 
     return session
@@ -111,7 +133,7 @@ export const authService = {
     } = await supabase.auth.getUser()
 
     if (error) {
-      throw error
+      return handleInvalidJwtError(error, 'getUser', supabase)
     }
 
     return user
@@ -140,7 +162,7 @@ export const authService = {
    */
   async signInWithProvider(provider: 'google' | 'github' | 'facebook'): Promise<void> {
     const supabase = createClient()
-    const { error } = await supabase.auth.signInWithOAuth({
+    const { data, error } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
@@ -149,6 +171,10 @@ export const authService = {
 
     if (error) {
       throw error
+    }
+
+    if (data?.url) {
+      window.location.href = data.url
     }
   },
 
@@ -179,7 +205,7 @@ export const authService = {
     } = await supabase.auth.refreshSession()
 
     if (error) {
-      throw error
+      return handleInvalidJwtError(error, 'refreshSession', supabase)
     }
 
     return session

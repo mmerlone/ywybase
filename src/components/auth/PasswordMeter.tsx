@@ -110,7 +110,7 @@ export function PasswordMeter({ password = '', confirmPassword, onValidationChan
 
       <List dense disablePadding>
         {effectiveRequirements.map((req) => {
-          const isFulfilled = fulfilledRequirements[req.key] || false
+          const isFulfilled = fulfilledRequirements[req.key] ?? false
           return (
             <ListItem key={req.key} disableGutters disablePadding>
               <ListItemIcon sx={{ minWidth: 24, marginRight: 1 }}>

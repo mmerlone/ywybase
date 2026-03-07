@@ -7,8 +7,7 @@ import { useFormContext } from 'react-hook-form'
 import { useState } from 'react'
 
 import { uiText } from './config/uiText'
-import { AuthOperationsEnum } from '@/types/auth.types'
-import { AuthOperations } from '@/types'
+import { AuthOperationsEnum, type AuthOperations } from '@/types/auth.types'
 
 type AuthFormFieldsProps = {
   operation: AuthOperations
@@ -39,17 +38,18 @@ export function AuthFormFields({ operation, isLoading = false }: AuthFormFieldsP
         label={fields.email}
         type="email"
         {...register('email')}
-        error={!!errors.email}
+        error={Boolean(errors.email)}
         helperText={errors.email?.message as string}
         fullWidth
         margin="normal"
         disabled={isLoading}
+        autoFocus
       />
     </motion.div>
   )
 
   const renderPasswordField = (name: string, label: string): JSX.Element => {
-    const visible = !!showPassword[name]
+    const visible = Boolean(showPassword[name])
     return (
       <motion.div
         layout
@@ -62,7 +62,7 @@ export function AuthFormFields({ operation, isLoading = false }: AuthFormFieldsP
           label={label}
           type={visible ? 'text' : 'password'}
           {...register(name)}
-          error={!!errors[name]}
+          error={Boolean(errors[name])}
           helperText={errors[name]?.message as string}
           fullWidth
           margin="normal"
@@ -99,7 +99,7 @@ export function AuthFormFields({ operation, isLoading = false }: AuthFormFieldsP
       <TextField
         label={fields.name}
         {...register('name')}
-        error={!!errors.name}
+        error={Boolean(errors.name)}
         helperText={errors.name?.message as string}
         fullWidth
         margin="normal"
@@ -140,26 +140,29 @@ export function AuthFormFields({ operation, isLoading = false }: AuthFormFieldsP
       <LayoutGroup>
         <motion.div layout transition={{ layout: { duration: 0.25, ease: [0.2, 0, 0.2, 1] } }}>
           <AnimatePresence mode="wait" initial={false}>
-            {operation !== AuthOperationsEnum.SET_PASSWORD && operation !== AuthOperationsEnum.UPDATE_PASSWORD && (
-              <>
-                {renderEmailField()}
-                {operation !== AuthOperationsEnum.FORGOT_PASSWORD && (
-                  <>
-                    {renderPasswordField('password', fields.password)}
-
-                    {operation === AuthOperationsEnum.SIGN_UP && (
+            {operation !== AuthOperationsEnum.SET_PASSWORD &&
+              operation !== AuthOperationsEnum.UPDATE_PASSWORD &&
+              operation !== AuthOperationsEnum.ADD_PASSWORD && (
+                <>
+                  {renderEmailField()}
+                  {operation !== AuthOperationsEnum.FORGOT_PASSWORD &&
+                    operation !== AuthOperationsEnum.RESEND_VERIFICATION && (
                       <>
-                        {renderPasswordField('confirmPassword', fields.confirmPassword)}
-                        {renderNameField()}
-                        {renderTermsCheckbox()}
+                        {renderPasswordField('password', fields.password)}
+
+                        {operation === AuthOperationsEnum.SIGN_UP && (
+                          <>
+                            {renderPasswordField('confirmPassword', fields.confirmPassword)}
+                            {renderNameField()}
+                            {renderTermsCheckbox()}
+                          </>
+                        )}
                       </>
                     )}
-                  </>
-                )}
-              </>
-            )}
+                </>
+              )}
 
-            {operation === AuthOperationsEnum.SET_PASSWORD && (
+            {(operation === AuthOperationsEnum.SET_PASSWORD || operation === AuthOperationsEnum.ADD_PASSWORD) && (
               <>
                 {renderPasswordField('password', fields.newPassword)}
                 {renderPasswordField('confirmPassword', fields.confirmNewPassword)}

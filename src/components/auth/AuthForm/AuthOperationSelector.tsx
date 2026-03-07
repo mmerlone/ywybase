@@ -1,6 +1,6 @@
 import LabelledToggle from '@/components/layout/LabelledToggle'
-import { AuthOperationsEnum, type LabelledToggleOption } from '@/types'
-import { AuthOperations } from '@/types/auth.types'
+import { AuthOperationsEnum, type AuthOperations } from '@/types/auth.types'
+import type { LabelledToggleOption } from '@/types/components.types'
 
 interface AuthOperationSelectorProps {
   currentOperation: AuthOperations

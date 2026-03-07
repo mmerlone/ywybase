@@ -2,7 +2,7 @@ import { Box, Container, Typography } from '@mui/material'
 import type { Metadata } from 'next'
 
 import AuthForm from '@/components/auth/AuthForm'
-import { AuthOperationsEnum } from '@/types/auth.types'
+import { AuthOperationsEnum, type AuthOperations } from '@/types/auth.types'
 import { SITE_CONFIG } from '@/config/site'
 
 export const metadata: Metadata = {
@@ -18,7 +18,7 @@ export default async function AuthPage({ searchParams }: PageProps): Promise<JSX
   // Get the operation from search params (this is automatically handled by Next.js)
   const { op } = await searchParams
   const normalized = op?.toLowerCase() ?? null
-  const initialOperation = ((): AuthOperationsEnum | null => {
+  const initialOperation = ((): AuthOperations | null => {
     switch (normalized) {
       case AuthOperationsEnum.LOGIN:
         return AuthOperationsEnum.LOGIN
@@ -30,6 +30,8 @@ export default async function AuthPage({ searchParams }: PageProps): Promise<JSX
         return AuthOperationsEnum.SET_PASSWORD
       case AuthOperationsEnum.UPDATE_PASSWORD:
         return AuthOperationsEnum.UPDATE_PASSWORD
+      case AuthOperationsEnum.RESEND_VERIFICATION:
+        return AuthOperationsEnum.RESEND_VERIFICATION
       default:
         return AuthOperationsEnum.LOGIN
     }
@@ -38,7 +40,6 @@ export default async function AuthPage({ searchParams }: PageProps): Promise<JSX
     <Container maxWidth="md">
       <Box
         sx={{
-          minHeight: '100vh',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'flex-start',
@@ -55,7 +56,7 @@ export default async function AuthPage({ searchParams }: PageProps): Promise<JSX
           }}>
           Welcome to {SITE_CONFIG.name}
         </Typography>
-        <AuthForm initialOperation={initialOperation || undefined} />
+        <AuthForm initialOperation={initialOperation ?? undefined} />
       </Box>
     </Container>
   )

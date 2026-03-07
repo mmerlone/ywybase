@@ -9,29 +9,30 @@ export type { AuthUser, Session }
  * Authentication operations used in the application.
  * Defines the different types of authentication forms and flows.
  */
-export enum AuthOperationsEnum {
+export const AuthOperationsEnum = {
   // Standard authentication
-  LOGIN = 'login',
-  SIGN_UP = 'sign-up',
-  SIGN_OUT = 'sign-out',
+  LOGIN: 'login',
+  SIGN_UP: 'sign-up',
+  SIGN_OUT: 'sign-out',
 
   // SIGN UP: resend verification email
-  RESEND_VERIFICATION = 'resend-verification',
+  RESEND_VERIFICATION: 'resend-verification',
 
   // Password reset flow (two-step)
-  FORGOT_PASSWORD = 'forgot-password', // Step 1: Request password reset email (handles both initial request and resend)
-  SET_PASSWORD = 'set-password', // Step 2: Set new password (token-auth from email link, new password fields only)
+  FORGOT_PASSWORD: 'forgot-password', // Step 1: Request password reset email (handles both initial request and resend)
+  SET_PASSWORD: 'set-password', // Step 2: Set new password (token-auth from email link, new password fields only)
 
   // Account management
-  UPDATE_PASSWORD = 'update-password', // For logged-in users to change their password (current password fields only)
+  UPDATE_PASSWORD: 'update-password', // For logged-in users to change their password (current password fields only)
+  ADD_PASSWORD: 'add-password', // For OAuth users to add email/password login to their account
 
   // Future: Account Recovery
-  // ACCOUNT_RECOVERY = 'account-recovery',
+  // ACCOUNT_RECOVERY: 'account-recovery',
 
   // Future: MFA
-  // SETUP_MFA = 'setup-mfa',
-  // VERIFY_MFA = 'verify-mfa',
-}
+  // SETUP_MFA: 'setup-mfa',
+  // VERIFY_MFA: 'verify-mfa',
+} as const
 
 /**
  * Authentication providers supported by the application.
@@ -42,8 +43,8 @@ export enum AuthOperationsEnum {
  *
  * @example
  * ```typescript
- * // Using the AuthProviders enum
- * const provider: AuthProviders = AuthProvider.GOOGLE;
+ * // Using the AuthProvider enum
+ * const provider: AuthProvider = AuthProvidersEnum.GOOGLE;
  *
  * // Checking provider type
  * if (provider === AuthProvidersEnum.GOOGLE) {
@@ -51,63 +52,78 @@ export enum AuthOperationsEnum {
  * }
  * ```
  */
-export enum AuthProvidersEnum {
-  /**
-   * Google OAuth 2.0 provider.
-   *
-   * @remarks
-   * Requires Google OAuth 2.0 credentials to be configured.
-   *
-   * @see [Google OAuth 2.0 Documentation](https://developers.google.com/identity/protocols/oauth2)
-   */
-  GOOGLE = 'google',
+export const AuthProvidersEnum = {
+  /** Email/password provider (Supabase native) */
+  EMAIL: 'email',
+  /** Google OAuth 2.0 provider */
+  GOOGLE: 'google',
+  /** GitHub OAuth 2.0 provider */
+  GITHUB: 'github',
+  /** Facebook OAuth 2.0 provider */
+  FACEBOOK: 'facebook',
+  /** Twitter OAuth 2.0 provider */
+  TWITTER: 'twitter',
+  /** Microsoft OAuth 2.0 provider */
+  MICROSOFT: 'microsoft',
+  /** Apple Sign In provider */
+  APPLE: 'apple',
+  /** Discord OAuth 2.0 provider */
+  DISCORD: 'discord',
+  /** GitLab OAuth 2.0 provider */
+  GITLAB: 'gitlab',
+  /** Bitbucket OAuth 2.0 provider */
+  BITBUCKET: 'bitbucket',
+  /** Slack OAuth 2.0 provider */
+  SLACK: 'slack',
+  /** Spotify OAuth 2.0 provider */
+  SPOTIFY: 'spotify',
+  /** Twitch OAuth 2.0 provider */
+  TWITCH: 'twitch',
+  /** LinkedIn OAuth 2.0 provider */
+  LINKEDIN: 'linkedin',
+  /** Notion OAuth 2.0 provider */
+  NOTION: 'notion',
+  /** Zoom OAuth 2.0 provider */
+  ZOOM: 'zoom',
+  /** WorkOS SSO provider */
+  WORKOS: 'workos',
+} as const
 
-  /**
-   * GitHub OAuth 2.0 provider.
-   *
-   * @remarks
-   * Requires GitHub OAuth App to be configured.
-   *
-   * @see [GitHub OAuth Documentation](https://docs.github.com/en/developers/apps/building-oauth-apps/authorizing-oauth-apps)
-   */
-  GITHUB = 'github',
-
-  /**
-   * Microsoft OAuth 2.0 provider.
-   *
-   * @remarks
-   * Requires Microsoft Identity Platform application to be configured.
-   *
-   * @see [Microsoft Identity Platform Documentation](https://docs.microsoft.com/en-us/azure/active-directory/develop/v2-oauth2-auth-code-flow)
-   */
-  // MICROSOFT = 'microsoft',
-
-  /**
-   * Apple Sign In provider.
-   *
-   * @remarks
-   * Requires Apple Developer account and Sign In with Apple configuration.
-   *
-   */
-  // APPLE = 'apple',
-}
+/**
+ * Type representing the string literal union of all AuthProvider values.
+ *
+ * @remarks
+ * This type is derived from the AuthProvider enum and represents all possible
+ * string values that can be used to identify an authentication provider.
+ *
+ * @example
+ * ```typescript
+ * // Valid values
+ * const provider: AuthProvider = 'google'; // Valid
+ * const provider2: AuthProvider = 'github'; // Valid
+ *
+ * // TypeScript error - invalid provider
+ * const invalidProvider: AuthProvider = 'twitter'; // Error
+ * ```
+ */
+export type AuthProvider = (typeof AuthProvidersEnum)[keyof typeof AuthProvidersEnum]
 
 /**
  * Sign out reasons
  */
-export enum SignOutReasonEnum {
-  USER_ACTION = 'user_action',
-  USER_NOT_FOUND = 'user_not_found',
-  SESSION_EXPIRED = 'session_expired',
-  UNKNOWN = 'unknown',
-}
+export const SignOutReasonEnum = {
+  USER_ACTION: 'user_action',
+  USER_NOT_FOUND: 'user_not_found',
+  SESSION_EXPIRED: 'session_expired',
+  UNKNOWN: 'unknown',
+} as const
 
-export enum VerificationStatusEnum {
-  IDLE = 'idle',
-  CHECKING = 'checking',
-  UNVERIFIED = 'unverified',
-  VERIFIED = 'verified',
-}
+export const VerificationStatusEnum = {
+  IDLE: 'idle',
+  CHECKING: 'checking',
+  UNVERIFIED: 'unverified',
+  VERIFIED: 'verified',
+} as const
 
 /**
  * Represents an error that can be either:
@@ -123,7 +139,7 @@ export type SerializableError = AppError | AppErrorJSON
  * Type representing an authentication operation.
  * This is a string union type of all possible AuthOperations enum values.
  */
-export type AuthOperations = `${AuthOperationsEnum}`
+export type AuthOperations = (typeof AuthOperationsEnum)[keyof typeof AuthOperationsEnum]
 
 /**
  * Represents the authentication result
@@ -133,25 +149,7 @@ export type AuthResult = {
   data?: unknown
 }
 
-/**
- * Type representing the string literal union of all AuthProvider values.
- *
- * @remarks
- * This type is derived from the AuthProvider enum and represents all possible
- * string values that can be used to identify an authentication provider.
- *
- * @example
- * ```typescript
- * // Valid values
- * const provider: AuthProviderValue = 'google'; // Valid
- * const provider2: AuthProviderValue = 'github'; // Valid
- *
- * // TypeScript error - invalid provider
- * const invalidProvider: AuthProviderValue = 'twitter'; // Error
- * ```
- */
-export type AuthProviderValue = `${AuthProvidersEnum}`
-export type SignOutReason = `${SignOutReasonEnum}`
+export type SignOutReason = (typeof SignOutReasonEnum)[keyof typeof SignOutReasonEnum]
 
 /**
  * Configuration for an authentication provider in the application.
@@ -175,7 +173,7 @@ export interface AuthProviderConfig {
    * The authentication provider identifier.
    * Must be one of the values from the AuthProvidersEnum.
    */
-  id: AuthProviderValue
+  id: AuthProvider
 
   /**
    * Display name of the authentication provider.
@@ -232,7 +230,7 @@ export interface AuthContextType {
 
   // Auth actions
   signIn: (email: string, password: string) => Promise<{ error: SerializableError | null }>
-  signInWithProvider: (provider: AuthProvidersEnum) => Promise<{ error: SerializableError | null }>
+  signInWithProvider: (provider: AuthProvider) => Promise<{ error: SerializableError | null }>
   signUpWithEmail: (
     email: string,
     password: string,
@@ -298,6 +296,11 @@ export interface ResetPasswordPassFormInput {
   confirmPassword: string
 }
 
+export interface AddPasswordFormInput {
+  password: string
+  confirmPassword: string
+}
+
 export interface UpdatePasswordFormInput {
   currentPassword: string
   newPassword: string
@@ -310,11 +313,13 @@ export type FormTypeMap = {
   [AuthOperationsEnum.FORGOT_PASSWORD]: ResetPasswordEmailFormInput
   [AuthOperationsEnum.SET_PASSWORD]: ResetPasswordPassFormInput
   [AuthOperationsEnum.UPDATE_PASSWORD]: UpdatePasswordFormInput
+  [AuthOperationsEnum.ADD_PASSWORD]: AddPasswordFormInput
+  [AuthOperationsEnum.RESEND_VERIFICATION]: ResetPasswordEmailFormInput
 }
 
 export type FormType = keyof FormTypeMap
 
-export type VerificationStatusType = `${VerificationStatusEnum}`
+export type VerificationStatusType = (typeof VerificationStatusEnum)[keyof typeof VerificationStatusEnum]
 
 // Type guard for form inputs
 export function isLoginFormInput(data: unknown): data is LoginFormInput {

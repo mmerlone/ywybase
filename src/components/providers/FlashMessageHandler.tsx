@@ -54,38 +54,121 @@
  */
 'use client'
 
-import { useEffect } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
+import { usePathname } from 'next/navigation'
 
 import { useSnackbar } from '@/contexts/SnackbarContext'
-import { flashClient } from '@/lib/utils/flash-messages.client'
+import { flashClient, type FlashMessage } from '@/lib/utils/flash-messages.client'
 
-export function FlashMessageHandler(): null {
+/**
+ * Props for FlashMessageHandler.
+ */
+interface FlashMessageHandlerProps {
+  /** Optional initial flash message provided by server rendering. */
+  initialFlash?: FlashMessage | null
+}
+
+export function FlashMessageHandler({ initialFlash }: FlashMessageHandlerProps): null {
   const { showSuccess, showError, showWarning, showInfo } = useSnackbar()
+  const pathname = usePathname()
+  const initialConsumedRef = useRef(false)
+  const pollTimeoutRef = useRef<number | null>(null)
 
-  useEffect(() => {
+  const showFlashMessage = useCallback(
+    (flashMessage: FlashMessage): void => {
+      switch (flashMessage.severity) {
+        case 'success':
+          showSuccess(flashMessage.message)
+          break
+        case 'error':
+          showError(flashMessage.message)
+          break
+        case 'warning':
+          showWarning(flashMessage.message)
+          break
+        case 'info':
+          showInfo(flashMessage.message)
+          break
+      }
+    },
+    [showSuccess, showError, showWarning, showInfo]
+  )
+
+  const checkForFlash = useCallback((): void => {
+    if (initialFlash && !initialConsumedRef.current) {
+      initialConsumedRef.current = true
+      showFlashMessage(initialFlash)
+      flashClient.clear()
+      return
+    }
+
     const flashMessage = flashClient.get()
 
     if (!flashMessage) return
 
-    // Show the notification based on severity
-    switch (flashMessage.severity) {
-      case 'success':
-        showSuccess(flashMessage.message)
-        break
-      case 'error':
-        showError(flashMessage.message)
-        break
-      case 'warning':
-        showWarning(flashMessage.message)
-        break
-      case 'info':
-        showInfo(flashMessage.message)
-        break
+    showFlashMessage(flashMessage)
+    flashClient.clear()
+  }, [initialFlash, showFlashMessage])
+
+  const scheduleFlashPoll = useCallback((): void => {
+    if (pollTimeoutRef.current !== null) {
+      return
     }
 
-    // Clear the flash message after showing
-    flashClient.clear()
-  }, [showSuccess, showError, showWarning, showInfo])
+    let attempts = 0
+    const maxAttempts = 12
+    const intervalMs = 100
+
+    const poll = (): void => {
+      attempts += 1
+      const flashMessage = flashClient.get()
+
+      if (flashMessage) {
+        showFlashMessage(flashMessage)
+        flashClient.clear()
+        pollTimeoutRef.current = null
+        return
+      }
+
+      if (attempts < maxAttempts) {
+        pollTimeoutRef.current = window.setTimeout(poll, intervalMs)
+        return
+      }
+
+      pollTimeoutRef.current = null
+    }
+
+    pollTimeoutRef.current = window.setTimeout(poll, intervalMs)
+  }, [showFlashMessage])
+
+  useEffect(() => {
+    checkForFlash()
+  }, [checkForFlash, pathname])
+
+  useEffect(() => {
+    const handleClick = (): void => {
+      window.setTimeout(() => {
+        checkForFlash()
+        scheduleFlashPoll()
+      }, 50)
+    }
+
+    const handlePopState = (): void => {
+      checkForFlash()
+      scheduleFlashPoll()
+    }
+
+    document.addEventListener('click', handleClick)
+    window.addEventListener('popstate', handlePopState)
+
+    return (): void => {
+      document.removeEventListener('click', handleClick)
+      window.removeEventListener('popstate', handlePopState)
+      if (pollTimeoutRef.current !== null) {
+        window.clearTimeout(pollTimeoutRef.current)
+      }
+    }
+  }, [checkForFlash, scheduleFlashPoll])
 
   return null
 }

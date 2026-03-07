@@ -1,115 +1,63 @@
+/**
+ * @fileoverview Composition hook that unifies authentication state, actions,
+ * and error utilities into a single `AuthContextType` value.
+ *
+ * This hook is consumed exclusively by `AuthProvider`; application code should
+ * use `useAuthContext` from `@/components/providers` instead.
+ *
+ * @module hooks/useAuth
+ * @internal
+ */
+
 'use client'
 
 import { useCallback } from 'react'
 
-import { AuthContextType } from '../types'
+import { authService } from '@/lib/actions/auth/client'
+import { logger } from '@/lib/logger/client'
+import type { AuthContextType, SerializableError, SignOutReason } from '@/types/auth.types'
 
-import { useAuthState } from './useAuthState'
 import { useAuthActions } from './useAuthActions'
 import { useAuthError } from './useAuthError'
-
-import { authService } from '@/lib/actions/auth/client'
-import { handleClientError as handleError } from '@/lib/error'
+import { useAuthState } from './useAuthState'
 
 /**
- * Authentication hook that provides comprehensive auth state management and operations.
+ * Core authentication composition hook.
  *
- * This hook combines three specialized hooks for better separation of concerns:
- * - `useAuthState`: Manages auth state (user, session, loading, errors)
- * - `useAuthActions`: Provides authentication actions (login, sign up, etc.)
- * - `useAuthError`: Utilities for error handling and display
+ * Combines {@link useAuthState}, {@link useAuthActions}, and {@link useAuthError}
+ * into a single value conforming to {@link AuthContextType}.  Also provides the
+ * `refreshSession`, `hasRole`, and `isCurrentUser` utilities required by the
+ * context contract.
  *
- * **Architecture**:
- * - Modular design with separate concerns for state, actions, and errors
- * - Integrates with centralized error handling system
- * - Provides structured error information for UI components
- * - Manages session lifecycle and auto-refresh
+ * @internal Consumed only by `AuthProvider`. Use `useAuthContext` in components.
  *
- * @returns {AuthContextType} Authentication context containing:
- * - `authUser`: Current authenticated user or null
- * - `session`: Current session or null
- * - `isLoading`: Loading state for auth operations
- * - `error`: Structured error information or null
- * - `signIn`: Login with email and password
- * - `signInWithProvider`: Login with OAuth provider
- * - `signUpWithEmail`: Sign up with email and password
- * - `resetPassword`: Send password reset email
- * - `signOut`: Sign out current user
- * - `refreshSession`: Refresh current session
- * - `hasRole`: Check user role (placeholder for RBAC)
- * - `isCurrentUser`: Check if user ID matches current user
- * - `clearError`: Clear current error state
- * - `getErrorForDisplay`: Get user-friendly error information
- * - `getErrorCode`: Get current error code
- * - `isAuthError`: Check if error is auth-related
- * - `isValidationError`: Check if error is validation-related
- * - `isNetworkError`: Check if error is network-related
- *
- * @example
- * ```tsx
- * function LoginForm() {
- *   const { signIn, isLoading, error } = useAuth();
- *
- *   const handleSubmit = async (email: string, password: string) => {
- *     const result = await signIn(email, password);
- *     if (result.error) {
- *       console.error('Login failed:', result.error.message);
- *     }
- *   };
- *
- *   return (
- *     <form onSubmit={(e) => handleSubmit(/ * form data * /)}>
- *       {/* Form fields * /}
- *       {error && <div>{error.message}</div>}
- *       <button disabled={isLoading}>Login</button>
- *     </form>
- *   );
- * }
- * ```
- *
- * @example
- * ```tsx
- * function UserProfile() {
- *   const { authUser, signOut, isCurrentUser } = useAuth();
- *
- *   if (!authUser) return <div>Please login</div>;
- *
- *   return (
- *     <div>
- *       <h1>Welcome {authUser.email}</h1>
- *       <button onClick={() => signOut()}>Sign Out</button>
- *     </div>
- *   );
- * }
- * ```
+ * @returns {AuthContextType} Full authentication context value.
  */
-export const useAuth = (): AuthContextType => {
-  // Get auth state from useAuthState
+export function useAuth(): AuthContextType {
+  // ── state ────────────────────────────────────────────────────────────
   const { authUser, session, isLoading, error, setError, setIsLoading, setSession, setAuthUser } = useAuthState()
 
-  // Refresh session
+  // ── refresh session ──────────────────────────────────────────────────
   const refreshSession = useCallback(async (): Promise<void> => {
     try {
-      setIsLoading(true)
-      setError(null) // Clear previous errors
-
-      const session = await authService.getSession()
-      setSession(session)
-      setAuthUser(session?.user ?? null)
-    } catch (error) {
-      const appError = handleError(error, {
-        operation: 'refreshSession',
-        unexpected: true,
-        hook: 'useAuth',
-      })
-      setError(appError)
-    } finally {
-      setIsLoading(false)
+      const refreshed = await authService.refreshSession()
+      if (refreshed) {
+        setSession(refreshed)
+        setAuthUser(refreshed.user ?? null)
+      }
+    } catch (err) {
+      logger.error({ err, op: 'refreshSession' }, 'Failed to refresh session')
     }
-  }, [setError, setIsLoading, setSession, setAuthUser])
+  }, [setSession, setAuthUser])
 
-  // Get auth actions from useAuthActions
-  const actions = useAuthActions({
+  // ── actions ──────────────────────────────────────────────────────────
+  const {
+    signIn,
+    signInWithProvider,
+    signUpWithEmail,
+    resetPassword,
+    signOut: signOutBase,
+  } = useAuthActions({
     setErrorAction: setError,
     setIsLoadingAction: setIsLoading,
     setSessionAction: setSession,
@@ -117,67 +65,77 @@ export const useAuth = (): AuthContextType => {
     refreshSessionAction: refreshSession,
   })
 
-  // Get error utilities from useAuthError
-  const errorUtils = useAuthError({ error, setErrorAction: setError })
+  // Wrap signOut to accept an optional reason parameter (AuthContextType contract)
+  const signOut = useCallback(
+    async (reason?: SignOutReason): Promise<{ error: SerializableError | null }> => {
+      if (reason) {
+        logger.info({ reason, op: 'signOut' }, 'Sign out initiated')
+      }
+      return signOutBase()
+    },
+    [signOutBase]
+  )
 
-  // Additional utility functions
-  const hasRole = useCallback((role: string): boolean => {
-    // Role-based access control is not yet implemented
-    // This is a placeholder for future RBAC functionality
-    return !!role
-  }, [])
+  // ── error utilities ──────────────────────────────────────────────────
+  const { clearError, getErrorForDisplay, getErrorCode, isAuthError, isValidationError, isNetworkError } = useAuthError(
+    {
+      error,
+      setErrorAction: setError,
+    }
+  )
 
+  // ── convenience helpers ──────────────────────────────────────────────
+
+  /**
+   * Check whether the current user has the given role.
+   *
+   * Roles are expected in `user.app_metadata.role` (set by Supabase or custom claims).
+   */
+  const hasRole = useCallback(
+    (role: string): boolean => {
+      if (!authUser) return false
+      const userRole = (authUser.app_metadata as Record<string, unknown> | undefined)?.role
+      return userRole === role
+    },
+    [authUser]
+  )
+
+  /**
+   * Check whether the given `userId` matches the currently authenticated user.
+   */
   const isCurrentUser = useCallback(
     (userId: string): boolean => {
       return authUser?.id === userId
     },
-    [authUser?.id]
+    [authUser]
   )
 
+  // ── compose ──────────────────────────────────────────────────────────
   return {
+    // state
     authUser,
     session,
-    isLoading,
     error,
-    signIn: actions.signIn,
-    signInWithProvider: actions.signInWithProvider,
-    signUpWithEmail: actions.signUpWithEmail,
-    resetPassword: actions.resetPassword,
-    signOut: actions.signOut,
+    isLoading,
+
+    // actions
+    signIn,
+    signInWithProvider,
+    signUpWithEmail,
+    resetPassword,
+    signOut,
     refreshSession,
+
+    // utilities
     hasRole,
     isCurrentUser,
-    clearError: errorUtils.clearError,
-    getErrorForDisplay: errorUtils.getErrorForDisplay,
-    getErrorCode: errorUtils.getErrorCode,
-    isAuthError: errorUtils.isAuthError,
-    isValidationError: errorUtils.isValidationError,
-    isNetworkError: errorUtils.isNetworkError,
-  }
-}
 
-/**
- * Hook to get the auth service instance directly.
- *
- * Useful for advanced authentication operations that aren't covered by the
- * main useAuth() hook, such as custom authentication flows or direct service access.
- *
- * @returns {typeof authService} The authentication service instance
- *
- * @example
- * ```tsx
- * function CustomAuthComponent() {
- *   const authService = useAuthService();
- *   const [session, setSession] = useState(null);
- *
- *   useEffect(() => {
- *     authService.getSession().then(setSession);
- *   }, [authService]);
- *
- *   return <div>Custom auth logic</div>;
- * }
- * ```
- */
-export const useAuthService = (): typeof authService => {
-  return authService
+    // error boundary integration
+    clearError,
+    getErrorForDisplay,
+    getErrorCode,
+    isAuthError,
+    isValidationError,
+    isNetworkError,
+  }
 }

@@ -4,6 +4,7 @@ import {
   ErrorOutline as ErrorIcon,
   Home as HomeIcon,
   Login as LoginIcon,
+  Refresh as RefreshIcon,
   SupportAgent as SupportIcon,
 } from '@mui/icons-material'
 import { Alert, Box, Container, Typography, Button, Paper } from '@mui/material'
@@ -11,8 +12,7 @@ import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { Suspense } from 'react'
 import { SITE_CONFIG } from '@/config/site'
-import { ErrorPageCode } from '@/types/error.types'
-import { ErrorPageCodeEnum } from '@/types/error.types'
+import { type ErrorPageCode, ErrorPageCodeEnum } from '@/types/error.types'
 
 /**
  * Interface for error display details
@@ -31,7 +31,9 @@ function ErrorPageContent(): JSX.Element {
   const searchParams = useSearchParams()
   const codeParam = searchParams.get('code')
   const code =
-    codeParam && Object.values(ErrorPageCodeEnum).includes(codeParam as ErrorPageCodeEnum)
+    codeParam !== null &&
+    codeParam !== undefined &&
+    Object.values(ErrorPageCodeEnum).includes(codeParam as ErrorPageCode)
       ? (codeParam as ErrorPageCode)
       : null
 
@@ -90,7 +92,6 @@ function ErrorPageContent(): JSX.Element {
   return (
     <Box
       sx={{
-        minHeight: '100vh',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -114,6 +115,12 @@ function ErrorPageContent(): JSX.Element {
           <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
             {message}
           </Typography>
+
+          {(code === ErrorPageCodeEnum.AUTH_LINK_EXPIRED || code === ErrorPageCodeEnum.AUTH_CODE_INVALID) && (
+            <Alert severity="info" sx={{ mb: 3, textAlign: 'left' }}>
+              <Typography variant="body2">Email verification links expire after 24 hours for security.</Typography>
+            </Alert>
+          )}
 
           {code === ErrorPageCodeEnum.CONFIGURATION_ERROR && process.env.NODE_ENV === 'development' && (
             <Alert severity="info" sx={{ mb: 3, textAlign: 'left' }}>
@@ -153,6 +160,17 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_xxxxx`}
             <Button variant="contained" startIcon={<HomeIcon />} component={Link} href="/">
               Go Home
             </Button>
+
+            {(code === ErrorPageCodeEnum.AUTH_LINK_EXPIRED || code === ErrorPageCodeEnum.AUTH_CODE_INVALID) && (
+              <Button
+                variant="outlined"
+                color="primary"
+                startIcon={<RefreshIcon />}
+                component={Link}
+                href="/auth?op=resend-verification">
+                Request a new link
+              </Button>
+            )}
 
             {showLogin && (
               <Button variant="outlined" startIcon={<LoginIcon />} component={Link} href="/auth">

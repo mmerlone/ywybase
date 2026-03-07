@@ -5,7 +5,7 @@ import { Box, CircularProgress, Typography } from '@mui/material'
 import type { AuthUser } from '@supabase/supabase-js'
 import { useRouter } from 'next/navigation'
 
-import { useAuthContext } from '@/components/providers'
+import { useCurrentUser } from '@/components/providers/AuthProvider'
 import { logger } from '@/lib/logger/client'
 
 interface ServerAuthProps {
@@ -78,9 +78,9 @@ export function ServerAuth({
   onAccessDenied,
   onAccessGranted,
 }: ServerAuthProps): JSX.Element | null {
-  const { authUser, isLoading, session } = useAuthContext()
+  const { user: authUser, isLoading, session } = useCurrentUser()
   const router = useRouter()
-  const isAuthenticated = !!authUser
+  const isAuthenticated = Boolean(authUser)
   const [hasAccess, setHasAccess] = useState<boolean | null>(null)
 
   const checkAccessControl = useCallback(async (): Promise<boolean> => {
@@ -90,8 +90,8 @@ export function ServerAuth({
     if (!checkAccess) return isAuthenticated || !required
 
     try {
-      const hasAccess = await checkAccess(isAuthenticated, authUser, session)
-      return hasAccess
+      const accessResult = await checkAccess(isAuthenticated, authUser, session)
+      return accessResult
     } catch (err) {
       logger.error({ err }, 'Error in access control check')
       return false
@@ -103,17 +103,21 @@ export function ServerAuth({
       // Skip if still loading
       if (isLoading) return
 
-      const hasAccess = await checkAccessControl()
+      const currentAccess = await checkAccessControl()
+      setHasAccess(currentAccess)
 
-      if (required && !hasAccess) {
+      if (required && !currentAccess) {
         onAccessDenied?.()
         router.push(loginPath)
-      } else if (hasAccess) {
+      } else if (currentAccess) {
         onAccessGranted?.()
       }
     }
 
-    verifyAccess()
+    void verifyAccess().catch((err) => {
+      // Log but don't throw - access check failures are handled internally
+      logger.warn({ err, operation: 'verifyAccess' }, 'Failed to verify access')
+    })
   }, [isAuthenticated, isLoading, router, required, loginPath, checkAccessControl, onAccessDenied, onAccessGranted])
 
   // If custom access control is provided, evaluate it and update local access state
@@ -127,12 +131,16 @@ export function ServerAuth({
       setHasAccess(access)
     }
 
-    verify()
+    void verify().catch((err) => {
+      // Log but don't throw - access check failures are handled internally
+      logger.warn({ err, operation: 'verifyCustomAccess' }, 'Failed to verify custom access')
+    })
     return (): void => {
       mounted = false
     }
   }, [checkAccess, isLoading, checkAccessControl])
 
+  // TODO: provide a better loading UX
   // Show loading state
   if (isLoading) {
     return <>{loadingComponent}</>
