@@ -19,17 +19,17 @@
  */
 
 import { ErrorCodes } from './codes'
-import { ErrorTypeEnum } from '@/types/error.types'
-import type {
-  AppError,
-  AppErrorOptions,
-  AuthErrorContext,
-  DatabaseErrorContext,
-  ValidationErrorContext,
-  NetworkErrorContext,
-  BaseErrorContext,
-  AppErrorJSON,
-  ErrorType,
+import {
+  ErrorTypeEnum,
+  type AppError,
+  type AppErrorOptions,
+  type AuthErrorContext,
+  type DatabaseErrorContext,
+  type ValidationErrorContext,
+  type NetworkErrorContext,
+  type BaseErrorContext,
+  type AppErrorJSON,
+  type ErrorType,
 } from '@/types/error.types'
 
 /**
@@ -77,7 +77,7 @@ export class BaseAppError<TContext extends BaseErrorContext = BaseErrorContext>
     super(options.message)
     this.errorType = ErrorTypeEnum.APP_ERROR as ErrorType
     this.code = options.code
-    this.context = (options.context || {}) as TContext
+    this.context = (options.context ?? {}) as TContext
     this.isOperational = options.isOperational ?? true
     this.statusCode = options.statusCode
     this.cause = options.cause
@@ -152,7 +152,7 @@ export class ValidationError extends BaseAppError<ValidationErrorContext> {
     super({
       code: ErrorCodes.validation.invalidInput(),
       message,
-      context: context || {},
+      context: context ?? {},
       isOperational: true,
       statusCode: 400,
     })

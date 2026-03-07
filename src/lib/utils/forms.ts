@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import type { FieldErrors, Resolver } from 'react-hook-form'
+import type { FieldErrors, FieldValues, Resolver } from 'react-hook-form'
 import { ZodError, type ZodType } from 'zod'
 
 /**
@@ -34,7 +34,7 @@ import { ZodError, type ZodType } from 'zod'
  *
  * @see {@link https://github.com/react-hook-form/resolvers/issues/588} - Related issue
  */
-export function createSafeResolver<T extends Record<string, unknown>>(schema: ZodType<T>): Resolver<T> {
+export function createSafeResolver<T extends FieldValues>(schema: ZodType<T>): Resolver<T> {
   const zodResolverFn = zodResolver(schema)
 
   return async (values, context, options) => {
@@ -46,7 +46,7 @@ export function createSafeResolver<T extends Record<string, unknown>>(schema: Zo
         const rhfErrors: FieldErrors<T> = {}
         error.issues.forEach((issue) => {
           const fieldName = issue.path[0] as string
-          ;(rhfErrors as Record<string, unknown>)[fieldName] = {
+          ;(rhfErrors as Record<string, FieldErrors[string]>)[fieldName] = {
             type: issue.code,
             message: issue.message,
           }

@@ -5,7 +5,7 @@
  * Used across all security modules to ensure type safety and consistency.
  */
 
-import { NextRequest, NextResponse } from 'next/server'
+import { type NextRequest, type NextResponse } from 'next/server'
 
 /**
  * Security event severity levels

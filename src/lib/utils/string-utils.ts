@@ -5,9 +5,9 @@
  * for consistent text processing across the application.
  */
 
-import { format } from 'date-fns'
 import ipaddr from 'ipaddr.js'
 import { type Country } from 'country-telephone-data'
+import { format as formatDateFns } from 'date-fns'
 
 /**
  * Normalize a string value by trimming whitespace and handling null/undefined.
@@ -129,7 +129,7 @@ export function isPrivateNetworkUrl(url: string): boolean {
 export function formatDate(date: string | null | undefined): string {
   if (date === null || date === undefined) return 'Never'
   try {
-    return format(new Date(date), 'PP p')
+    return formatDateFns(new Date(date), 'PP p')
   } catch {
     return 'Invalid date'
   }

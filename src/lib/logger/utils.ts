@@ -88,3 +88,47 @@ export function timeOperation(
     },
   }
 }
+
+/**
+ * Mask an email address for PII-compliant logging.
+ *
+ * Obscures the local part of the email while keeping enough visible
+ * for debugging purposes. The domain is preserved for context.
+ *
+ * **Masking Rules**:
+ * - 1-2 chars: all masked (e.g., `a@...` → `*@example.com`)
+ * - 3-4 chars: first char visible (e.g., `john@...` → `j***@example.com`)
+ * - 5+ chars: first and last char visible (e.g., `username@...` → `u******e@example.com`)
+ *
+ * @param email - Email address to mask
+ * @returns Masked email safe for logging
+ *
+ * @example
+ * ```typescript
+ * maskEmail('user@example.com')      // 'u**r@example.com'
+ * maskEmail('ab@example.com')        // '**@example.com'
+ * maskEmail('john.doe@example.com')  // 'j******e@example.com'
+ * ```
+ */
+export const maskEmail = (email: string): string => {
+  if (!email || typeof email !== 'string' || !email.includes('@')) return email
+
+  const parts = email.split('@')
+  const localPart = parts[0]
+  const domain = parts[1]
+
+  if (!localPart || !domain) return '***'
+
+  const len = localPart.length
+
+  let masked: string
+  if (len <= 2) {
+    masked = '*'.repeat(len)
+  } else if (len <= 4) {
+    masked = localPart[0] + '*'.repeat(len - 1)
+  } else {
+    masked = localPart[0] + '*'.repeat(len - 2) + localPart[len - 1]
+  }
+
+  return `${masked}@${domain}`
+}

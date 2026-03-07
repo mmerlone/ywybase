@@ -18,18 +18,29 @@
 import type { AuthApiError, PostgrestError } from '@supabase/supabase-js'
 
 import { ErrorCodeBuilder, ErrorCodes } from '../codes'
-import { AuthError, DatabaseError, NetworkError, ValidationError } from '../errors'
 import {
-  AppError,
-  AuthErrorContext,
-  DatabaseErrorContext,
-  ErrorContext,
-  NetworkErrorContext,
-  ServerActionContext,
-  ValidationErrorContext,
+  AuthError,
+  BaseAppError,
+  BusinessError,
+  ConfigurationError,
+  DatabaseError,
+  NetworkError,
+  PermissionError,
+  ValidationError,
+} from '../errors'
+import { safeJsonParse } from '../../utils/json'
+import {
+  type AppError,
+  type AppErrorJSON,
+  type AuthErrorContext,
+  type DatabaseErrorContext,
+  type ErrorContext,
+  type NetworkErrorContext,
+  type ServerActionContext,
+  type ValidationErrorContext,
+  ErrorTypeEnum,
 } from '@/types/error.types'
 
-// Import type guards and utilities from error.utils
 import {
   isServerActionContext,
   isNetworkErrorContext,
@@ -37,7 +48,9 @@ import {
   isAuthErrorContext,
   isDatabaseErrorContext,
   isAppError,
+  isAppErrorJSON,
   getErrorType,
+  isDynamicServerError,
 } from './error.utils'
 
 // Re-export for convenience
@@ -48,6 +61,8 @@ export {
   isAuthErrorContext,
   isDatabaseErrorContext,
   isAppError,
+  isAppErrorJSON,
+  isDynamicServerError,
   getErrorType,
 }
 
@@ -150,10 +165,8 @@ export function safeParseErrorDetails(details: unknown): Record<string, unknown>
   if (typeof details === 'string') {
     try {
       // Try to parse JSON string
-      const parsed = JSON.parse(details) as unknown
-      return typeof parsed === 'object' && parsed !== null
-        ? { ...(parsed as Record<string, unknown>) }
-        : { message: details }
+      const parsed = safeJsonParse<object>(details)
+      return parsed !== null ? { ...parsed } : { message: details }
     } catch {
       // If parsing fails, treat as simple message
       return { message: details }
@@ -166,14 +179,21 @@ export function safeParseErrorDetails(details: unknown): Record<string, unknown>
 
 /**
  * Handle server action errors.
- * Creates DatabaseError for server action failures.
+ * Creates appropriate error based on the error type.
  *
  * @param error - Original error
  * @param context - Server action context
  * @returns Structured AppError
+ * @throws Re-throws Next.js dynamic server errors for proper static/dynamic detection
  * @internal
  */
 export function handleServerActionError(error: unknown, context: ServerActionContext): AppError {
+  // Re-throw Next.js dynamic server errors - they're control flow for static/dynamic detection
+  // Next.js catches these to automatically opt routes into dynamic rendering
+  if (isDynamicServerError(error)) {
+    throw error
+  }
+
   return new DatabaseError({
     code: ErrorCodes.server.internalError(),
     message: 'An error occurred while processing your request',
@@ -251,7 +271,43 @@ export function handleValidationError(error: unknown, context: ValidationErrorCo
  * - session_expired → AUTH/SESSION_EXPIRED
  * - user_already_exists → AUTH/EMAIL_ALREADY_IN_USE
  */
+/**
+ * Check if the error message indicates a disabled provider.
+ *
+ * @param msg - Error message to check
+ * @returns True if message indicates disabled provider
+ */
+function isProviderDisabledMessage(msg: string): boolean {
+  return msg.includes('Unsupported provider') || msg.includes('provider is not enabled')
+}
+
 export function handleSupabaseAuthError(error: unknown, context: AuthErrorContext): AppError {
+  // Specialized check for "Unsupported provider" error
+  // This can come as a simple message or a JSON string from Supabase GoTrue
+  const errorMsg = isError(error) ? error.message : String(error)
+  const isProviderError = isProviderDisabledMessage(errorMsg)
+
+  let isJsonProviderError = false
+  if (!isProviderError && errorMsg.trim().startsWith('{')) {
+    const parsed = safeJsonParse<{ msg?: string }>(errorMsg)
+    if (parsed?.msg !== undefined && isProviderDisabledMessage(parsed.msg)) {
+      isJsonProviderError = true
+    }
+  }
+
+  if (isProviderError || isJsonProviderError) {
+    const errorCode = ErrorCodes.auth.providerDisabled()
+    return new AuthError({
+      code: errorCode,
+      message: ErrorCodeBuilder.getMessage(errorCode),
+      context: {
+        ...context,
+        originalError: isError(error) ? error : new Error(errorMsg),
+      },
+      statusCode: 400,
+    })
+  }
+
   if (!isSupabaseAuthError(error)) {
     // Fallback to generic auth error if it's not a Supabase auth error
     const errorObj = isError(error) ? error : new Error(String(error))
@@ -287,10 +343,14 @@ export function handleSupabaseAuthError(error: unknown, context: AuthErrorContex
     // Rate limiting
     '429': { code: ErrorCodes.network.rateLimitExceeded(), type: 'auth' },
     rate_limit_exceeded: { code: ErrorCodes.network.rateLimitExceeded(), type: 'auth' },
+    over_email_send_rate_limit: { code: ErrorCodes.network.rateLimitExceeded(), type: 'auth' },
+
+    // Email service errors
+    unexpected_failure: { code: ErrorCodes.auth.unknownError(), type: 'auth' },
   }
 
   const errorCode = error.code ?? 'unknown'
-  const mappedError = errorMap[errorCode] || {
+  const mappedError = errorMap[errorCode] ?? {
     code: ErrorCodes.auth.invalidToken(), // Fallback to auth error
     type: 'auth' as const,
   }
@@ -363,7 +423,7 @@ export function handleSupabasePostgrestError(
     '23502': { code: ErrorCodes.validation.notNullViolation(), type: 'validation' },
   }
 
-  const mappedError = errorMap[error.code] || {
+  const mappedError = errorMap[error.code] ?? {
     code: ErrorCodes.database.unknownPostgrestError(),
     type: 'database' as const,
   }
@@ -384,6 +444,44 @@ export function handleSupabasePostgrestError(
   })
 
   return databaseError
+}
+
+/**
+ * Reconstruct an AppError instance from a plain JSON object.
+ * Used for reconstructing errors returned by Server Actions on the client.
+ *
+ * @param json - The serialized AppErrorJSON object
+ * @returns An instance of the corresponding AppError class
+ */
+export function reconstructError(json: AppErrorJSON): AppError {
+  const { code, message, context = {}, statusCode, errorType } = json
+
+  const options = {
+    code,
+    message,
+    context,
+    statusCode,
+  }
+
+  switch (errorType) {
+    case ErrorTypeEnum.AUTH_ERROR:
+      return new AuthError(options)
+    case ErrorTypeEnum.VALIDATION_ERROR:
+      return new ValidationError(message, context as ValidationErrorContext)
+    case ErrorTypeEnum.DATABASE_ERROR:
+      return new DatabaseError(options)
+    case ErrorTypeEnum.NETWORK_ERROR:
+      return new NetworkError(options)
+    case ErrorTypeEnum.PERMISSION_ERROR:
+      return new PermissionError(options)
+    case ErrorTypeEnum.CONFIGURATION_ERROR:
+      return new ConfigurationError(options)
+    case ErrorTypeEnum.BUSINESS_ERROR:
+      return new BusinessError(options)
+    case ErrorTypeEnum.APP_ERROR:
+    default:
+      return new BaseAppError(options)
+  }
 }
 
 /**
@@ -416,25 +514,32 @@ export function coreHandleError(error: unknown, context: ErrorContext = {}): App
     return error
   }
 
+  // Handle serialized AppErrorJSON (e.g. from Server Actions)
+  if (isAppErrorJSON(error)) {
+    return reconstructError(error)
+  }
+
   // Handle based on context type first
-  if (isServerActionContext(context)) {
-    return handleServerActionError(error, context)
-  }
-
-  if (isNetworkErrorContext(context)) {
-    return handleNetworkError(error, context)
-  }
-
-  if (isValidationErrorContext(context)) {
-    return handleValidationError(error, context)
-  }
-
+  // Check specific domains first before generic server action context
   if (isAuthErrorContext(context)) {
     return handleSupabaseAuthError(error, context)
   }
 
   if (isDatabaseErrorContext(context)) {
     return handleSupabasePostgrestError(error, context, true)
+  }
+
+  if (isValidationErrorContext(context)) {
+    return handleValidationError(error, context)
+  }
+
+  if (isNetworkErrorContext(context)) {
+    return handleNetworkError(error, context)
+  }
+
+  // Check server action context last as it's often a catch-all for hook errors
+  if (isServerActionContext(context)) {
+    return handleServerActionError(error, context)
   }
 
   // Fallback for unknown errors
