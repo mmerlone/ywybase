@@ -195,7 +195,7 @@ Server Actions provide the right balance of abstraction and simplicity for this 
 │                        │ Action Calls                          │
 │                        ▼                                       │
 │    ┌─────────────────────────────────────────────┐           │
-│    │         Action/Service Layer               │           │
+│    │         Action Layer                       │           │
 │    │  ┌──────────────────────────────────────┐  │           │
 │    │  │  Profile Actions                     │  │           │
 │    │  │  Auth Actions                        │  │           │

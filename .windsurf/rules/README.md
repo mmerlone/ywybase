@@ -64,15 +64,15 @@ Complete development workflow covering:
 
 ### Technology Stack
 
-- **Next.js 15.5.6** with App Router
-- **React 18.3.1** with Server Components
+- **Next.js 15.5.x** with App Router
+- **React 18.3.x** with Server Components
 - **TypeScript 5.x** strict mode
-- **MUI 7.3.4** with Pigment CSS
-- **Tailwind CSS 4.1.14**
+- **MUI 7.3.x** with Pigment CSS
+- **Tailwind CSS 4.1.x**
 - **Supabase** for auth and database
-- **React Query 5.90.11** for state management
-- **React Hook Form 7.45.4** + Zod validation
-- **Pino 10.0.0** for logging
+- **React Query 5.90.x** for state management
+- **React Hook Form 7.45.x** + Zod validation
+- **Pino 10.0.x** for logging
 - **Sentry 10** for error tracking
 
 ### Core Principles

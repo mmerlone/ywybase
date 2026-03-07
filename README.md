@@ -1,10 +1,10 @@
 # YwyBase
 
-[![Next.js](https://img.shields.io/badge/Next.js-15.5.9-000000?style=flat&logo=next.js)](https://nextjs.org/)
-[![React](https://img.shields.io/badge/React-18.3.1-61DAFB?style=flat&logo=react)](https://react.dev/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.3.0-3178C6?style=flat&logo=typescript)](https://www.typescriptlang.org/)
-[![MUI](https://img.shields.io/badge/MUI-7.3.4-007FFF?style=flat&logo=mui)](https://mui.com/)
-[![Supabase](https://img.shields.io/badge/@supabase/ssr-0.7.0-3ECF8E?style=flat&logo=supabase)](https://supabase.com/)
+[![Next.js](https://img.shields.io/badge/Next.js-15.5.x-000000?style=flat&logo=next.js)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React-18.3.x-61DAFB?style=flat&logo=react)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.3.x-3178C6?style=flat&logo=typescript)](https://www.typescriptlang.org/)
+[![MUI](https://img.shields.io/badge/MUI-7.3.x-007FFF?style=flat&logo=mui)](https://mui.com/)
+[![Supabase](https://img.shields.io/badge/@supabase/ssr-0.7.x-3ECF8E?style=flat&logo=supabase)](https://supabase.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## 🌐 Live Demo
@@ -15,7 +15,7 @@ YwyBase - A Solid Ground to Scale. A production-ready Next.js 15 application tem
 
 This is a solo project born from experimenting with a myriad of AI-assisted coding tools, primarily using the free tiers of Copilot, Cursor, WindSurf, CodeRabbit, and others. As a solo endeavor spanning engineering, QA, and DevOps, developed in my free time with AI collaboration, bugs are inevitable.
 
-While I originally created this project for my own use, fun, amusement, study and exercise, I decided to share it with the community. Use at your own risk, and if you do, contributions are more thean welcome!
+While I originally created this project for my own use, fun, amusement, study and exercise, I decided to share it with the community. Use at your own risk, and if you do, contributions are more than welcome!
 
 ## 📑 **Table of Contents**
 
@@ -122,7 +122,6 @@ Components → Hooks → Server Actions → Database
 ### **🗄️ Database & Components**
 
 - **[Database Documentation](./docs/database/)** - Database operations and schema management
-  - **[Profile-Auth Sync](./docs/database/profile-auth-sync-report.md)** - Profile-auth synchronization system
   - **[Database Recreation](./docs/database/database-recreation.md)** - Guide for recreating database
 - **[Component Documentation](./docs/components/)** - UI component library documentation
   - **[Avatar Components](./docs/components/avatar.md)** - Profile picture management
@@ -447,9 +446,9 @@ pnpm build
 
 ### **Frontend**
 
-- **Next.js 15.5.9** - React framework
-- **React 18.3.1** - UI library
-- **Material UI 7.3.4** - Component library
+- **Next.js 15.5.x** - React framework
+- **React 18.3.x** - UI library
+- **Material UI 7.3.x** - Component library
 - **TypeScript 5.x** - Type safety
 
 ### **Backend & Data**

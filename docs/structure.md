@@ -1,13 +1,13 @@
 # Project Structure
 
-Canonical structure for the Next.js 15.5.9 App Router application. Follow this structure for consistency.
+Canonical structure for the Next.js 15.5.x App Router application. Follow this structure for consistency.
 
 ## 🏗️ **Core Principles**
 
 1. **App Router First** - All routes under `/app` using Next.js 15 App Router
 2. **React Server Components** - Default to Server Components with `async/await`
 3. **Type Safety** - Full TypeScript with generated types from Supabase
-4. **Performance** - Built with MUI 7.3.4 and optimized for speed
+4. **Performance** - Built with MUI 7.3.x and optimized for speed
 5. **State Management** - React Query for server state management
 6. **Form Handling** - React Hook Form with Zod validation
 7. **Authentication** - Supabase Auth with secure sessions
@@ -115,7 +115,7 @@ Canonical structure for the Next.js 15.5.9 App Router application. Follow this s
 - **Hooks**: `camelCase` with `use` prefix (e.g., `useAuth.ts`)
 - **Utilities**: `camelCase` (e.g., `cookieUtils.ts`)
 - **Routes**: `kebab-case` (e.g., `user-profile/`)
-- **Types**: `camelCase` with type suffix (e.g., `userTypes.ts`)
+- **Types**: `camelCase.types.ts` (e.g., `auth.types.ts`)
 
 ## 🔗 **Documentation Links**
 
@@ -195,9 +195,9 @@ export * from './apiTypes'
 
 ### **Frontend Layer**
 
-- **Next.js 15.5.9** - Framework
-- **React 18.3.1** - UI library
-- **Material UI 7.3.4** - Components (verified current)
+- **Next.js 15.5.x** - Framework
+- **React 18.3.x** - UI library
+- **Material UI 7.3.x** - Components (verified current minor)
 - **TypeScript 5.x** - Type safety
 
 ### **Data Layer**

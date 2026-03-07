@@ -1,393 +1,156 @@
-# Profile-Auth Sync Report Documentation
+# Profile-Auth Sync Status Report
 
-## Overview
+## Status
 
-The profile-auth sync system maintains data consistency between the canonical `profiles` table and Supabase's `auth.users` table. This document explains the sync mechanisms and provides tools for monitoring and maintaining synchronization.
+Comparison against [supabase/migrations/20250105000000_initial_schema.sql](../../supabase/migrations/20250105000000_initial_schema.sql) shows that the core sync layer already exists:
 
-## Sync Architecture
+- `report_profile_auth_sync()`
+- `get_sync_summary()`
+- `fix_sync_issues()`
+- sync triggers for `auth.users`, `auth.identities`, and profile role propagation
+- avatar ownership check via `is_avatar_owner()`
 
-### Direction of Sync
+The missing work is the operational layer proposed by this report: monitoring tables, alerting, detection triggers, materialized reporting, and dashboard views.
 
-**Profiles → Auth.users (Canonical Source)**
+## Missing Enhancements
 
-- `phone` - User's phone number
-- `display_name` - Stored as both `full_name` and `name` in auth metadata
-- `role` - User's role with bidirectional sync via trigger (includes new 'root' role)
+### 1. Monitoring objects
 
-**Auth.users → Profiles (Synced Fields)**
+Not present in the migration:
 
-- `created_at` - Account creation timestamp
-- `confirmed_at` - Email verification timestamp
-- `last_sign_in_at` - Last login timestamp
-- `banned_until` - Ban expiration timestamp
-- `avatar_url` - Profile picture URL (from auth metadata)
-- `providers` - Authentication providers array (from auth.identities)
+- `public.sync_health_log` table
+- `public.log_sync_health()` function
 
-### Sync Mechanisms
+Purpose:
 
-1. **Triggers**: Automatic sync on profile changes
-   - `sync_profile_role_to_auth()` - Role changes (supports new 'root' role)
-   - `handle_new_user()` - Enhanced new user creation with improved provider detection
-   - `update_updated_at_column()`
+- persist periodic sync health snapshots
+- track critical mismatches over time
+- support dashboards without recalculating full reports every time
 
-**Last Updated**: 2025-02-27
-**Version**: 2.1.0 (Updated for schema migration 20250105000000 - Enhanced sync functions, new 'root' role, and avatar ownership security)
+### 2. Alerting objects
 
-2. **Manual Functions**: Administrative sync operations
-   - `sync_auth_to_profiles()` - Enhanced auth data to profiles sync with conflict resolution
-   - `sync_profiles_to_auth()` - Improved profile data to auth sync with metadata handling
+Not present in the migration:
 
-3. **Security Functions**: Access control and ownership verification
-   - `is_avatar_owner()` - Avatar ownership verification for RLS policies
+- `public.sync_alerts` table
+- `public.create_sync_alert()` function
 
-## New Sync Report Functions
+Purpose:
 
-### 1. `report_profile_auth_sync()`
+- store actionable sync incidents
+- support severity-based review and resolution workflows
 
-**Purpose**: Comprehensive sync status report for all users
+### 3. Detection trigger
 
-**Returns**:
+Not present in the migration:
 
-- `user_id` - User UUID
-- `email` - User email
-- `sync_status` - 'in_sync' or 'out_of_sync'
-- `out_of_sync_fields` - JSON array of mismatched fields with values
-- `profiles_updated_at` - Last profile update timestamp
-- `auth_users_updated_at` - Last auth.users update timestamp
-- `details` - Summary statistics and breakdown
+- `public.detect_sync_issues()` trigger function
+- `detect_profile_sync_issues` trigger on `public.profiles`
 
-**Usage**:
+Purpose:
 
-```sql
--- Full sync report
-SELECT * FROM public.report_profile_auth_sync();
+- create alerts when profile updates are likely to introduce mismatches
 
--- Only out-of-sync users
-SELECT * FROM public.report_profile_auth_sync()
-WHERE sync_status = 'out_of_sync';
+### 4. Performance/reporting objects
 
--- Users with specific field mismatches
-SELECT * FROM public.report_profile_auth_sync()
-WHERE out_of_sync_fields ? 'role';
-```
+Not present in the migration:
 
-### 2. `get_sync_summary()`
+- `public.sync_status_mv` materialized view
+- indexes on `sync_status_mv`
+- `public.refresh_sync_status()` function
 
-**Purpose**: High-level sync statistics
+Purpose:
 
-**Returns**:
+- reduce cost of repeated sync report queries
+- improve dashboard and admin reporting performance
 
-- `total_users` - Total user count
-- `in_sync_count` - Users in sync
-- `out_of_sync_count` - Users out of sync
-- `sync_percentage` - Percentage of users in sync
-- `most_common_mismatches` - Field breakdown of mismatches
-- `users_needing_attention` - Users with >2 mismatches
+### 5. Dashboard views
 
-**Usage**:
+Not present in the migration:
 
-```sql
-SELECT * FROM public.get_sync_summary();
-```
+- `public.sync_dashboard` view
+- `public.recent_sync_issues` view
 
-### 3. `fix_sync_issues()`
-
-**Purpose**: Automated sync issue resolution (service_role only)
-
-**Parameters**:
-
-- `user_id_param` - Specific user UUID (NULL for all)
-- `fix_auth_to_profile` - Fix auth→profile sync issues
-- `fix_profile_to_auth` - Fix profile→auth sync issues
-- `dry_run` - Preview fixes without applying
-
-**Usage**:
-
-```sql
--- Dry run for all users
-SELECT * FROM public.fix_sync_issues(dry_run := true);
-
--- Fix specific user
-SELECT * FROM public.fix_sync_issues('user-uuid-here', dry_run := false);
-
--- Fix only auth→profile issues
-SELECT * FROM public.fix_sync_issues(fix_profile_to_auth := false);
-```
-
-## Monitoring Queries
-
-### Daily Health Check
-
-```sql
--- Get overall sync health
-SELECT
-    sync_percentage,
-    out_of_sync_count,
-    users_needing_attention
-FROM public.get_sync_summary();
-
--- Top 10 users with most sync issues
-SELECT
-    email,
-    jsonb_array_length(out_of_sync_fields) as issue_count,
-    details->'time_difference' as time_diff_seconds
-FROM public.report_profile_auth_sync()
-WHERE sync_status = 'out_of_sync'
-ORDER BY issue_count DESC
-LIMIT 10;
-```
-
-### Field-Specific Analysis
-
-```sql
--- Most common sync issues by field
-SELECT
-    elem->>'field' as field_name,
-    elem->>'direction' as sync_direction,
-    COUNT(*) as occurrence_count
-FROM public.report_profile_auth_sync() sd
-CROSS JOIN jsonb_array_elements(sd.out_of_sync_fields) elem
-GROUP BY field_name, sync_direction
-ORDER BY occurrence_count DESC;
-
--- Users with role sync issues (critical)
-SELECT
-    user_id,
-    email,
-    out_of_sync_fields
-FROM public.report_profile_auth_sync()
-WHERE out_of_sync_fields ? 'role';
-```
-
-### Time-Based Analysis
-
-```sql
--- Sync issues by time difference
-SELECT
-    CASE
-        WHEN ABS(details->>'time_difference'::numeric) < 60 THEN '< 1 minute'
-        WHEN ABS(details->>'time_difference'::numeric) < 3600 THEN '< 1 hour'
-        WHEN ABS(details->>'time_difference'::numeric) < 86400 THEN '< 1 day'
-        ELSE '> 1 day'
-    END as time_category,
-    COUNT(*) as user_count
-FROM public.report_profile_auth_sync()
-WHERE sync_status = 'out_of_sync'
-GROUP BY time_category
-ORDER BY user_count DESC;
-```
-
-## Proposed Enhancements
-
-### 1. Automated Sync Monitoring
-
-```sql
--- Create sync health table
-CREATE TABLE public.sync_health_log (
-    id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
-    timestamp timestamp with time zone DEFAULT NOW(),
-    total_users bigint,
-    in_sync_count bigint,
-    out_of_sync_count bigint,
-    sync_percentage numeric,
-    critical_issues jsonb,
-    auto_fixed_count bigint DEFAULT 0
-);
-
--- Create function to log sync health
-CREATE OR REPLACE FUNCTION public.log_sync_health()
-RETURNS void AS $$
-BEGIN
-    INSERT INTO public.sync_health_log (
-        total_users, in_sync_count, out_of_sync_count,
-        sync_percentage, critical_issues
-    )
-    SELECT
-        total_users,
-        in_sync_count,
-        out_of_sync_count,
-        sync_percentage,
-        jsonb_agg(
-            jsonb_build_object(
-                'user_id', user_id,
-                'email', email,
-                'issues', out_of_sync_fields
-            )
-        ) FILTER (WHERE sync_status = 'out_of_sync' AND jsonb_array_length(out_of_sync_fields) > 2)
-    FROM public.report_profile_auth_sync();
-END;
-$$ LANGUAGE plpgsql;
-```
-
-### 2. Sync Alert System
-
-```sql
--- Create sync alerts table
-CREATE TABLE public.sync_alerts (
-    id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
-    created_at timestamp with time zone DEFAULT NOW(),
-    alert_type text NOT NULL,
-    severity text NOT NULL CHECK (severity IN ('low', 'medium', 'high', 'critical')),
-    user_id uuid,
-    description text,
-    details jsonb,
-    resolved_at timestamp with time zone,
-    resolved_by uuid
-);
-
--- Function to create sync alerts
-CREATE OR REPLACE FUNCTION public.create_sync_alert(
-    alert_type_param text,
-    severity_param text,
-    user_id_param uuid,
-    description_param text,
-    details_param jsonb
-)
-RETURNS uuid AS $$
-DECLARE
-    alert_id uuid;
-BEGIN
-    INSERT INTO public.sync_alerts (
-        alert_type, severity, user_id, description, details
-    ) VALUES (
-        alert_type_param, severity_param, user_id_param, description_param, details_param
-    ) RETURNING id INTO alert_id;
-
-    RETURN alert_id;
-END;
-$$ LANGUAGE plpgsql;
-```
-
-### 3. Enhanced Sync Triggers
-
-```sql
--- Create trigger for sync issue detection
-CREATE OR REPLACE FUNCTION public.detect_sync_issues()
-RETURNS TRIGGER AS $$
-BEGIN
-    -- Check for critical sync issues on profile update
-    IF TG_OP = 'UPDATE' THEN
-        -- Add logic to detect and log sync issues
-        PERFORM public.create_sync_alert(
-            'sync_mismatch',
-            'medium',
-            NEW.id,
-            'Profile update may have caused sync mismatch',
-            jsonb_build_object(
-                'old_values', row_to_json(OLD),
-                'new_values', row_to_json(NEW)
-            )
-        );
-    END IF;
-
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
--- Add trigger to profiles table
-CREATE TRIGGER detect_profile_sync_issues
-    AFTER UPDATE ON public.profiles
-    FOR EACH ROW
-    EXECUTE FUNCTION public.detect_sync_issues();
-```
-
-### 4. Sync Performance Optimization
-
-```sql
--- Create materialized view for sync status
-CREATE MATERIALIZED VIEW public.sync_status_mv AS
-SELECT * FROM public.report_profile_auth_sync();
-
--- Create indexes for performance
-CREATE INDEX idx_sync_status_mv_status ON public.sync_status_mv (sync_status);
-CREATE INDEX idx_sync_status_mv_email ON public.sync_status_mv (email);
-CREATE INDEX idx_sync_status_mv_updated_at ON public.sync_status_mv (profiles_updated_at);
-
--- Function to refresh materialized view
-CREATE OR REPLACE FUNCTION public.refresh_sync_status()
-RETURNS void AS $$
-BEGIN
-    REFRESH MATERIALIZED VIEW CONCURRENTLY public.sync_status_mv;
-END;
-$$ LANGUAGE plpgsql;
-```
-
-### 5. Sync Dashboard Views
-
-```sql
--- Dashboard summary view
-CREATE VIEW public.sync_dashboard AS
-SELECT
-    sh.timestamp,
-    sh.total_users,
-    sh.sync_percentage,
-    sh.out_of_sync_count,
-    CASE
-        WHEN sh.sync_percentage >= 95 THEN 'healthy'
-        WHEN sh.sync_percentage >= 85 THEN 'warning'
-        ELSE 'critical'
-    END as health_status,
-    sh.critical_issues
-FROM public.sync_health_log sh
-ORDER BY sh.timestamp DESC
-LIMIT 30;
-
--- Recent sync issues view
-CREATE VIEW public.recent_sync_issues AS
-SELECT
-    sa.created_at,
-    sa.severity,
-    sa.user_id,
-    p.email,
-    sa.description,
-    sa.details
-FROM public.sync_alerts sa
-LEFT JOIN public.profiles p ON sa.user_id = p.id
-WHERE sa.resolved_at IS NULL
-ORDER BY sa.created_at DESC;
-```
-
-## Implementation Recommendations
-
-### Phase 1: Monitoring (Immediate)
-
-1. Deploy sync report functions (updated with enhanced conflict detection)
-2. Set up daily sync health logging
-3. Create dashboard views for monitoring
-4. Establish baseline sync metrics
-5. Implement avatar ownership verification with `is_avatar_owner()`
-
-### Phase 2: Automation (Short-term)
-
-1. Implement automated sync issue detection
-2. Create alert system for critical mismatches
-3. Set up materialized views for performance
-4. Add automated fix routines for common issues
-
-### Phase 3: Optimization (Long-term)
-
-1. Optimize sync triggers for performance
-2. Implement batch sync operations
-3. Add sync audit trail
-4. Create sync performance metrics
-
-## Security Considerations
-
-- Sync report functions are available to `authenticated` users
-- Fix functions require `service_role` permissions
-- Consider row-level security for sync reports in multi-tenant setups
-- Audit all manual sync operations
-- Implement rate limiting for sync operations
-
-## Performance Notes
-
-- Sync report functions can be resource-intensive on large datasets
-- Use materialized views for frequent reporting
-- Consider pagination for large user bases
-- Monitor query performance and optimize as needed
-- Schedule sync health checks during low-traffic periods
+Purpose:
+
+- expose a clean read model for admin/maintenance tooling
+
+## Recommended Migration Split
+
+The current initial migration is too broad. Do not keep adding more maintenance features to it. Split the schema into focused setup migrations so app setup stays deterministic and easier to review.
+
+Recommended sequence:
+
+1. `20250105000000_initial_schema.sql`
+   - core types
+   - `profiles` table
+   - base indexes
+   - RLS policies
+   - storage bucket and policies
+
+2. `20250105000001_profile_auth_sync_core.sql`
+   - `handle_new_user()`
+   - `sync_auth_to_profiles()`
+   - `sync_profiles_to_auth()`
+   - `sync_profile_role_to_auth()`
+   - `sync_auth_user_updates()`
+   - `sync_identities_to_profiles()`
+   - related triggers
+
+3. `20250105000002_profile_auth_sync_reports.sql`
+   - `report_profile_auth_sync()`
+   - `get_sync_summary()`
+   - `fix_sync_issues()`
+   - grants and function comments
+
+4. `20250105000003_profile_auth_sync_monitoring.sql`
+   - `sync_health_log`
+   - `log_sync_health()`
+   - `sync_dashboard`
+
+5. `20250105000004_profile_auth_sync_alerting.sql`
+   - `sync_alerts`
+   - `create_sync_alert()`
+   - `detect_sync_issues()`
+   - `detect_profile_sync_issues` trigger
+   - `recent_sync_issues`
+
+6. `20250105000005_profile_auth_sync_performance.sql`
+   - `sync_status_mv`
+   - materialized view indexes
+   - `refresh_sync_status()`
+
+## Clear Action Steps
+
+### Immediate
+
+1. Extract sync reporting functions from the initial migration into a dedicated sync-report migration.
+2. Add the missing monitoring migration with `sync_health_log` and `log_sync_health()`.
+3. Add the missing alerting migration with `sync_alerts`, `create_sync_alert()`, and the detection trigger.
+4. Add the missing performance migration with `sync_status_mv` and `refresh_sync_status()`.
+
+### Cleanup
+
+1. Remove direct client-facing references to this document from official docs navigation.
+2. Keep this file as an internal status note only, or delete it once the migrations are created.
+3. Avoid further expanding `20250105000000_initial_schema.sql`; use additive follow-up migrations instead.
+
+### Validation
+
+After splitting and adding the missing migrations:
+
+1. Initialize a fresh database from scratch.
+2. Verify all triggers compile and execute in order.
+3. Run `report_profile_auth_sync()` and `get_sync_summary()` on seeded users.
+4. Confirm `sync_status_mv` refreshes successfully.
+5. Confirm alert rows are created only for intended mismatch conditions.
+
+## Notes
+
+- The initial migration already covers the core sync model; the missing pieces are operational enhancements, not foundational schema blockers.
+- The old draft also contained a broken SQL example in its time-based analysis section; that example should not be reused as-is.
+- `GRANT EXECUTE ON FUNCTION public.sync_auth_user_updates()` is unnecessary for normal client access because it is a trigger function.
 
 ---
 
-**Last Updated**: 2025-02-27
-**Version**: 2.1.0 (Updated for schema migration 20250105000000 - Enhanced sync functions, new 'root' role, and avatar ownership security)
+**Last Updated**: 2026-03-06
+**Status**: Internal status report

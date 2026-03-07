@@ -7,7 +7,7 @@
 - Node.js >= 18.0.0
 - pnpm package manager
 - Git with SSH keys configured
-- Next.js 15.5.9
+- Next.js 15.5.x
 
 ### Initial Setup
 

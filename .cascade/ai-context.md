@@ -52,40 +52,40 @@ Follow structure defined in `docs/structure.md` at all times. Before making any 
 
 ### Core Framework
 
-- **Next.js**: v15.5.6
-- **React**: v18.3.1
+- **Next.js**: v15.5.x
+- **React**: v18.3.x
 - **TypeScript**: v5 (implied by @types/react v18)
 
 ### UI Libraries
 
-- **MUI (Material-UI)**: v7.3.4
-- **@mui/icons-material**: v7.3.4
-- **@mui/material-nextjs**: v7.3.3
-- **@mui/x-date-pickers**: v8.14.0
-- **Emotion**: v11.14.0
-- **Tailwind CSS**: v4.1.14
+- **MUI (Material-UI)**: v7.3.x
+- **@mui/icons-material**: v7.3.x
+- **@mui/material-nextjs**: v7.3.x
+- **@mui/x-date-pickers**: v8.14.x
+- **Emotion**: v11.14.x
+- **Tailwind CSS**: v4.1.x
 
 ### Data Fetching & State Management
 
-- **@tanstack/react-query**: v5.90.11
-- **@tanstack/react-query-devtools**: v5.91.1
+- **@tanstack/react-query**: v5.90.x
+- **@tanstack/react-query-devtools**: v5.91.x
 
 ### Backend & Database
 
-- **@supabase/ssr**: v0.7.0
+- **@supabase/ssr**: v0.7.x
 - **@supabase/supabase-js**: latest
 
 ### Form Handling
 
-- **react-hook-form**: v7.45.4
-- **@hookform/resolvers**: v3.3.2
-- **zod**: v3.25.67
+- **react-hook-form**: v7.45.x
+- **@hookform/resolvers**: v3.3.x
+- **zod**: v3.25.x
 
 ### Other Key Dependencies
 
-- **pino**: v10.0.0 (logging)
+- **pino**: v10.0.x (logging)
 - **@sentry/nextjs**: v10 (error tracking)
-- **i18next**: v25.6.0 (internationalization)
+- **i18next**: v25.6.x (internationalization)
 
 ### Common Patterns
 
@@ -100,7 +100,7 @@ Follow structure defined in `docs/structure.md` at all times. Before making any 
 
 ### Version
 
-- Using **MUI v7.3.4**
+- Using **MUI v7.3.x**
 
 ## Before You Start Coding
 

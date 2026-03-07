@@ -92,7 +92,7 @@ const getUser = (id: string): User => {
 
 ### Version
 
-- Using **MUI v7.3.4** (verified current)
+- Using **MUI v7.3.x** (verified current minor)
 
 ### Component Usage
 

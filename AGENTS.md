@@ -78,15 +78,15 @@ pnpm format:check           # Check formatting without changes
 
 ### Technology Stack
 
-- **Next.js**: 15.5.6 with App Router
-- **React**: 18.3.1 with Server Components
+- **Next.js**: 15.5.x with App Router
+- **React**: 18.3.x with Server Components
 - **TypeScript**: 5.x strict mode
-- **MUI**: 7.3.4 with Pigment CSS
-- **Tailwind CSS**: 4.1.14 for utilities
+- **MUI**: 7.3.x with Pigment CSS
+- **Tailwind CSS**: 4.1.x for utilities
 - **Supabase**: Authentication and PostgreSQL database
-- **React Query**: 5.90.11 for state management
-- **React Hook Form**: 7.45.4 with Zod validation
-- **Pino**: 10.0.0 for structured logging
+- **React Query**: 5.90.x for state management
+- **React Hook Form**: 7.45.x with Zod validation
+- **Pino**: 10.0.x for structured logging
 - **Sentry**: 10 for error tracking
 
 ## Development Standards
@@ -111,7 +111,7 @@ Follow `docs/structure.md` as canonical reference:
     /error             # Centralized error handling
     /supabase          # Supabase clients and services
     /validators         # Zod validation schemas
-    /types              # TypeScript definitions
+  /types                # TypeScript types
   /config             # Configuration files
   /middleware         # Next.js middleware
 /scripts              # Build and utility scripts
@@ -126,7 +126,7 @@ Follow `docs/structure.md` as canonical reference:
 - **Hooks**: `camelCase.ts` with `use` prefix (e.g., `useAuth.ts`)
 - **Utilities**: `camelCase.ts` (e.g., `formatDate.ts`)
 - **Routes**: `kebab-case` directories (e.g., `user-profile/`)
-- **Types**: `PascalCase.ts` (e.g., `UserType.ts`)
+- **Types**: `camelCase.types.ts` (e.g., `auth.types.ts`)
 
 ### Import Order
 
@@ -631,7 +631,7 @@ After completing any coding task:
 ### ❌ Never Do This
 
 - Mix Pages Router with App Router
-- Use `any` or `unkown` types without justification
+- Use `any` or `unknown` types without justification
 - Create files in wrong locations
 - Hardcode configuration values
 - Ignore TypeScript errors

@@ -18,13 +18,10 @@ src/components/auth/
 
 ### Data Flow
 
-```
 UserCard (Layout)
 ├── UserAvatarForm (editable)
-│   ├── UserAvatar (read-only)
-│   └── Upload/Delete functionality
-└── UserCard (layout composition)
-```
+├── UserAvatar (read-only)
+└── Upload/Delete functionality
 
 ## Components
 
@@ -103,15 +100,16 @@ interface UserAvatarProps {
 ### Image Optimization
 
 ```typescript
-const optimizedAvatar = useOptimizedAvatar({
-  src: profile.avatar_url,
-  alt: `${profile.display_name}'s avatar`,
-  sizes: {
-    small: 24,
-    medium: 48,
-    large: 96,
-  },
-})
+// useOptimizedAvatar takes the raw avatar URL and returns a getUrl function.
+// AVATAR_SIZES defines the server-side image transform dimensions:
+//   thumbnail: 50×50px | small: 100×100px | medium: 200×200px | large: 400×400px
+// These are distinct from the CSS display sizes in AVATAR_SIZE_CONFIG:
+//   small: 72px | medium: 120px | large: 150–200px (responsive)
+const avatarUrls = useOptimizedAvatar(profile.avatar_url)
+
+const smallUrl = avatarUrls.getUrl(AVATAR_SIZES.small) // 100×100 transform
+const mediumUrl = avatarUrls.getUrl(AVATAR_SIZES.medium) // 200×200 transform
+const largeUrl = avatarUrls.getUrl(AVATAR_SIZES.large) // 400×400 transform
 ```
 
 ### Fallback Hierarchy

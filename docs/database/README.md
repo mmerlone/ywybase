@@ -4,13 +4,6 @@ This directory contains comprehensive documentation for YwyBase database schema,
 
 ## 📋 Documentation Files
 
-### **[Schema & Sync Documentation](./profile-auth-sync-report.md)**
-
-- Profile-auth synchronization system documentation
-- Sync report functions and monitoring queries
-- Performance optimization recommendations
-- Security considerations
-
 ### **[Database Recreation Guide](./database-recreation.md)**
 
 - Complete database recreation procedures
@@ -199,15 +192,6 @@ CREATE POLICY avatars_user_own ON storage.objects
 
 ## 📊 Monitoring & Reporting
 
-### **Sync Report Functions**
-
-See **[Profile-Auth Sync Report](./profile-auth-sync-report.md)** for comprehensive:
-
-- `report_profile_auth_sync()` - Complete sync status analysis
-- Monitoring queries for sync health
-- Materialized views for performance
-- Alert system integration
-
 ### **Performance Optimization**
 
 - **Materialized Views**: For frequent sync status queries
@@ -270,7 +254,8 @@ WHERE sync_status = 'out_of_sync';
 ```sql
 -- Check RLS policies
 SELECT * FROM pg_policies
-WHERE tablename = 'profiles' OR tablename = 'storage.objects';
+WHERE tablename = 'profiles'
+   OR (schemaname = 'storage' AND tablename = 'objects');
 ```
 
 #### **Performance Issues**
@@ -295,7 +280,6 @@ LIMIT 10;
 
 ## 📚 Related Documentation
 
-- **[Profile-Auth Sync Report](./profile-auth-sync-report.md)** - Detailed sync reporting
 - **[Database Recreation Guide](./database-recreation.md)** - Complete recreation procedures
 - **[Security Documentation](/docs/security.md)** - Security best practices
 - **[API Development Guide](/docs/developer-guides/api-development.md)** - Database patterns
