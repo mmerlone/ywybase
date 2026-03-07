@@ -4,7 +4,7 @@ import { readFile } from 'fs/promises'
 import path from 'path'
 
 import { SITE_CONFIG } from '@/config/site'
-import { serverLogger as logger } from '@/lib/logger'
+import { logger } from '@/lib/logger/server'
 import { withApiErrorHandler } from '@/lib/error/server'
 
 /**
@@ -33,8 +33,8 @@ async function handler(request: NextRequest): Promise<NextResponse> {
   try {
     const { searchParams } = new URL(request.url)
     // Get title from query params, with fallback to site config
-    const title = searchParams.get('title')?.slice(0, 100) || SITE_CONFIG.title
-    const description = searchParams.get('description')?.slice(0, 200) || SITE_CONFIG.description
+    const title = searchParams.get('title')?.slice(0, 100) ?? SITE_CONFIG.title
+    const description = searchParams.get('description')?.slice(0, 200) ?? SITE_CONFIG.description
 
     // Load Inter font (matching the project's font)
     const fontPath = path.join(process.cwd(), 'public', 'fonts', 'Inter-SemiBold.woff')

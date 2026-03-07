@@ -6,7 +6,7 @@ import { forwardRef, useId, useMemo, useState } from 'react'
 
 import { logger } from '@/lib/logger/client'
 import { cn } from '@/lib/utils'
-import type { LabelledToggleOption } from '@/types'
+import type { LabelledToggleOption } from '@/types/components.types'
 import { carvedShadow, extrudedShadow } from '@/theme'
 
 export interface LabelledToggleProps<T extends string | number> {

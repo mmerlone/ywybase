@@ -60,16 +60,28 @@ export default function AboutLoading(): JSX.Element {
               <Skeleton variant="text" width="70%" height={32} sx={{ mb: 3 }} />
 
               {/* Category Sections */}
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Box key={i} sx={{ mb: 2 }}>
-                  <Skeleton variant="text" width="50%" height={20} sx={{ mb: 1 }} />
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                    {Array.from({ length: i === 0 ? 5 : i === 1 ? 3 : i === 2 ? 4 : i === 3 ? 3 : 3 }).map((_, j) => (
-                      <Skeleton key={j} variant="rectangular" width={80} height={24} sx={{ borderRadius: 2 }} />
-                    ))}
+              {Array.from({ length: 5 }).map((_, categoryIndex) => {
+                // Define skeleton counts for each category section
+                const skeletonCounts = [5, 3, 4, 3, 3]
+                const skeletonCount = skeletonCounts[categoryIndex] ?? 3
+
+                return (
+                  <Box key={categoryIndex} sx={{ mb: 2 }}>
+                    <Skeleton variant="text" width="50%" height={20} sx={{ mb: 1 }} />
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                      {Array.from({ length: skeletonCount }).map((_x, itemIndex) => (
+                        <Skeleton
+                          key={itemIndex}
+                          variant="rectangular"
+                          width={80}
+                          height={24}
+                          sx={{ borderRadius: 2 }}
+                        />
+                      ))}
+                    </Box>
                   </Box>
-                </Box>
-              ))}
+                )
+              })}
             </Paper>
 
             {/* Architecture Principles Card */}

@@ -4,7 +4,7 @@ import { DarkMode, LightMode, SettingsBrightness } from '@mui/icons-material'
 import { Skeleton, ToggleButton, ToggleButtonGroup } from '@mui/material'
 import { useColorScheme } from '@mui/material/styles'
 
-import { type ThemePreference, ThemePreferenceEnum } from '../../types'
+import { type ThemePreference, ThemePreferenceEnum } from '@/types/theme.types'
 import { useAuthContext } from '../providers/AuthProvider'
 import { useProfile } from '@/hooks/useProfile'
 import { buildLogger } from '@/lib/logger/client'

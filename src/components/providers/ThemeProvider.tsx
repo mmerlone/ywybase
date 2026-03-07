@@ -12,7 +12,7 @@
 
 import { CssBaseline } from '@mui/material'
 import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles'
-import { ReactNode } from 'react'
+import { type ReactNode } from 'react'
 
 import theme from '@/theme'
 
