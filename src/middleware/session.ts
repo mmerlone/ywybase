@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { type NextRequest, type NextResponse } from 'next/server'
 import { buildLogger } from '@/lib/logger/client'
 import { createClient } from '@/lib/supabase/server'
-import { MiddlewareSession } from './utils/types'
+import { type MiddlewareSession } from './utils/types'
 
 const logger = buildLogger('session-middleware')
 
@@ -10,9 +10,9 @@ const logger = buildLogger('session-middleware')
  * @param request Optional NextRequest object (required in middleware)
  * @returns MiddlewareSession or null if no valid session
  */
-export async function getSession(request?: NextRequest): Promise<MiddlewareSession | null> {
+export async function getSession(): Promise<MiddlewareSession | null> {
   try {
-    const supabase = request ? await createClient(request) : await createClient()
+    const supabase = await createClient()
 
     // Use getUser() for secure authentication validation
     // Note: getUser() contacts the Supabase Auth server to validate the token,
@@ -22,7 +22,7 @@ export async function getSession(request?: NextRequest): Promise<MiddlewareSessi
       error: userError,
     } = await supabase.auth.getUser()
 
-    if (userError || !user) {
+    if (userError !== null || user === null) {
       if (userError) {
         logger.warn({ err: userError }, 'Failed to get authenticated user')
       }
@@ -34,10 +34,10 @@ export async function getSession(request?: NextRequest): Promise<MiddlewareSessi
       data: { session },
     } = await supabase.auth.getSession()
 
-    if (!session) return null
+    if (session === null) return null
 
     let expires_at = session.expires_at
-    if (!expires_at) {
+    if (expires_at === undefined) {
       logger.warn({ userId: user.id }, 'Session missing expires_at. Using 1hr fallback.')
       expires_at = Math.floor((Date.now() + 3600000) / 1000)
     }
@@ -62,5 +62,5 @@ export async function getSession(request?: NextRequest): Promise<MiddlewareSessi
  */
 export async function updateSession(request: NextRequest, response: NextResponse): Promise<NextResponse> {
   const { updateSession: supabaseUpdateSession } = await import('@/lib/supabase/middleware')
-  return await supabaseUpdateSession(request, response)
+  return supabaseUpdateSession(request, response)
 }

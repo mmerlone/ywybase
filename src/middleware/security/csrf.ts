@@ -9,7 +9,7 @@ import { randomBytes, createHmac, timingSafeEqual } from 'crypto'
 import { SECURITY_CONFIG } from '@/config/security'
 import { buildLogger } from '@/lib/logger/client'
 import type { CsrfClientHelper, ValidationResult, SecurityMiddleware } from '@/types/security.types'
-import { NextRequest, NextResponse } from 'next/server'
+import { type NextRequest, NextResponse } from 'next/server'
 
 const logger = buildLogger('security-csrf')
 
@@ -18,7 +18,7 @@ const logger = buildLogger('security-csrf')
  */
 const CSRF_TOKEN_LENGTH = 32
 const CSRF_SECRET =
-  process.env.CSRF_SECRET ||
+  process.env.CSRF_SECRET ??
   ((): string => {
     if (process.env.NODE_ENV === 'production') {
       throw new Error('CSRF_SECRET environment variable is required in production')
@@ -57,7 +57,7 @@ export function generateCsrfToken(): string {
  */
 export function validateCsrfToken(token: string): boolean {
   try {
-    if (!token || typeof token !== 'string') {
+    if (token === null || typeof token !== 'string' || token === '') {
       return false
     }
 
@@ -93,13 +93,13 @@ export function validateCsrfToken(token: string): boolean {
 export function extractCsrfToken(request: NextRequest): string | null {
   // Try to get token from header first
   const headerToken = request.headers.get(CSRF_HEADER_NAME)
-  if (headerToken) {
+  if (headerToken !== null) {
     return headerToken
   }
 
   // Try to get token from cookie
   const cookieToken = request.cookies.get(CSRF_COOKIE_NAME)?.value
-  if (cookieToken) {
+  if (cookieToken !== undefined) {
     return cookieToken
   }
 
@@ -161,7 +161,7 @@ export const csrfMiddleware: SecurityMiddleware = async (
       // Generate and set CSRF token for safe methods
       const existingToken = request.cookies.get(CSRF_COOKIE_NAME)?.value
 
-      if (!existingToken || !validateCsrfToken(existingToken)) {
+      if (existingToken === undefined || validateCsrfToken(existingToken) === false) {
         const newToken = generateCsrfToken()
         return setCsrfTokenCookie(response, newToken)
       }
@@ -179,13 +179,13 @@ export const csrfMiddleware: SecurityMiddleware = async (
     // Validate CSRF token for state-changing methods
     const token = extractCsrfToken(request)
 
-    if (!token) {
+    if (token === null) {
       logger.warn(
         {
           method,
           pathname,
-          ip: request.headers.get('x-forwarded-for') || 'unknown',
-          userAgent: request.headers.get('user-agent') || 'unknown',
+          ip: request.headers.get('x-forwarded-for') ?? 'unknown',
+          userAgent: request.headers.get('user-agent') ?? 'unknown',
         },
         'CSRF token missing'
       )
@@ -201,13 +201,13 @@ export const csrfMiddleware: SecurityMiddleware = async (
       )
     }
 
-    if (!validateCsrfToken(token)) {
+    if (validateCsrfToken(token) === false) {
       logger.warn(
         {
           method,
           pathname,
-          ip: request.headers.get('x-forwarded-for') || 'unknown',
-          userAgent: request.headers.get('user-agent') || 'unknown',
+          ip: request.headers.get('x-forwarded-for') ?? 'unknown',
+          userAgent: request.headers.get('user-agent') ?? 'unknown',
         },
         'CSRF token invalid'
       )
@@ -232,7 +232,7 @@ export const csrfMiddleware: SecurityMiddleware = async (
         error,
         pathname: request.nextUrl.pathname,
         method: request.method,
-        ip: request.headers.get('x-forwarded-for') || 'unknown',
+        ip: request.headers.get('x-forwarded-for') ?? 'unknown',
       },
       'Error in CSRF middleware - failing closed'
     )
@@ -264,13 +264,13 @@ export function withCsrfProtection(handler: (request: NextRequest) => Promise<Ne
       // Validate CSRF token
       const token = extractCsrfToken(request)
 
-      if (!token || !validateCsrfToken(token)) {
+      if (token === null || validateCsrfToken(token) === false) {
         logger.warn(
           {
             method: request.method,
             pathname: request.nextUrl.pathname,
-            hasToken: !!token,
-            ip: request.headers.get('x-forwarded-for') || 'unknown',
+            hasToken: token !== null,
+            ip: request.headers.get('x-forwarded-for') ?? 'unknown',
           },
           'CSRF validation failed in API route'
         )
@@ -311,7 +311,7 @@ export function validateCsrfConfig(): ValidationResult {
 
   try {
     // Check CSRF secret
-    if (!process.env.CSRF_SECRET) {
+    if (process.env.CSRF_SECRET === undefined) {
       if (SECURITY_CONFIG.isProduction) {
         issues.push('CSRF_SECRET environment variable is required in production')
       } else {
@@ -377,15 +377,15 @@ export const CSRF_CLIENT_HELPER: CsrfClientHelper = {
     const prefix = `${CSRF_COOKIE_NAME}=`
     const cookie = document.cookie.split('; ').find((row) => row.startsWith(prefix))
 
-    if (!cookie) return null
+    if (cookie === undefined) return null
 
     const value = cookie.substring(prefix.length)
-    return value || null
+    return value !== '' ? value : null
   },
 
   addToHeaders(headers: HeadersInit = {}): HeadersInit {
     const token = this.getToken()
-    if (!token) return headers
+    if (token === null) return headers
 
     return {
       ...headers,

@@ -4,7 +4,7 @@
  * Composes security-related middleware including headers, rate limiting, and CSRF protection.
  */
 
-import { NextRequest, NextResponse } from 'next/server'
+import { type NextRequest, NextResponse } from 'next/server'
 import { buildLogger } from '@/lib/logger/client'
 import { securityHeadersMiddleware } from './headers'
 import { rateLimiter } from './rate-limit'
@@ -32,7 +32,8 @@ export async function securityMiddleware(
 ): Promise<SecurityMiddlewareResult> {
   const { pathname } = request.nextUrl
   const forwardedFor = request.headers.get('x-forwarded-for')
-  const ip = (forwardedFor ? forwardedFor.split(',')[0]?.trim() : null) || request.headers.get('x-real-ip') || 'unknown'
+  const ip =
+    (forwardedFor !== null ? forwardedFor.split(',')[0]?.trim() : null) ?? request.headers.get('x-real-ip') ?? 'unknown'
 
   try {
     let response = await securityHeadersMiddleware(request, initialResponse, { nonce: options.nonce })
@@ -52,6 +53,3 @@ export async function securityMiddleware(
     return { response: failureResponse, shortCircuitResponse: failureResponse }
   }
 }
-
-export * from './headers'
-export * from './rate-limit'

@@ -10,6 +10,7 @@ import { JSDOM } from 'jsdom'
 import createDOMPurify from 'dompurify'
 import { SECURITY_CONFIG } from '@/config/security'
 import { buildLogger } from '@/lib/logger/client'
+import { safeJsonParse } from '@/lib/utils/json'
 import type {
   HtmlSanitizeOptions,
   InputSanitizeOptions,
@@ -39,7 +40,7 @@ export function sanitizeHtml(input: string, options: HtmlSanitizeOptions = {}): 
 
     if (stripTags) {
       // Strip all HTML tags using DOMPurify with no allowed tags
-      return DOMPurify.sanitize(input, { ALLOWED_TAGS: [], ALLOWED_ATTR: [] }) || ''
+      return DOMPurify.sanitize(input, { ALLOWED_TAGS: [], ALLOWED_ATTR: [] }) ?? ''
     }
 
     const config = {
@@ -52,7 +53,7 @@ export function sanitizeHtml(input: string, options: HtmlSanitizeOptions = {}): 
       RETURN_TRUSTED_TYPE: false,
     }
 
-    const sanitized = DOMPurify.sanitize(input, config) || ''
+    const sanitized = DOMPurify.sanitize(input, config) ?? ''
 
     logger.debug(
       {
@@ -87,7 +88,7 @@ export function escapeHtml(input: string): string {
     '=': '&#x3D;',
   }
 
-  return input.replace(/[&<>"'`=/]/g, (char) => entityMap[char] || char)
+  return input.replace(/[&<>"'`=/]/g, (char) => entityMap[char] ?? char)
 }
 
 /**
@@ -161,7 +162,7 @@ export function sanitizeFilename(filename: string): string {
     // Limit length
     const maxLength = 255
     if (sanitized.length > maxLength) {
-      const extension = sanitized.includes('.') ? sanitized.split('.').pop() || '' : ''
+      const extension = sanitized.includes('.') ? (sanitized.split('.').pop() ?? '') : ''
       const nameWithoutExt = sanitized.includes('.') ? sanitized.substring(0, sanitized.lastIndexOf('.')) : sanitized
       const maxNameLength = maxLength - extension.length - (extension ? 1 : 0)
       sanitized = nameWithoutExt.substring(0, maxNameLength) + (extension ? '.' + extension : '')
@@ -174,10 +175,10 @@ export function sanitizeFilename(filename: string): string {
 
     // Add timestamp if filename is too generic
     const genericNames = ['file', 'document', 'image', 'upload']
-    const baseName = sanitized.toLowerCase().split('.')[0] || ''
+    const baseName = sanitized.toLowerCase().split('.')[0] ?? ''
     if (genericNames.includes(baseName)) {
       const timestamp = Date.now()
-      const extension = sanitized.includes('.') ? '.' + (sanitized.split('.').pop() || '') : ''
+      const extension = sanitized.includes('.') ? '.' + (sanitized.split('.').pop() ?? '') : ''
       sanitized = `file_${timestamp}${extension}`
     }
 
@@ -223,7 +224,7 @@ function performFileSecurityChecks(file: File): FileValidationResult {
       const secondLastExt = parts[parts.length - 2]?.toLowerCase()
       const dangerousSecondExts = ['php', 'asp', 'jsp', 'exe', 'bat', 'cmd']
 
-      if (secondLastExt && dangerousSecondExts.includes(secondLastExt)) {
+      if (secondLastExt !== undefined && dangerousSecondExts.includes(secondLastExt)) {
         return {
           isValid: false,
           error: 'Double file extensions not allowed',
@@ -389,7 +390,7 @@ export function sanitizeUrl(url: string, allowedDomains: string[] = []): string 
  */
 export function sanitizeJson(jsonString: string): unknown {
   try {
-    const parsed = JSON.parse(jsonString)
+    const parsed = safeJsonParse<unknown>(jsonString)
 
     // Remove dangerous properties
     const dangerousKeys = ['__proto__', 'constructor', 'prototype']
@@ -403,14 +404,14 @@ export function sanitizeJson(jsonString: string): unknown {
         return obj.map(removeDangerousKeys)
       }
 
-      const cleaned: Record<string, unknown> = {}
-      for (const [key, value] of Object.entries(obj as Record<string, unknown>)) {
+      const sanitized: Record<string, unknown> = {}
+      const target = obj as Record<string, unknown>
+      Object.keys(target).forEach((key) => {
         if (!dangerousKeys.includes(key)) {
-          cleaned[key] = removeDangerousKeys(value)
+          sanitized[key] = removeDangerousKeys(target[key])
         }
-      }
-
-      return cleaned
+      })
+      return sanitized
     }
 
     return removeDangerousKeys(parsed)
