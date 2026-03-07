@@ -117,13 +117,11 @@ export async function getCountryByGeoLocation(): Promise<string | null> {
 export async function detectUserCountry(): Promise<ICountry | null> {
   // Return cached result if available
   if (cachedCountry) {
-    logger.debug({ cachedCountry }, 'Country already cached')
     return cachedCountry
   }
 
   // Return existing promise if detection is in progress
   if (detectionPromise) {
-    logger.debug({ detectionPromise }, 'Country detection already in progress')
     return detectionPromise
   }
 
@@ -143,7 +141,6 @@ export async function detectUserCountry(): Promise<ICountry | null> {
           const countryByNavigator = getCountryByCode(detectedCode)
           if (countryByNavigator) {
             cachedCountry = countryByNavigator
-            logger.debug({ countryByNavigator }, 'Country detected from locale')
             return countryByNavigator
           }
         }
@@ -158,7 +155,6 @@ export async function detectUserCountry(): Promise<ICountry | null> {
       const country = getCountryByCode(countryByGeoLocation)
       if (country) {
         cachedCountry = country
-        logger.debug({ country }, 'Country detected from IP geolocation')
         return country
       }
     }
@@ -221,7 +217,6 @@ export async function detectUserCountry(): Promise<ICountry | null> {
           const country = getCountryByCode(countryByTimezone)
           if (country) {
             cachedCountry = country
-            logger.debug({ country }, 'Country detected from timezone')
             return country
           }
         }

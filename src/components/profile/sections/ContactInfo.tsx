@@ -1,8 +1,9 @@
 import { Grid, TextField } from '@mui/material'
 import { Controller, useFormContext } from 'react-hook-form'
 
-import { FormSection, FormFieldSkeleton } from '@/components/forms'
-import { ProfileFormValues } from '@/lib/validators'
+import { FormSection } from '@/components/forms/FormSection'
+import { FormFieldSkeleton } from '@/components/forms/FormFieldSkeleton'
+import { type ProfileFormValues } from '@/lib/validators/profile'
 
 interface ContactInfoProps {
   errors: Partial<Record<string, { message?: string }>>
@@ -28,9 +29,10 @@ export function ContactInfo({ errors, disabled = false, isLoading = false }: Con
                   fullWidth
                   label="Phone Number"
                   variant="outlined"
-                  error={!!errors.phone}
-                  helperText={errors.phone?.message}
+                  placeholder="+1 (555) 123-4567"
                   disabled={disabled}
+                  error={Boolean(errors.phone)}
+                  helperText={errors.phone?.message}
                   value={field.value ?? ''}
                 />
               )}
@@ -52,7 +54,7 @@ export function ContactInfo({ errors, disabled = false, isLoading = false }: Con
                   variant="outlined"
                   placeholder="https://example.com"
                   disabled={disabled}
-                  error={!!errors.website}
+                  error={Boolean(errors.website)}
                   helperText={errors.website?.message}
                   value={field.value ?? ''}
                 />

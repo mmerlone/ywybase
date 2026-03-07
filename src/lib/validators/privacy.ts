@@ -7,8 +7,6 @@
 
 import { z } from 'zod'
 
-import { cookiePreferencesSchema } from './cookie'
-
 /**
  * Schema for data sharing preferences.
  * Controls what data the user consents to share with third parties and for analytics.
@@ -27,11 +25,11 @@ import { cookiePreferencesSchema } from './cookie'
  */
 export const dataSharingSchema = z
   .object({
-    third_parties: z.boolean().default(false),
-    analytics: z.boolean().default(false),
-    marketing: z.boolean().default(false),
+    third_parties: z.boolean().optional(),
+    analytics: z.boolean().optional(),
+    marketing: z.boolean().optional(),
   })
-  .default({})
+  .optional()
 
 /**
  * Schema for communication preferences.
@@ -51,11 +49,11 @@ export const dataSharingSchema = z
  */
 export const communicationPreferencesSchema = z
   .object({
-    email: z.boolean().default(false),
-    push: z.boolean().default(false),
-    sms: z.boolean().default(false),
+    email: z.boolean().optional(),
+    push: z.boolean().optional(),
+    sms: z.boolean().optional(),
   })
-  .default({})
+  .optional()
 
 /**
  * Schema for privacy settings.
@@ -68,7 +66,6 @@ export const communicationPreferencesSchema = z
  * @example
  * ```typescript
  * const privacy = privacySettingsSchema.parse({
- *   cookie_preferences: { necessary: true, analytics: true, marketing: false, functional: true },
  *   data_sharing: { third_parties: false, analytics: true, marketing: false },
  *   communication_preferences: { email: true, push: false, sms: false }
  * });
@@ -76,11 +73,10 @@ export const communicationPreferencesSchema = z
  */
 export const privacySettingsSchema = z
   .object({
-    cookie_preferences: cookiePreferencesSchema.optional(),
-    data_sharing: dataSharingSchema.optional(),
-    communication_preferences: communicationPreferencesSchema.optional(),
+    data_sharing: dataSharingSchema,
+    communication_preferences: communicationPreferencesSchema,
   })
-  .default({})
+  .optional()
 
 /**
  * Inferred TypeScript type for data sharing preferences.

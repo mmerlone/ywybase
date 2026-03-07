@@ -1,6 +1,6 @@
 -- Initial schema migration for YwyBase application
 -- Created: 2026-01-05
--- Updated: 2026-02-12
+-- Updated: 2026-03-03 (audited against Supabase project jbhkkxnssbivgznxdjyt)
 -- Description: Creates profiles table with functions, triggers, and RLS policies
 -- Profiles.* is canonical; auth.users fields are synced via triggers where needed
 
@@ -950,7 +950,3 @@ COMMENT ON FUNCTION public.get_sync_summary() IS 'Provides summary statistics fo
 COMMENT ON FUNCTION public.fix_sync_issues(uuid, boolean, boolean, boolean) IS 'Fixes synchronization issues between profiles and auth.users. Requires service_role for actual fixes';
 COMMENT ON FUNCTION public.update_user_role(uuid, public.user_role) IS 'Securely updates a user role. Only admins and roots can change roles. Requires service_role permissions.';
 COMMENT ON FUNCTION public.sync_auth_user_updates() IS 'Automatically syncs confirmed_at, last_sign_in_at, banned_until, and providers from auth.users to profiles when updated';
-
--- ============================================================================
--- TRIGGERS (for ongoing sync)
--- ============================================================================

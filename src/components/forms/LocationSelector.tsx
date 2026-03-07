@@ -2,11 +2,11 @@
 
 import { Autocomplete, FormControl, FormHelperText, Grid, TextField } from '@mui/material'
 import { type ICity, type ICountry, type IState } from 'country-state-city'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useFormContext } from 'react-hook-form'
 
+import { useGeoLocation } from '@/hooks/useGeoLocation'
 import { getCities, getCountries, getCountryByCode, getStateByCode, getStates } from '@/lib/utils/location-utils'
-import { useCountryDetection } from '@/hooks/useCountryDetection'
 
 type LocationError = {
   message?: string
@@ -39,7 +39,7 @@ export function LocationSelector({
   disabled = false,
 }: LocationSelectorProps): JSX.Element {
   const { watch, setValue } = useFormContext()
-  const { detect } = useCountryDetection()
+  const { detectedCountryCode } = useGeoLocation()
 
   // Watch form values with proper typing
   const countryValue = watch(countryName) as string | undefined
@@ -71,48 +71,45 @@ export function LocationSelector({
     return getCities(selectedCountry.isoCode, selectedState.isoCode) ?? []
   }, [selectedCountry, selectedState])
 
-  // Use computed values directly
+  // Use computed values directly instead of state
   const states = countryStates
   const cities = stateCities
 
-  const handleCountryChange = useCallback(
-    (country: ICountry | null): void => {
-      if (country) {
-        setValue(countryName, country.isoCode, {
-          shouldValidate: true,
-          shouldDirty: true,
-          shouldTouch: true,
-        })
-        setValue(stateName, '', {
-          shouldValidate: true,
-          shouldDirty: true,
-          shouldTouch: true,
-        })
-        setValue(cityName, '', {
-          shouldValidate: true,
-          shouldDirty: true,
-          shouldTouch: true,
-        })
-      } else {
-        setValue(countryName, '', {
-          shouldValidate: true,
-          shouldDirty: true,
-          shouldTouch: true,
-        })
-        setValue(stateName, '', {
-          shouldValidate: true,
-          shouldDirty: true,
-          shouldTouch: true,
-        })
-        setValue(cityName, '', {
-          shouldValidate: true,
-          shouldDirty: true,
-          shouldTouch: true,
-        })
-      }
-    },
-    [countryName, stateName, cityName, setValue]
-  )
+  const handleCountryChange = (country: ICountry | null): void => {
+    if (country) {
+      setValue(countryName, country.isoCode, {
+        shouldValidate: true,
+        shouldDirty: true,
+        shouldTouch: true,
+      })
+      setValue(stateName, '', {
+        shouldValidate: true,
+        shouldDirty: true,
+        shouldTouch: true,
+      })
+      setValue(cityName, '', {
+        shouldValidate: true,
+        shouldDirty: true,
+        shouldTouch: true,
+      })
+    } else {
+      setValue(countryName, '', {
+        shouldValidate: true,
+        shouldDirty: true,
+        shouldTouch: true,
+      })
+      setValue(stateName, '', {
+        shouldValidate: true,
+        shouldDirty: true,
+        shouldTouch: true,
+      })
+      setValue(cityName, '', {
+        shouldValidate: true,
+        shouldDirty: true,
+        shouldTouch: true,
+      })
+    }
+  }
 
   // Handle state change
   const handleStateChange = (state: IState | null): void => {
@@ -150,23 +147,6 @@ export function LocationSelector({
     })
   }
 
-  const detectAndSet = useCallback(async () => {
-    if (!countryValue) {
-      const detected = await detect()
-      if (detected) {
-        handleCountryChange(detected)
-      }
-    }
-  }, [countryValue, detect, handleCountryChange])
-
-  // Background pre-detection for caching (UX optimization)
-  // This triggers detection on mount without updating the UI.
-  useEffect(() => {
-    if (!countryValue) {
-      detect().catch(() => {})
-    }
-  }, [detect, countryValue])
-
   return (
     <Grid container spacing={2} sx={{ mb: 1 }}>
       <Grid size={{ xs: 12, sm: 8 }}>
@@ -176,6 +156,15 @@ export function LocationSelector({
             getOptionLabel={(option) => option.name}
             value={selectedCountry}
             onChange={(_, newValue) => handleCountryChange(newValue)}
+            onOpen={() => {
+              // When dropdown is opened and no country is selected, apply the auto-detected country
+              if (!countryValue && detectedCountryCode) {
+                const detected = countries.find((c) => c.isoCode === detectedCountryCode)
+                if (detected) {
+                  handleCountryChange(detected)
+                }
+              }
+            }}
             renderInput={(params) => (
               <TextField
                 {...params}
@@ -185,11 +174,6 @@ export function LocationSelector({
                 required={required?.country}
                 placeholder="Search for a country..."
                 disabled={disabled}
-                onClick={() => {
-                  if (!disabled) {
-                    detectAndSet().catch(() => {})
-                  }
-                }}
               />
             )}
             isOptionEqualToValue={(option, value) => option.isoCode === value?.isoCode}

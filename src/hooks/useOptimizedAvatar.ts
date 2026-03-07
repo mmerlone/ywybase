@@ -70,7 +70,7 @@ export function useOptimizedAvatar(avatarUrl: string | null): OptimizedAvatarRet
         }
 
         const { bucket, filePath } = pathInfo
-        const sizeOptions = size || AVATAR_SIZES.medium
+        const sizeOptions = size ?? AVATAR_SIZES.medium
         return getOptimizedImageUrl(client, bucket, filePath, sizeOptions)
       },
     }

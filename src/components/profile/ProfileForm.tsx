@@ -1,22 +1,24 @@
 'use client'
 
-import { zodResolver } from '@hookform/resolvers/zod'
 import { Box, Button, CircularProgress, Grid, Paper, Tab, Tabs } from '@mui/material'
-import { type User } from '@supabase/supabase-js'
+import { useCurrentUser } from '@/components/providers/AuthProvider'
 import { useCallback, useEffect, useState } from 'react'
 import { FormProvider, useForm } from 'react-hook-form'
+import { ProfileSkeleton } from './ProfileSkeleton'
 
-import { AccountTab } from './AccountTab'
-import { AvatarSection } from './sections/AvatarSection'
-import { ProfileTab } from './ProfileTab'
+import { TabAccount } from './TabAccount'
+import { TabProfile } from './TabProfile'
+import { TabSocialLinks } from './TabSocialLinks'
+import { UserCard } from './UserCard'
 
 import { useSnackbar } from '@/contexts/SnackbarContext'
 import { useProfile } from '@/hooks/useProfile'
 import { logger } from '@/lib/logger/client'
-import { normalizeString } from '@/lib/utils/string-utils'
-import { ProfileFormValues, profileFormSchema } from '@/lib/validators'
-import { GenderPreference } from '@/types'
-import { Profile, ProfileUpdate } from '@/types/database'
+import { formatBoolean, formatDate, normalizeString } from '@/lib/utils/string-utils'
+import { createSafeResolver } from '@/lib/utils/forms'
+import { type ProfileFormValues, profileFormSchema } from '@/lib/validators/profile'
+import type { GenderPreference, Profile, ProfileUpdate } from '@/types/profile.types'
+import { ThemePreferenceEnum } from '@/types/theme.types'
 
 /**
  * Transform profile data to match ProfileFormValues type.
@@ -31,7 +33,7 @@ function transformToFormValues(profileData: Profile | null, userEmail: string): 
 
   return {
     email: userEmail,
-    display_name: profileData.display_name || '',
+    display_name: profileData.display_name ?? '',
     first_name: normalizeString(profileData.first_name),
     last_name: normalizeString(profileData.last_name),
     bio: normalizeString(profileData.bio),
@@ -45,27 +47,28 @@ function transformToFormValues(profileData: Profile | null, userEmail: string): 
     city: normalizeString(profileData.city),
     locale: normalizeString(profileData.locale),
     birth_date: profileData.birth_date ?? null,
-    gender: (profileData.gender as GenderPreference) || null,
+    gender: (profileData.gender as GenderPreference) ?? null,
+    theme: profileData.theme,
   }
 }
 
 interface ProfileFormProps {
-  user: User | null
   profile: Profile | null
 }
 
-export function ProfileForm({ user, profile: initialProfile }: ProfileFormProps): JSX.Element {
+export function ProfileForm({ profile: initialProfile }: ProfileFormProps): JSX.Element {
   const { showError, showSuccess } = useSnackbar()
-  const { profile, updateProfile, isLoading } = useProfile(user?.id, initialProfile)
+  const { user: authUser } = useCurrentUser()
+  const { profile, updateProfile, isLoading } = useProfile(authUser?.id, initialProfile)
   const [activeTab, setActiveTab] = useState(0)
 
   const form = useForm<ProfileFormValues>({
-    resolver: zodResolver(profileFormSchema),
-    mode: 'onChange',
+    resolver: createSafeResolver(profileFormSchema),
+    mode: 'onBlur',
     defaultValues: initialProfile
       ? {
-          email: user?.email ?? '',
-          display_name: initialProfile.display_name || '',
+          email: authUser?.email ?? '',
+          display_name: initialProfile.display_name ?? '',
           first_name: normalizeString(initialProfile.first_name),
           last_name: normalizeString(initialProfile.last_name),
           bio: normalizeString(initialProfile.bio),
@@ -79,10 +82,11 @@ export function ProfileForm({ user, profile: initialProfile }: ProfileFormProps)
           city: normalizeString(initialProfile.city),
           locale: normalizeString(initialProfile.locale),
           birth_date: initialProfile.birth_date ?? null,
-          gender: (initialProfile.gender as GenderPreference) || null,
+          gender: (initialProfile.gender as GenderPreference) ?? null,
+          theme: initialProfile.theme,
         }
       : {
-          email: user?.email ?? '',
+          email: authUser?.email ?? '',
           display_name: '',
           first_name: '',
           last_name: '',
@@ -98,6 +102,7 @@ export function ProfileForm({ user, profile: initialProfile }: ProfileFormProps)
           locale: '',
           birth_date: null,
           gender: null,
+          theme: ThemePreferenceEnum.SYSTEM,
         },
   })
 
@@ -108,12 +113,12 @@ export function ProfileForm({ user, profile: initialProfile }: ProfileFormProps)
   // This handles cases where profile data updates after initial load
   useEffect(() => {
     if (profile && !isDirty && !isSubmitting && !isLoading) {
-      const formValues = transformToFormValues(profile, user?.email ?? '')
+      const formValues = transformToFormValues(profile, authUser?.email ?? '')
       if (formValues) {
-        form.reset(formValues, { keepDirty: false, keepErrors: false })
+        reset(formValues, { keepDirty: false, keepErrors: false })
       }
     }
-  }, [profile, user?.email, form, isDirty, isSubmitting, isLoading])
+  }, [profile, authUser?.email, reset, isDirty, isSubmitting, isLoading])
 
   const onSubmit = useCallback(
     async (data: ProfileFormValues, event?: React.BaseSyntheticEvent) => {
@@ -122,7 +127,7 @@ export function ProfileForm({ user, profile: initialProfile }: ProfileFormProps)
         event.stopPropagation()
       }
 
-      if (user?.id == null) return
+      if (!authUser?.id) return
 
       try {
         const updates: ProfileUpdate = {
@@ -140,7 +145,8 @@ export function ProfileForm({ user, profile: initialProfile }: ProfileFormProps)
           city: data.city ?? null,
           locale: data.locale ?? null,
           birth_date: data.birth_date ?? null,
-          gender: data.gender || null,
+          gender: data.gender ?? null,
+          theme: data.theme,
         }
 
         const result = await updateProfile(updates)
@@ -161,16 +167,23 @@ export function ProfileForm({ user, profile: initialProfile }: ProfileFormProps)
             component: 'ProfileForm',
             action: 'updateProfile',
             stack: err.stack,
-            userId: user?.id,
+            userId: authUser?.id,
           },
           'Profile update error'
         )
-        showError(err.message || 'Failed to update profile. Please try again.')
+        showError(err.message ?? 'Failed to update profile. Please try again.')
         // Don't reset form on error to preserve user input
       }
     },
-    [user?.id, updateProfile, showSuccess, showError, reset]
+    [authUser?.id, updateProfile, showSuccess, showError, reset]
   )
+
+  // Show unified skeleton only during initial load if no server data is available
+  if (isLoading && !initialProfile) {
+    return <ProfileSkeleton />
+  }
+
+  const resolvedProfile = profile ?? initialProfile
 
   return (
     <Box sx={{ mt: 1, width: '100%' }}>
@@ -193,7 +206,14 @@ export function ProfileForm({ user, profile: initialProfile }: ProfileFormProps)
               position: 'relative',
               overflow: 'visible',
             }}>
-            <AvatarSection />
+            <UserCard
+              profile={resolvedProfile}
+              formatDate={formatDate}
+              formatBoolean={formatBoolean}
+              avatarForm={true}
+              avatarSize="lg"
+              userId={authUser?.id}
+            />
           </Paper>
         </Grid>
 
@@ -204,7 +224,8 @@ export function ProfileForm({ user, profile: initialProfile }: ProfileFormProps)
               <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
                 <Tabs value={activeTab} onChange={(_, newValue) => setActiveTab(newValue)} aria-label="profile tabs">
                   <Tab label="Profile" id="profile-tab-0" aria-controls="profile-tabpanel-0" />
-                  <Tab label="Account" id="profile-tab-1" aria-controls="profile-tabpanel-1" />
+                  <Tab label="Social" id="profile-tab-1" aria-controls="profile-tabpanel-1" />
+                  <Tab label="Account" id="profile-tab-2" aria-controls="profile-tabpanel-2" />
                 </Tabs>
               </Box>
 
@@ -215,11 +236,11 @@ export function ProfileForm({ user, profile: initialProfile }: ProfileFormProps)
                     onSubmit={(e) => {
                       e.preventDefault()
                       e.stopPropagation()
-                      void handleSubmit(onSubmit)(e)
+                      void handleSubmit(onSubmit)(e).catch(() => {})
                     }}
                     noValidate
                     sx={{ width: '100%' }}>
-                    <ProfileTab errors={errors} disabled={isSubmitting || isLoading} isLoading={isLoading} />
+                    <TabProfile errors={errors} disabled={isSubmitting || isLoading} />
 
                     <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4, gap: 2 }}>
                       <Button
@@ -247,7 +268,11 @@ export function ProfileForm({ user, profile: initialProfile }: ProfileFormProps)
               </Box>
 
               <Box role="tabpanel" hidden={activeTab !== 1} id="profile-tabpanel-1" aria-labelledby="profile-tab-1">
-                {activeTab === 1 && <AccountTab />}
+                {activeTab === 1 && <TabSocialLinks />}
+              </Box>
+
+              <Box role="tabpanel" hidden={activeTab !== 2} id="profile-tabpanel-2" aria-labelledby="profile-tab-2">
+                {activeTab === 2 && <TabAccount />}
               </Box>
             </Paper>
           </FormProvider>

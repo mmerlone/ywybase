@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react'
 import { Box, Stack, Typography } from '@mui/material'
-import { clientLogger } from '@/lib/logger'
+import { logger as clientLogger } from '@/lib/logger/client'
 
 // Theme constants for consistent styling
 const CLOCK_CONTAINER_SX = {

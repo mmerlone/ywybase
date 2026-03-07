@@ -13,6 +13,7 @@
  * - Optimized image URLs with transformation
  * - Automatic old avatar cleanup
  * - Collision-free file naming
+ * - Request-level memoization via `getCachedProfile()`
  *
  * **Avatar Storage**:
  * - Bucket: 'avatars'
@@ -25,7 +26,8 @@
 
 'use server'
 
-import DOMPurify from 'isomorphic-dompurify'
+import { cache } from 'react'
+
 import { ErrorCodes } from '@/lib/error/codes'
 import { BusinessError } from '@/lib/error/errors'
 import {
@@ -37,11 +39,19 @@ import type { AuthResponse } from '@/types/error.types'
 import { buildLogger } from '@/lib/logger/server'
 import { createClient } from '@/lib/supabase/server'
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { profileUpdateSchema, profileCreateSchema } from '@/lib/validators/profile'
-import { validateAndSanitizeFile } from '@/middleware/security/sanitize'
+import {
+  profileUpdateSchema,
+  profileCreateSchema,
+  socialLinksArraySchema,
+  type SocialLinksArrayData,
+  type ProfileUpdateData,
+  type ProfileCreateData,
+} from '@/lib/validators/profile'
+import { validateAndSanitizeFile, sanitizeHtml } from '@/middleware/security/sanitize'
 import { getOptimizedImageUrl, parseSupabaseStorageUrl, AVATAR_SIZES, isDefaultAvatar } from '@/lib/utils/image-utils'
-import type { Profile, Database } from '@/types/database'
-import type { ProfileUpdateData, ProfileCreateData } from '@/lib/validators/profile'
+import { convertDbProfile } from '@/lib/utils/profile-utils'
+import type { Database } from '@/types/database'
+import type { Profile } from '@/types/profile.types'
 
 const logger = buildLogger('profile-server-actions')
 
@@ -139,8 +149,66 @@ const AVATAR_VALIDATION: {
 }
 
 /**
- * Get a user's profile by ID.
- * Returns profile data or null if not found.
+ * Get the authenticated user's own profile (self-service).
+ * Does not require userId - automatically uses the current authenticated user.
+ *
+ * @returns Promise resolving to own profile data or null if not found
+ * @throws {AuthError} If user is not authenticated
+ *
+ * @remarks
+ * **Self-Service Operation**: This action only returns the current user's own profile.
+ * For admin access to any user's profile, use `getProfile(userId)` from admin/users.ts.
+ *
+ * @example
+ * ```typescript
+ * const result = await getOwnProfile()
+ * if (result.success && result.data) {
+ *   console.log('My display name:', result.data.display_name)
+ * }
+ * ```
+ */
+export const getOwnProfile = withServerActionErrorHandling(
+  async (): Promise<AuthResponse<Profile | null>> => {
+    const supabase = await createClient()
+
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser()
+
+    if (authError || !user?.id) {
+      throw new BusinessError({
+        code: ErrorCodes.auth.invalidToken(),
+        message: 'Authentication required',
+        context: { operation: 'getOwnProfile' },
+        statusCode: 401,
+      })
+    }
+
+    logger.debug({ userId: user.id }, 'Fetching own profile')
+
+    const { data, error } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        // Profile not found - return success with null data
+        return createServerActionSuccess(null, 'Profile not found')
+      }
+      throw error
+    }
+
+    logger.debug({ userId: user.id }, 'Own profile retrieved successfully')
+    return createServerActionSuccess(data ? convertDbProfile(data) : null, 'Profile retrieved successfully')
+  },
+  {
+    operation: 'getOwnProfile',
+    successMessage: 'Profile retrieved successfully',
+  }
+)
+
+/**
+ * Get a user's profile by ID (internal use).
+ * For self-service, prefer using getOwnProfile() which auto-detects the current user.
  *
  * @param userId - The user ID to fetch profile for
  * @returns Promise resolving to profile data or null
@@ -187,14 +255,52 @@ export const getProfile = withServerActionErrorHandling(
       throw error
     }
 
-    logger.info({ userId, profileId: data?.id }, 'Profile retrieved successfully')
-    return createServerActionSuccess(data as Profile, 'Profile retrieved successfully')
+    logger.debug({ userId, profileId: data?.id }, 'Profile retrieved successfully')
+    return createServerActionSuccess(data ? convertDbProfile(data) : null, 'Profile retrieved successfully')
   },
   {
     operation: 'getProfile',
     successMessage: 'Profile retrieved successfully',
   }
 )
+
+/**
+ * Request-memoized profile getter for Server Components.
+ *
+ * Uses React's `cache()` to deduplicate identical calls within the same
+ * request lifecycle. Use this in layouts, pages, and `generateMetadata()`
+ * to avoid redundant database queries.
+ *
+ * @param userId - The user ID to fetch profile for
+ * @returns Promise resolving to profile data or null
+ *
+ * @remarks
+ * **Caching Behavior**:
+ * - Multiple calls with the same `userId` within a single request are deduped
+ * - Cache is automatically cleared after the request completes
+ * - Does NOT persist across requests (unlike TanStack Query)
+ *
+ * **When to Use**:
+ * - `generateMetadata()` + page component need same profile
+ * - Layout + page both need profile data
+ * - Any Server Component rendering scenario
+ *
+ * **When NOT to Use**:
+ * - Client Components (use `useProfile` hook instead)
+ * - Mutations (use `updateProfile` directly)
+ *
+ * @example
+ * ```typescript
+ * // In generateMetadata and ProfilePage - only 1 DB call
+ * const result = await getCachedProfile(user.id)
+ * if (result.success && result.data) {
+ *   console.log('Display name:', result.data.display_name)
+ * }
+ * ```
+ */
+export const getCachedProfile = cache(async (userId: string): Promise<AuthResponse<Profile | null>> => {
+  return getProfile(userId)
+})
 
 /**
  * Create a new user profile.
@@ -255,8 +361,8 @@ export const createProfile = withServerActionErrorHandling(
       throw error
     }
 
-    logger.info({ userId, profileId: data.id }, 'Profile created successfully')
-    return createServerActionSuccess(data as Profile, 'Profile created successfully')
+    logger.debug({ userId, profileId: data.id, email: validated.data!.email }, 'Profile created successfully')
+    return createServerActionSuccess(convertDbProfile(data), 'Profile created successfully')
   },
   {
     operation: 'createProfile',
@@ -323,10 +429,10 @@ export const updateProfile = withServerActionErrorHandling(
     // Sanitize text fields to prevent XSS
     const sanitizedData = {
       ...validated.data,
-      ...(validated.data.bio && { bio: DOMPurify.sanitize(validated.data.bio, { ALLOWED_TAGS: [] }) }),
-      ...(validated.data.company && { company: DOMPurify.sanitize(validated.data.company, { ALLOWED_TAGS: [] }) }),
+      ...(validated.data.bio && { bio: sanitizeHtml(validated.data.bio, { stripTags: true }) }),
+      ...(validated.data.company && { company: sanitizeHtml(validated.data.company, { stripTags: true }) }),
       ...(validated.data.job_title && {
-        job_title: DOMPurify.sanitize(validated.data.job_title, { ALLOWED_TAGS: [] }),
+        job_title: sanitizeHtml(validated.data.job_title, { stripTags: true }),
       }),
     }
 
@@ -342,8 +448,11 @@ export const updateProfile = withServerActionErrorHandling(
       throw error
     }
 
-    logger.info({ userId, profileId: data.id }, 'Profile updated successfully')
-    return createServerActionSuccess(data as Profile, 'Profile updated successfully')
+    logger.info(
+      { userId, profileId: data.id, email: (sanitizedData as { email?: string }).email },
+      'Profile updated successfully'
+    )
+    return createServerActionSuccess(convertDbProfile(data), 'Profile updated successfully')
   },
   {
     operation: 'updateProfile',
@@ -417,7 +526,7 @@ export const uploadAvatar = withServerActionErrorHandling(
       logger.warn({ userId, fileName: file.name, error: validation.error }, 'Avatar validation failed')
       throw new BusinessError({
         code: ErrorCodes.validation.invalidInput(),
-        message: validation.error || 'Invalid file',
+        message: validation.error ?? 'Invalid file',
         context: { operation: 'uploadAvatar' },
         statusCode: 400,
       })
@@ -443,7 +552,7 @@ export const uploadAvatar = withServerActionErrorHandling(
       typeof crypto !== 'undefined' && crypto.randomUUID
         ? crypto.randomUUID()
         : `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`
-    const fileName = validation.sanitizedName || `${userId}-${uniqueId}.${fileExt}`
+    const fileName = validation.sanitizedName ?? `${userId}-${uniqueId}.${fileExt}`
     const filePath = `${userId}/${fileName}`
 
     // Upload file to storage
@@ -487,7 +596,7 @@ export const uploadAvatar = withServerActionErrorHandling(
     }
 
     // Clean up old avatar after successful update
-    await cleanupOldAvatar(supabase, currentProfile?.avatar_url || null, filePath, userId)
+    await cleanupOldAvatar(supabase, currentProfile?.avatar_url ?? null, filePath, userId)
 
     logger.info({ userId, optimizedUrl, filePath }, 'Avatar uploaded successfully with optimization')
     return createServerActionSuccess(optimizedUrl, 'Avatar uploaded successfully')
@@ -496,6 +605,95 @@ export const uploadAvatar = withServerActionErrorHandling(
     operation: 'uploadAvatar',
     revalidatePaths: ['/profile'],
     successMessage: 'Avatar uploaded successfully',
+  }
+)
+
+/**
+ * Delete avatar from Supabase Storage and clear the profile's avatar_url.
+ *
+ * Unlike setting `avatar_url` to `null` directly, this action also removes the
+ * actual file from storage, preventing orphaned files from accumulating.
+ *
+ * @param userId - The user ID whose avatar should be deleted
+ * @returns Promise resolving to void on success
+ *
+ * @remarks
+ * **Safety Checks**:
+ * - Skips storage deletion if avatar is a default/system avatar
+ * - Always clears `avatar_url` in the database even if storage deletion fails
+ * - Logs warnings for storage cleanup failures but doesn't throw
+ *
+ * @example
+ * ```typescript
+ * const result = await deleteAvatar('user-123')
+ * if (result.success) {
+ *   // Avatar removed from storage and profile updated
+ * }
+ * ```
+ */
+export const deleteAvatar = withServerActionErrorHandling(
+  async (userId: string): Promise<AuthResponse<void>> => {
+    logger.debug({ userId, op: 'deleteAvatar' }, 'Deleting avatar')
+
+    if (!userId) {
+      throw new BusinessError({
+        code: ErrorCodes.validation.invalidInput(),
+        message: 'User ID is required',
+        context: { operation: 'deleteAvatar' },
+        statusCode: 400,
+      })
+    }
+
+    const supabase = await createClient()
+
+    // Get current avatar URL before clearing it
+    const { data: currentProfile, error: fetchError } = await supabase
+      .from('profiles')
+      .select('avatar_url')
+      .eq('id', userId)
+      .single()
+
+    if (fetchError) {
+      logger.error({ userId, error: fetchError, op: 'deleteAvatar' }, 'Failed to fetch current profile')
+      throw new Error('Failed to fetch current profile')
+    }
+
+    const avatarUrl = currentProfile?.avatar_url
+
+    // Clear avatar_url in database first
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({ avatar_url: null })
+      .eq('id', userId)
+      .select()
+      .single()
+
+    if (updateError) {
+      throw updateError
+    }
+
+    // Delete the file from storage if it exists and is not a default avatar
+    if (avatarUrl) {
+      const storagePath = extractStoragePath(avatarUrl)
+      if (storagePath && !isDefaultAvatar(storagePath)) {
+        try {
+          const { error: storageError } = await supabase.storage.from(PROFILE_BUCKET).remove([storagePath])
+          if (storageError) throw storageError
+          logger.info({ userId, storagePath, op: 'deleteAvatar' }, 'Avatar file deleted from storage')
+        } catch (error) {
+          // Don't fail the operation if storage cleanup fails — the DB is already updated
+          logger.error({ userId, storagePath, error, op: 'deleteAvatar' }, 'Failed to delete avatar file from storage')
+        }
+      }
+    }
+
+    logger.info({ userId, op: 'deleteAvatar' }, 'Avatar deleted successfully')
+    return createServerActionSuccess(undefined, 'Avatar deleted successfully')
+  },
+  {
+    operation: 'deleteAvatar',
+    revalidatePaths: ['/profile'],
+    successMessage: 'Avatar deleted successfully',
   }
 )
 
@@ -570,5 +768,84 @@ export const getOptimizedAvatarUrls = withServerActionErrorHandling(
   {
     operation: 'getOptimizedAvatarUrls',
     successMessage: 'Avatar URLs generated successfully',
+  }
+)
+
+/**
+ * Update user's social links with validation.
+ * Validates social links array, enforces constraints (max 10, one per platform, HTTPS-only),
+ * and updates the profile.
+ *
+ * @param userId - User ID to update
+ * @param socialLinks - Array of validated social links
+ * @returns AuthResponse with updated Profile
+ *
+ * @example
+ * ```typescript
+ * const result = await updateSocialLinks(userId, [
+ *   {
+ *     id: crypto.randomUUID(),
+ *     url: 'https://github.com/username',
+ *     title: 'GitHub Profile',
+ *     platform: 'github',
+ *     metadata: { title: 'Username', description: 'Open source dev' }
+ *   }
+ * ])
+ * if (result.success) {
+ *   console.log('Social links updated:', result.data.social_links)
+ * }
+ * ```
+ */
+export const updateSocialLinks = withServerActionErrorHandling(
+  async (userId: string, socialLinks: SocialLinksArrayData): Promise<AuthResponse<Profile>> => {
+    logger.debug({ userId, linkCount: socialLinks.length }, 'Updating social links')
+
+    if (!userId) {
+      throw new BusinessError({
+        code: ErrorCodes.validation.invalidInput(),
+        message: 'User ID is required',
+        context: { operation: 'updateSocialLinks' },
+        statusCode: 400,
+      })
+    }
+
+    // Validate social links array
+    const validated = socialLinksArraySchema.safeParse(socialLinks)
+    const validationError = handleServerActionValidation<Profile>(validated, {
+      userId,
+      operation: 'updateSocialLinks',
+    })
+    if (validationError) return validationError
+
+    // Ensure data exists after validation
+    if (!validated.data) {
+      return {
+        success: false,
+        error: 'Validation failed: No social links data provided',
+      }
+    }
+
+    // Update profile with validated social links
+    const supabase = await createClient()
+    const { data, error } = await supabase
+      .from('profiles')
+      .update({
+        social_links: validated.data as Database['public']['Tables']['profiles']['Update']['social_links'],
+      })
+      .eq('id', userId)
+      .select()
+      .single()
+
+    if (error) {
+      throw error
+    }
+
+    logger.info({ userId, profileId: data.id, linkCount: validated.data.length }, 'Social links updated successfully')
+    return createServerActionSuccess(convertDbProfile(data), 'Social links updated successfully')
+  },
+  {
+    operation: 'updateSocialLinks',
+    revalidatePaths: ['/profile'],
+    successMessage: 'Social links updated successfully',
   }
 )

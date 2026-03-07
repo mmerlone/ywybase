@@ -1,11 +1,10 @@
 import { ImageResponse } from 'next/og'
-import { type NextRequest } from 'next/server'
+import { type NextRequest, NextResponse } from 'next/server'
 import { readFile } from 'fs/promises'
 import path from 'path'
 
 import { SITE_CONFIG } from '@/config/site'
-import { isValidAvatarUrl } from '@/lib/utils/isValidAvatarUrl'
-// import { serverLogger as logger } from '@/lib/logger'
+import { isValidAvatarUrl } from '@/lib/utils/profile-utils'
 import { withApiErrorHandler } from '@/lib/error/server'
 
 /**
@@ -30,13 +29,12 @@ import { withApiErrorHandler } from '@/lib/error/server'
  *
  * @see https://vercel.com/docs/og-image-generation
  */
-import { NextResponse } from 'next/server'
 
 async function handler(request: NextRequest): Promise<NextResponse> {
   const { searchParams } = new URL(request.url)
 
   const name = searchParams.get('name')
-  if (!name) {
+  if (name === null || name === undefined) {
     return NextResponse.json({ error: 'Missing required parameter: name' }, { status: 400 })
   }
 
@@ -88,7 +86,7 @@ async function handler(request: NextRequest): Promise<NextResponse> {
             marginBottom: 32,
             boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
           }}>
-          {validatedAvatar ? (
+          {validatedAvatar !== null ? (
             // eslint-disable-next-line @next/next/no-img-element -- OG image generation requires basic img tag
             <img
               src={validatedAvatar}
@@ -129,14 +127,14 @@ async function handler(request: NextRequest): Promise<NextResponse> {
             fontSize: 52,
             fontWeight: 600,
             color: '#1e293b',
-            marginBottom: bio ? 16 : 0,
+            marginBottom: bio !== undefined && bio !== null ? 16 : 0,
             textAlign: 'center',
           }}>
           {name}
         </div>
 
         {/* Bio */}
-        {bio && (
+        {bio !== undefined && bio !== null && (
           <div
             style={{
               fontSize: 24,

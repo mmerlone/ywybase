@@ -457,43 +457,26 @@ export const convertAppProfileForUpdate = (appProfile: Partial<ProfileUpdate>): 
     display_name,
     email,
     role,
-    avatar_url,
-    bio,
-    birth_date,
-    city,
-    company,
-    country_code,
-    first_name,
-    is_onboarded,
-    job_title,
-    last_name,
-    locale,
-    phone,
-    state,
-    status,
-    timezone,
-    website,
+    // Explicitly destructure auth-synced fields to exclude them from ...rest
+    created_at: _created_at,
+    confirmed_at: _confirmed_at,
+    last_sign_in_at: _last_sign_in_at,
+    banned_until: _banned_until,
+    providers: _providers,
+    ...rest
   } = appProfile as Partial<Profile>
 
+  // Acknowledge intentionally unused destructured bindings (excluded from DB update)
+  void _created_at
+  void _confirmed_at
+  void _last_sign_in_at
+  void _banned_until
+  void _providers
+
   return {
-    avatar_url,
-    bio,
-    birth_date,
-    city,
-    company,
-    country_code,
-    display_name,
-    email,
-    first_name,
-    is_onboarded,
-    job_title,
-    last_name,
-    locale,
-    phone,
-    state,
-    status,
-    timezone,
-    website,
+    ...rest,
+    display_name, // Optional field
+    email, // Optional field
     role: convertAppUserRole(role),
     privacy_settings: privacy_settings ? convertAppPrivacySettings(privacy_settings) : undefined,
     gender: convertAppGenderPreference(gender),
@@ -502,6 +485,7 @@ export const convertAppProfileForUpdate = (appProfile: Partial<ProfileUpdate>): 
       : undefined,
     social_links: social_links ? convertAppSocialLinks(social_links) : undefined,
     theme: appProfile.theme,
+    // Auth-synced fields are intentionally excluded from updates
   }
 }
 

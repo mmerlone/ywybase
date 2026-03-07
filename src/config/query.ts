@@ -45,6 +45,15 @@ export const QUERY_CONFIG = {
   },
 
   /**
+   * Geolocation detection cache times.
+   * User IP rarely changes within a session — cache aggressively.
+   */
+  geoLocation: {
+    staleTime: 30 * 60 * 1000, // 30 minutes
+    gcTime: 60 * 60 * 1000, // 1 hour
+  },
+
+  /**
    * Default retry configuration
    */
   retry: {

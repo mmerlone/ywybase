@@ -1,8 +1,9 @@
 import { Grid, TextField } from '@mui/material'
 import { Controller, useFormContext } from 'react-hook-form'
 
-import { FormSection, FormFieldSkeleton } from '@/components/forms'
-import { ProfileFormValues } from '@/lib/validators'
+import { FormSection } from '@/components/forms/FormSection'
+import { FormFieldSkeleton } from '@/components/forms/FormFieldSkeleton'
+import { type ProfileFormValues } from '@/lib/validators/profile'
 
 interface AccountDetailsProps {
   errors: Partial<Record<string, { message?: string }>>
@@ -30,7 +31,7 @@ export function AccountDetails({ errors, disabled = false, isLoading = false }: 
                   required
                   label="Display Name"
                   variant="outlined"
-                  error={!!errors.display_name}
+                  error={Boolean(errors.display_name)}
                   helperText={errors.display_name?.message ?? 'This will be shown to other users'}
                   disabled={disabled}
                   value={field.value ?? ''}
@@ -54,7 +55,7 @@ export function AccountDetails({ errors, disabled = false, isLoading = false }: 
                   label="Email"
                   variant="outlined"
                   type="email"
-                  error={!!errors.email}
+                  error={Boolean(errors.email)}
                   helperText={errors.email?.message ?? '(Cannot be changed)'}
                   disabled={disabled || true}
                   value={field.value ?? ''}

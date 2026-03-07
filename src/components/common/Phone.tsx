@@ -3,20 +3,17 @@
 import React from 'react'
 import { Box, Link, Tooltip, Typography, useTheme } from '@mui/material'
 import { Phone as PhoneIcon } from '@mui/icons-material'
-import countryTelData, { type Country } from 'country-telephone-data'
-
-// Extend Country type to match actual data structure
-interface ExtendedCountry extends Country {
-  dialCode: string
-  priority: number
-  format: string
-}
-
-// telData is now correctly typed via src/types/country-telephone-data.d.ts
-const telData = countryTelData
-
+import { allCountries, type Country } from 'country-telephone-data'
 import { PHONE_REGEX } from '@/lib/validators/profile'
 import { formatNationalNumber } from '@/lib/utils/string-utils'
+
+// Build a dial-code → primary Country map once at module level.
+// Countries are sorted by priority (ascending) so the first entry for a given
+// dial code is the most "canonical" country (e.g. US for +1, RU for +7).
+const dialCodeToCountry: Record<string, Country> = {}
+for (const country of [...allCountries].sort((a, b) => a.priority - b.priority)) {
+  dialCodeToCountry[country.dialCode] ??= country
+}
 
 interface PhoneProps {
   /** Phone number string to display and format */
@@ -106,7 +103,7 @@ export function Phone({
     const cleanPhone = phone.replace(/[^\d+]/g, '')
 
     // Try to extract country calling code (longest first)
-    let detectedCountry: ExtendedCountry | null = null
+    let detectedCountry: Country | null = null
     let callingCode: string | null = null
     let nationalPhone = cleanPhone
 
@@ -114,22 +111,15 @@ export function Phone({
     const isValid = PHONE_REGEX.test(phone)
 
     if (cleanPhone.startsWith('+')) {
-      // Sort calling codes by length (longest first) to handle overlapping codes
-      const sortedCodes = Object.keys(telData.allCountryCodes).sort((a, b) => b.length - a.length)
+      // Sort dial codes by length (longest first) to handle overlapping codes (e.g. 1284 before 1)
+      const sortedCodes = Object.keys(dialCodeToCountry).sort((a, b) => b.length - a.length)
 
       for (const code of sortedCodes) {
         if (cleanPhone.startsWith(`+${code}`)) {
-          // Get the first country code for this calling code
-          const countryCodes = telData.allCountryCodes[code]
-          const countryCode = countryCodes?.[0]
-          if (countryCode) {
-            detectedCountry =
-              (telData.allCountries.find((country) => country.iso2 === countryCode) as ExtendedCountry | undefined) ??
-              null
-            callingCode = code
-            nationalPhone = cleanPhone.substring(code.length + 1)
-            break
-          }
+          detectedCountry = dialCodeToCountry[code] ?? null
+          callingCode = code
+          nationalPhone = cleanPhone.substring(code.length + 1)
+          break
         }
       }
     }
@@ -151,7 +141,7 @@ export function Phone({
     return {
       phone,
       isValid,
-      country: detectedCountry?.iso2?.toUpperCase() ?? null,
+      country: detectedCountry?.iso2?.toUpperCase?.() ?? null,
       callingCode,
       nationalPhone, // Raw digits
       displayPhone,
