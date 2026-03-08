@@ -93,10 +93,12 @@ function prepareEndpoint(ogUrl: string, sourceUrl: string): string {
   endpoint = endpoint.replace('{url}', encodeURIComponent(sourceUrl))
 
   if (endpoint.includes('{username}')) {
-    // Strip query string and fragment before extracting the last path segment
-    // to avoid the trailing `\/?$` anchor failing on URLs like
-    // `https://example.com/user?ref=profile`.
-    const pathOnly = sourceUrl.replace(/[?#].*$/, '')
+    // Extract the pathname via the URL API instead of a regex strip.
+    // sourceUrl is guaranteed to be a valid HTTPS URL at this point (already
+    // passed isSecureUrl / isPrivateNetworkUrl guards), so new URL() is safe.
+    // This avoids the unbounded `.*` pattern that could backtrack on strings
+    // with many '#' characters.
+    const pathOnly = new URL(sourceUrl).pathname
     const match = pathOnly.match(/\/([^/]+)\/?$/)
     const rawUsername = match?.[1] ?? ''
 
