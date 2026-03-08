@@ -240,9 +240,9 @@ AS $$
 BEGIN
   -- Check if current user is admin or root
   IF NOT EXISTS (
-    SELECT 1 FROM auth.users
+    SELECT 1 FROM public.profiles
     WHERE id = auth.uid()
-      AND raw_app_meta_data->>'role' IN ('admin', 'root')
+      AND role IN ('admin', 'root')
   ) THEN
     RAISE EXCEPTION 'Only admins or roots can change user roles';
   END IF;
@@ -673,86 +673,63 @@ BEGIN
         INNER JOIN auth.users u ON p.id = u.id
     ),
     sync_analysis AS (
+        -- Build per-user detail objects and collect non-null ones into a jsonb array.
+        -- Identities are resolved via subquery to avoid fan-out from a direct JOIN.
         SELECT 
-            *,
-            jsonb_agg(
-                jsonb_build_object(
-                    'field', field_name,
-                    'profile_value', profile_value,
-                    'auth_value', auth_value,
-                    'direction', direction
-                )
-            ) as mismatch_details
-        FROM (
-            SELECT 
-                user_id,
-                email,
-                profiles_updated_at,
-                auth_users_updated_at,
-                -- Collect all mismatched fields
-                CASE 
-                    WHEN created_at_mismatch IS NOT NULL THEN 
-                        jsonb_build_object('field', created_at_mismatch, 'profile_value', to_jsonb(p.created_at), 'auth_value', to_jsonb(u.created_at), 'direction', 'auth_to_profile')
-                    ELSE NULL
-                END as created_at_detail,
-                CASE 
-                    WHEN confirmed_at_mismatch IS NOT NULL THEN 
-                        jsonb_build_object('field', confirmed_at_mismatch, 'profile_value', to_jsonb(p.confirmed_at), 'auth_value', to_jsonb(u.confirmed_at), 'direction', 'auth_to_profile')
-                    ELSE NULL
-                END as confirmed_at_detail,
-                CASE 
-                    WHEN last_sign_in_at_mismatch IS NOT NULL THEN 
-                        jsonb_build_object('field', last_sign_in_at_mismatch, 'profile_value', to_jsonb(p.last_sign_in_at), 'auth_value', to_jsonb(u.last_sign_in_at), 'direction', 'auth_to_profile')
-                    ELSE NULL
-                END as last_sign_in_at_detail,
-                CASE 
-                    WHEN banned_until_mismatch IS NOT NULL THEN 
-                        jsonb_build_object('field', banned_until_mismatch, 'profile_value', to_jsonb(p.banned_until), 'auth_value', to_jsonb(u.banned_until), 'direction', 'auth_to_profile')
-                    ELSE NULL
-                END as banned_until_detail,
-                CASE 
-                    WHEN avatar_url_mismatch IS NOT NULL THEN 
-                        jsonb_build_object('field', avatar_url_mismatch, 'profile_value', to_jsonb(p.avatar_url), 'auth_value', to_jsonb(u.raw_user_meta_data->>'avatar_url'), 'direction', 'auth_to_profile')
-                    ELSE NULL
-                END as avatar_url_detail,
-                CASE 
-                    WHEN phone_mismatch IS NOT NULL THEN 
-                        jsonb_build_object('field', phone_mismatch, 'profile_value', to_jsonb(p.phone), 'auth_value', to_jsonb(u.phone), 'direction', 'profile_to_auth')
-                    ELSE NULL
-                END as phone_detail,
-                CASE 
-                    WHEN display_name_full_name_mismatch IS NOT NULL THEN 
-                        jsonb_build_object('field', display_name_full_name_mismatch, 'profile_value', to_jsonb(p.display_name), 'auth_value', to_jsonb(u.raw_user_meta_data->>'full_name'), 'direction', 'profile_to_auth')
-                    ELSE NULL
-                END as display_name_full_name_detail,
-                CASE 
-                    WHEN display_name_name_mismatch IS NOT NULL THEN 
-                        jsonb_build_object('field', display_name_name_mismatch, 'profile_value', to_jsonb(p.display_name), 'auth_value', to_jsonb(u.raw_user_meta_data->>'name'), 'direction', 'profile_to_auth')
-                    ELSE NULL
-                END as display_name_name_detail,
-                CASE 
-                    WHEN role_mismatch IS NOT NULL THEN 
-                        jsonb_build_object('field', role_mismatch, 'profile_value', to_jsonb(p.role::text), 'auth_value', to_jsonb(u.raw_app_meta_data->>'role'), 'direction', 'bidirectional')
-                    ELSE NULL
-                END as role_detail,
-                CASE 
-                    WHEN providers_mismatch IS NOT NULL THEN 
-                        jsonb_build_object('field', providers_mismatch, 'profile_value', to_jsonb(p.providers), 'auth_value', to_jsonb(ARRAY_AGG(DISTINCT i.provider ORDER BY i.provider)), 'direction', 'auth_to_profile')
-                    ELSE NULL
-                END as providers_detail
-            FROM profile_auth_comparison pac
-            LEFT JOIN public.profiles p ON pac.user_id = p.id
-            LEFT JOIN auth.users u ON pac.user_id = u.id
-            LEFT JOIN auth.identities i ON u.id = i.user_id
-        ) detailed
+            pac.user_id,
+            pac.email,
+            pac.profiles_updated_at,
+            pac.auth_users_updated_at,
+            mismatch_details.jsonb_agg
+        FROM profile_auth_comparison pac
+        INNER JOIN public.profiles p ON pac.user_id = p.id
+        INNER JOIN auth.users u ON pac.user_id = u.id
         CROSS JOIN LATERAL (
-            SELECT jsonb_agg(detail) 
-            FROM jsonb_array_elements(ARRAY[
-                created_at_detail, confirmed_at_detail, last_sign_in_at_detail, 
-                banned_until_detail, avatar_url_detail, phone_detail,
-                display_name_full_name_detail, display_name_name_detail, 
-                role_detail, providers_detail
-            ]::jsonb[]) detail
+            -- Use VALUES to build the candidate detail rows, then filter nulls and aggregate.
+            -- This avoids ARRAY[...]::jsonb[] which requires a native array, not a jsonb value.
+            SELECT jsonb_agg(detail)
+            FROM (
+                VALUES
+                    (CASE WHEN pac.created_at_mismatch IS NOT NULL THEN
+                        jsonb_build_object('field', pac.created_at_mismatch, 'profile_value', to_jsonb(p.created_at), 'auth_value', to_jsonb(u.created_at), 'direction', 'auth_to_profile')
+                    END),
+                    (CASE WHEN pac.confirmed_at_mismatch IS NOT NULL THEN
+                        jsonb_build_object('field', pac.confirmed_at_mismatch, 'profile_value', to_jsonb(p.confirmed_at), 'auth_value', to_jsonb(u.confirmed_at), 'direction', 'auth_to_profile')
+                    END),
+                    (CASE WHEN pac.last_sign_in_at_mismatch IS NOT NULL THEN
+                        jsonb_build_object('field', pac.last_sign_in_at_mismatch, 'profile_value', to_jsonb(p.last_sign_in_at), 'auth_value', to_jsonb(u.last_sign_in_at), 'direction', 'auth_to_profile')
+                    END),
+                    (CASE WHEN pac.banned_until_mismatch IS NOT NULL THEN
+                        jsonb_build_object('field', pac.banned_until_mismatch, 'profile_value', to_jsonb(p.banned_until), 'auth_value', to_jsonb(u.banned_until), 'direction', 'auth_to_profile')
+                    END),
+                    (CASE WHEN pac.avatar_url_mismatch IS NOT NULL THEN
+                        jsonb_build_object('field', pac.avatar_url_mismatch, 'profile_value', to_jsonb(p.avatar_url), 'auth_value', to_jsonb(u.raw_user_meta_data->>'avatar_url'), 'direction', 'auth_to_profile')
+                    END),
+                    (CASE WHEN pac.phone_mismatch IS NOT NULL THEN
+                        jsonb_build_object('field', pac.phone_mismatch, 'profile_value', to_jsonb(p.phone), 'auth_value', to_jsonb(u.phone), 'direction', 'profile_to_auth')
+                    END),
+                    (CASE WHEN pac.display_name_full_name_mismatch IS NOT NULL THEN
+                        jsonb_build_object('field', pac.display_name_full_name_mismatch, 'profile_value', to_jsonb(p.display_name), 'auth_value', to_jsonb(u.raw_user_meta_data->>'full_name'), 'direction', 'profile_to_auth')
+                    END),
+                    (CASE WHEN pac.display_name_name_mismatch IS NOT NULL THEN
+                        jsonb_build_object('field', pac.display_name_name_mismatch, 'profile_value', to_jsonb(p.display_name), 'auth_value', to_jsonb(u.raw_user_meta_data->>'name'), 'direction', 'profile_to_auth')
+                    END),
+                    (CASE WHEN pac.role_mismatch IS NOT NULL THEN
+                        jsonb_build_object('field', pac.role_mismatch, 'profile_value', to_jsonb(p.role::text), 'auth_value', to_jsonb(u.raw_app_meta_data->>'role'), 'direction', 'bidirectional')
+                    END),
+                    (CASE WHEN pac.providers_mismatch IS NOT NULL THEN
+                        jsonb_build_object(
+                            'field', pac.providers_mismatch,
+                            'profile_value', to_jsonb(p.providers),
+                            'auth_value', to_jsonb((
+                                SELECT ARRAY_AGG(DISTINCT provider ORDER BY provider)
+                                FROM auth.identities
+                                WHERE user_id = u.id
+                            )),
+                            'direction', 'auth_to_profile'
+                        )
+                    END)
+            ) AS t(detail)
             WHERE detail IS NOT NULL
         ) mismatch_details
     )
@@ -932,14 +909,19 @@ BEGIN
             END IF;
         END IF;
         
+        user_id := sync_record.user_id;
+        email := sync_record.email;
+        fixes_applied := fixes;
+        status := CASE WHEN jsonb_array_length(fixes) > 0 THEN 'fixed' ELSE 'no_changes' END;
         RETURN NEXT;
+     END LOOP;
     END LOOP;
 END;
 $$;
 
 -- Grant necessary permissions
-GRANT EXECUTE ON FUNCTION public.report_profile_auth_sync() TO authenticated, service_role;
-GRANT EXECUTE ON FUNCTION public.get_sync_summary() TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.report_profile_auth_sync() TO service_role;
+GRANT EXECUTE ON FUNCTION public.get_sync_summary() TO service_role;
 GRANT EXECUTE ON FUNCTION public.fix_sync_issues(uuid, boolean, boolean, boolean) TO service_role;
 GRANT EXECUTE ON FUNCTION public.update_user_role(uuid, public.user_role) TO service_role;
 GRANT EXECUTE ON FUNCTION public.sync_auth_user_updates() TO authenticated, service_role;
