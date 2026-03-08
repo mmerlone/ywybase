@@ -222,29 +222,14 @@ async function fetchMetadataForUrl(url: string): Promise<OgMeta> {
   }
 
   if (platform?.ogUrl === undefined || platform?.ogUrl === null) {
-    logger.info({ url }, 'No ogUrl configured for platform, falling back to direct HTML fetch')
-    try {
-      // nosemgrep: ssrf — URL is validated by isSecureUrl + isPrivateNetworkUrl + isValidSocialUrl
-      // CodeQL: intentional — 'website' platform permits arbitrary public HTTPS URLs.
-      // DNS-rebinding risk is accepted; server does not have access to internal services.
-      const res = await fetch(url, {
-        method: 'GET',
-        headers: { Accept: 'text/html', 'User-Agent': BROWSER_USER_AGENT },
-        signal: AbortSignal.timeout(FETCH_TIMEOUT),
-      })
-
-      if (!res.ok) {
-        logger.warn({ url, status: res.status }, 'Direct HTML fetch failed')
-        return { error: 'Preview not available for this platform' }
-      }
-
-      const html = await res.text()
-      const meta = parseHtmlResponse(html, url)
-      if (meta) return meta
-    } catch (error) {
-      logger.warn({ url, error }, 'Direct HTML fetch failed')
-    }
-
+    // Direct server-side HTML scraping of arbitrary URLs is intentionally not
+    // performed. Fetching user-supplied URLs on the server creates an SSRF
+    // vector that cannot be fully mitigated without an external proxy service
+    // (DNS rebinding bypasses pre-fetch IP checks). Platforms without a
+    // structured API endpoint (website, Twitter/X, Instagram, etc.) should be
+    // proxied through a dedicated OG service in a future iteration.
+    // See: docs/ROADMAP.md — "Route OG fetching through an external service".
+    logger.info({ url, platformKey }, 'No ogUrl for platform, server-side HTML scraping disabled')
     return { error: 'Preview not available for this platform' }
   }
 

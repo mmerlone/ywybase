@@ -60,6 +60,22 @@ _Priority 4 — Minor Fixes_
 
 - Improve `SAFE_USERNAME_RE` regex for edge cases with query parameters.
 
+_Priority 5 — Route OG fetching through an external service_
+
+Server-side direct HTML scraping of arbitrary URLs (`website` platform and any
+platform without a structured API endpoint) is currently disabled to prevent
+SSRF. DNS rebinding makes pre-fetch IP validation insufficient on its own.
+
+The clean solution is to proxy all OG fetch requests through a dedicated
+third-party service, so the taint never flows from user input directly into
+the server's `fetch()` call:
+
+- Evaluate services: [Microlink](https://microlink.io), [OpenGraph.io](https://opengraph.io), [Iframely](https://iframely.com).
+- The user-supplied URL becomes a query parameter to a hardcoded service endpoint — breaking the CodeQL taint trace and eliminating the SSRF risk entirely.
+- Abstract behind the existing `getOgMetadata()` interface so callers are unaffected.
+- Add API key management and graceful fallback when the service is unavailable.
+- Re-enable metadata previews for `website` links and bot-blocking platforms (Twitter/X, Instagram, YouTube).
+
 **Story Points**: 5
 
 ---
