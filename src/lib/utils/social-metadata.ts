@@ -19,6 +19,7 @@ import { buildLogger } from '@/lib/logger/server'
 import { isPrivateNetworkUrl, isSecureUrl } from './string-utils'
 import { getPlatformConfigForUrl } from './get-platform-from-url'
 import { getOgMetaFromMapping } from './social-og'
+import { isValidSocialUrl } from './profile-utils'
 
 const logger = buildLogger('social-metadata')
 
@@ -180,8 +181,9 @@ function parseHtmlResponse(html: string, url: string): OgMeta | null {
  * @returns Parsed metadata, or `{ error }` when the site blocks the request
  */
 async function fetchMetadataForUrl(url: string): Promise<OgMeta> {
-  // Guard against SSRF: reject non-HTTPS schemes and private/internal network addresses.
-  // This module is server-side and must not be weaponised to probe internal services.
+  // Guard against SSRF: reject non-HTTPS schemes, private/internal network addresses,
+  // and non-social or otherwise disallowed targets. This module is server-side and must
+  // not be weaponised to probe internal services.
   if (!isSecureUrl(url)) {
     logger.warn({ url }, 'Rejected non-HTTPS URL')
     return { error: 'Preview not available for this platform' }
@@ -192,6 +194,11 @@ async function fetchMetadataForUrl(url: string): Promise<OgMeta> {
   }
 
   const platform = getPlatformConfigForUrl(url)
+  const platformKey = platform?.key ?? 'website'
+  if (!isValidSocialUrl(url, platformKey)) {
+    logger.warn({ url, platformKey }, 'Rejected invalid or insecure social URL')
+    return { error: 'Preview not available for this platform' }
+  }
 
   if (platform?.ogUrl === undefined || platform?.ogUrl === null) {
     logger.info({ url }, 'No ogUrl configured for platform, falling back to direct HTML fetch')
