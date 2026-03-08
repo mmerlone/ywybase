@@ -12,13 +12,14 @@ import { logger } from '@/lib/logger/client'
 type RouteParams = Record<string, string>
 
 function validateRouteParams(routePath: string, params?: Record<string, string>): void {
-  if (params === undefined) return
-
   // Extract required params from route path (e.g., "/users/:id" -> ["id"])
   const requiredParams = routePath.match(/:(\w+)/g)?.map((param) => param.slice(1)) ?? []
 
+  // No required params and no params provided - valid
+  if (requiredParams.length === 0) return
+
   // Check if all required params are provided in params object
-  const missingParams = requiredParams.filter((param) => !(param in params))
+  const missingParams = requiredParams.filter((param) => params === undefined || !(param in params))
 
   if (missingParams.length > 0) {
     throw new Error(`Missing required parameters: ${missingParams.join(', ')}`)
@@ -43,7 +44,7 @@ function buildUrl(routeKey: RouteKey, params?: Record<string, string>, query?: R
   }
 
   // Add query parameters
-  if (query !== undefined) {
+  if (query !== undefined && Object.keys(query).length > 0) {
     const searchParams = new URLSearchParams()
     Object.entries(query).forEach(([key, value]) => {
       searchParams.append(key, value)

@@ -12,7 +12,7 @@ export function getPlatformConfigForUrl(url: string): SocialPlatformConfig | nul
     const u = new URL(url)
     for (const platform of SOCIAL_PLATFORMS) {
       if (platform.key === 'website') continue
-      if (platform.hostnames.some((h) => h !== null && u.hostname.endsWith(h))) {
+      if (platform.hostnames.some((h) => h !== null && (u.hostname === h || u.hostname.endsWith('.' + h)))) {
         return platform
       }
     }

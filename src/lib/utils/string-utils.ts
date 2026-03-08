@@ -129,7 +129,11 @@ export function isPrivateNetworkUrl(url: string): boolean {
 export function formatDate(date: string | null | undefined): string {
   if (date === null || date === undefined) return 'Never'
   try {
-    return formatDateFns(new Date(date), 'PP p')
+    const parsed = new Date(date)
+    if (isNaN(parsed.getTime())) {
+      return 'Invalid date'
+    }
+    return formatDateFns(parsed, 'PP p')
   } catch {
     return 'Invalid date'
   }

@@ -28,6 +28,8 @@ function Component() {
       showError('Failed to save data')
     }
   }
+
+  return <button onClick={handleSave}>Save</button>
 }
 ```
 

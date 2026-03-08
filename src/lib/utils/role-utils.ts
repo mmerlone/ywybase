@@ -10,7 +10,7 @@ import { UserRoleEnum, type UserRole } from '@/types/admin.types'
  * @returns Normalized UserRole enum value.
  */
 export const normalizeUserRole = (role: string | null | undefined): UserRole => {
-  if (role === null || role === '' || role === undefined) return UserRoleEnum.USER
+  if (!role) return UserRoleEnum.USER
 
   const normalized = role.toLowerCase().trim()
 

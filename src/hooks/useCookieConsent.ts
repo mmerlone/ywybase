@@ -179,17 +179,27 @@ export function useCookieConsent(): UseCookieConsentReturn {
       const savedConsent = localStorage.getItem(COOKIE_CONSENT_KEY)
       const savedPrefs = localStorage.getItem(COOKIE_PREFERENCES_KEY)
 
-      const hasConsent = savedConsent !== null ? Boolean(safeJsonParse(savedConsent)) : null
+      let hasConsent: boolean | null = null
+      if (savedConsent !== null) {
+        const parsedConsent = safeJsonParse<unknown>(savedConsent)
+
+        if (typeof parsedConsent === 'boolean') {
+          hasConsent = parsedConsent
+        } else {
+          logger.warn({ savedConsent }, 'Invalid saved cookie consent value, reopening banner')
+        }
+      }
 
       const preferences = ((): CookiePreferences => {
         if (savedPrefs === null) return { ...defaultPreferences }
-        try {
-          const raw = safeJsonParse(savedPrefs) as CookiePreferences
-          return ensureCookiePreferences(raw)
-        } catch (err) {
-          logger.error({ err }, 'Failed to parse saved cookie preferences')
+
+        const raw = safeJsonParse<Partial<CookiePreferences>>(savedPrefs)
+        if (raw === null) {
+          logger.warn({ savedPrefs }, 'Invalid saved cookie preferences, resetting to defaults')
           return { ...defaultPreferences }
         }
+
+        return ensureCookiePreferences(raw)
       })()
 
       dispatch({ type: 'INIT', hasConsent, preferences })

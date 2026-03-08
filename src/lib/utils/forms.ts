@@ -45,10 +45,14 @@ export function createSafeResolver<T extends FieldValues>(schema: ZodType<T>): R
       if (error instanceof ZodError) {
         const rhfErrors: FieldErrors<T> = {}
         error.issues.forEach((issue) => {
-          const fieldName = issue.path[0] as string
-          ;(rhfErrors as Record<string, FieldErrors[string]>)[fieldName] = {
-            type: issue.code,
-            message: issue.message,
+          // Convert path array to dot notation for nested fields
+          // e.g., ['user', 'email'] -> 'user.email', ['items', 0, 'name'] -> 'items.0.name'
+          const fieldPath = issue.path.join('.')
+          if (fieldPath && !(fieldPath in rhfErrors)) {
+            ;(rhfErrors as Record<string, FieldErrors[string]>)[fieldPath] = {
+              type: issue.code,
+              message: issue.message,
+            }
           }
         })
         return { values: {}, errors: rhfErrors }

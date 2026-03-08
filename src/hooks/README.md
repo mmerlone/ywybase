@@ -7,7 +7,7 @@ This directory contains custom React hooks that provide reusable stateful logic 
 ### Authentication Hooks (Internal)
 
 > **Note:** These hooks are internal implementation details used by `AuthProvider`.
-> For authentication in your components, use `useAuthContext` from `@/components/providers`.
+> For authentication in your components, use `useAuthContext` from `@/components/providers/AuthProvider`.
 
 - `useAuth` - Core auth state composition (internal, used by AuthProvider)
 - `useAuthState` - Auth state management (internal)

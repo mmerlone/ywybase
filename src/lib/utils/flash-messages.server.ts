@@ -100,6 +100,7 @@ export async function getFlashMessage(): Promise<FlashMessage | null> {
       return null
     }
 
+    clearFlashCookie()
     return parsed
   } catch {
     // Invalid JSON, clear cookie if possible

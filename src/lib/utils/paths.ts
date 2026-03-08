@@ -14,5 +14,8 @@
  * @returns True when pathname matches path or is a subpath
  */
 export function isSameOrSubpath(pathname: string, path: string): boolean {
+  if (path === '/') {
+    return pathname === '/' || pathname.startsWith('/')
+  }
   return pathname === path || pathname.startsWith(path + '/')
 }
