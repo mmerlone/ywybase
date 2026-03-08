@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
-import type React from 'react'
+import type { ReactNode, ChangeEvent } from 'react'
 import {
   Table,
   TableBody,
@@ -20,7 +20,7 @@ interface Column<T> {
   label: string
   align?: 'left' | 'center' | 'right'
   minWidth?: number
-  format?: (value: unknown, row: T) => React.ReactNode
+  format?: (value: unknown, row: T) => ReactNode
 }
 
 interface DataTableProps<T> {
@@ -64,7 +64,7 @@ export function DataTable<T>({
     onPageChange(newPage + 1) // MUI uses 0-based, our API uses 1-based
   }
 
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>): void => {
+  const handleChangeRowsPerPage = (event: ChangeEvent<HTMLInputElement>): void => {
     onPageSizeChange(parseInt(event.target.value, 10))
     onPageChange(1)
   }
