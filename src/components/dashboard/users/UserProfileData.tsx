@@ -1,21 +1,27 @@
 'use client'
 
 import React from 'react'
-import { Box, Chip, Divider, Grid, Paper, Stack, Typography } from '@mui/material'
+import { Box, Chip, Divider, Grid, Paper, Stack, Tooltip, Typography } from '@mui/material'
 import {
-  Translate as LocaleIcon,
-  Palette as ThemeIcon,
-  Notifications as NotificationsIcon,
   Cake as BirthdayIcon,
-  CheckCircle as YesIcon,
   Cancel as NoIcon,
+  CheckCircle as YesIcon,
+  Notifications as NotificationsIcon,
+  Palette as ThemeIcon,
+  Schedule as TimezoneIcon,
+  Translate as LocaleIcon,
 } from '@mui/icons-material'
-import type { Profile } from '@/types/profile.types'
+import { formatInTimeZone } from 'date-fns-tz'
+
+import { SocialLinks } from '@/components/dashboard/users/SocialLinks'
+import { Phone } from '@/components/common/Phone'
+import { TzClockDateUx } from '@/components/common/TzClockDateUx'
+import { formatText } from '@/lib/utils/string-utils'
+import { formatTimezoneOffset } from '@/lib/utils/timezone'
+import type { Profile, SocialLink } from '@/types/profile.types'
 
 interface UserProfileDataProps {
   profile: Profile
-  formatDate: (date: string | null | undefined) => string
-  formatText: (value?: string | null) => string
 }
 
 /**
@@ -40,9 +46,32 @@ function PrivacySubSection({ items }: { items: Array<{ label: string; value: boo
   )
 }
 
-export function UserProfileData({ profile, formatDate, formatText }: UserProfileDataProps): JSX.Element {
+/**
+ * Get zodiac sign info based on birth date.
+ */
+function getZodiacInfo(birthDate: string): { symbol: string; name: string } {
+  const date = new Date(birthDate)
+  const month = date.getMonth() + 1
+  const day = date.getDate()
+
+  if ((month === 3 && day >= 21) || (month === 4 && day <= 19)) return { symbol: '♈', name: 'Aries' }
+  if ((month === 4 && day >= 20) || (month === 5 && day <= 20)) return { symbol: '♉', name: 'Taurus' }
+  if ((month === 5 && day >= 21) || (month === 6 && day <= 20)) return { symbol: '♊', name: 'Gemini' }
+  if ((month === 6 && day >= 21) || (month === 7 && day <= 22)) return { symbol: '♋', name: 'Cancer' }
+  if ((month === 7 && day >= 23) || (month === 8 && day <= 22)) return { symbol: '♌', name: 'Leo' }
+  if ((month === 8 && day >= 23) || (month === 9 && day <= 22)) return { symbol: '♍', name: 'Virgo' }
+  if ((month === 9 && day >= 23) || (month === 10 && day <= 22)) return { symbol: '♎', name: 'Libra' }
+  if ((month === 10 && day >= 23) || (month === 11 && day <= 21)) return { symbol: '♏', name: 'Scorpio' }
+  if ((month === 11 && day >= 22) || (month === 12 && day <= 21)) return { symbol: '♐', name: 'Sagittarius' }
+  if ((month === 12 && day >= 22) || (month === 1 && day <= 19)) return { symbol: '♑', name: 'Capricorn' }
+  if ((month === 1 && day >= 20) || (month === 2 && day <= 18)) return { symbol: '♒', name: 'Aquarius' }
+  return { symbol: '♓', name: 'Pisces' }
+}
+
+export function UserProfileData({ profile }: UserProfileDataProps): JSX.Element {
   const communicationPreferences = profile.privacy_settings?.communication_preferences
   const dataSharingPreferences = profile.privacy_settings?.data_sharing
+  const socialLinks: SocialLink[] = profile.social_links ?? []
 
   const detailSections: Array<{
     title: string
@@ -53,15 +82,34 @@ export function UserProfileData({ profile, formatDate, formatText }: UserProfile
       fields: [
         { label: 'First Name', value: formatText(profile.first_name) },
         { label: 'Last Name', value: formatText(profile.last_name) },
-        { label: 'Display Name', value: formatText(profile.display_name) },
-        { label: 'Email', value: profile.email },
-        { label: 'Phone', value: formatText(profile.phone) },
+        {
+          label: 'Phone',
+          value: <Phone phone={profile.phone} showFlag showLink />,
+        },
         {
           label: 'Birth Date',
           value: profile.birth_date ? (
             <Stack direction="row" spacing={1} alignItems="center">
               <BirthdayIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
-              <Typography variant="body1">{formatDate(profile.birth_date)}</Typography>
+              <Typography variant="body1">{formatInTimeZone(new Date(profile.birth_date), 'UTC', 'PP')}</Typography>
+              {((): React.ReactNode => {
+                const zodiacInfo = getZodiacInfo(profile.birth_date)
+                return (
+                  <Tooltip title={`Zodiac sign: ${zodiacInfo.name}`}>
+                    <Typography
+                      variant="body1"
+                      aria-label={zodiacInfo.name}
+                      sx={{
+                        fontSize: 20,
+                        cursor: 'help',
+                        '&:hover': { transform: 'scale(1.1)' },
+                        transition: 'transform 0.2s ease',
+                      }}>
+                      {zodiacInfo.symbol}
+                    </Typography>
+                  </Tooltip>
+                )
+              })()}
             </Stack>
           ) : (
             '-'
@@ -77,7 +125,23 @@ export function UserProfileData({ profile, formatDate, formatText }: UserProfile
         { label: 'Country', value: formatText(profile.country_code) },
         { label: 'State / Region', value: formatText(profile.state) },
         { label: 'City', value: formatText(profile.city) },
-        { label: 'Timezone', value: formatText(profile.timezone) },
+        {
+          label: 'Timezone',
+          value: profile.timezone ? (
+            <Stack spacing={1}>
+              <Stack direction="row" spacing={1} alignItems="center">
+                <TimezoneIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+                <Typography variant="body1">{profile.timezone}</Typography>
+              </Stack>
+              <Typography variant="body2" color="text.secondary">
+                UTC{formatTimezoneOffset(profile.timezone)}
+              </Typography>
+              <TzClockDateUx timezone={profile.timezone} showDate={true} />
+            </Stack>
+          ) : (
+            '-'
+          ),
+        },
       ],
     },
     {
@@ -160,29 +224,20 @@ export function UserProfileData({ profile, formatDate, formatText }: UserProfile
             Account Information
           </Typography>
           <Grid container spacing={2}>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Typography variant="body2" color="text.secondary">
-                Created At
-              </Typography>
-              <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                {formatDate(profile.created_at)}
-              </Typography>
-            </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Typography variant="body2" color="text.secondary">
-                Last Sign In
-              </Typography>
-              <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                {formatDate(profile.last_sign_in_at)}
-              </Typography>
-            </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Typography variant="body2" color="text.secondary">
-                Email Verified
-              </Typography>
-              <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                {profile.confirmed_at ? 'Yes' : 'No'}
-              </Typography>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <Stack direction="row" spacing={1} alignItems="center">
+                <Typography variant="body2" color="text.secondary">
+                  Email Verified:
+                </Typography>
+                {profile.confirmed_at ? (
+                  <YesIcon sx={{ fontSize: 18, color: 'success.main' }} />
+                ) : (
+                  <NoIcon sx={{ fontSize: 18, color: 'error.main' }} />
+                )}
+                <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                  {profile.confirmed_at ? 'Yes' : 'No'}
+                </Typography>
+              </Stack>
             </Grid>
           </Grid>
         </Box>
@@ -209,6 +264,13 @@ export function UserProfileData({ profile, formatDate, formatText }: UserProfile
             </Box>
           </React.Fragment>
         ))}
+        <Divider />
+        <SocialLinks
+          socialLinks={socialLinks}
+          userAvatarUrl={profile.avatar_url}
+          userEmail={profile.email}
+          userDisplayName={profile.display_name}
+        />
       </Stack>
     </Paper>
   )
