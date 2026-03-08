@@ -34,8 +34,16 @@ const FETCH_TIMEOUT = 10000 // 10 seconds
 /**
  * In-memory LRU cache for fetched metadata.
  * Shared between the API route and Server Action.
+ * TODO: scale up.
  */
 const LRU_CACHE = new Map<string, { data: OgMeta; ts: number }>()
+
+/**
+ * In-flight request deduplication map.
+ * Concurrent calls for the same URL reuse the existing promise
+ * instead of triggering duplicate outbound fetches.
+ */
+const IN_FLIGHT = new Map<string, Promise<OgMeta>>()
 
 /** Maximum number of cached entries. */
 export const METADATA_CACHE_MAX = 100
@@ -85,7 +93,11 @@ function prepareEndpoint(ogUrl: string, sourceUrl: string): string {
   endpoint = endpoint.replace('{url}', encodeURIComponent(sourceUrl))
 
   if (endpoint.includes('{username}')) {
-    const match = sourceUrl.match(/\/([^/?#]+)\/?$/)
+    // Strip query string and fragment before extracting the last path segment
+    // to avoid the trailing `\/?$` anchor failing on URLs like
+    // `https://example.com/user?ref=profile`.
+    const pathOnly = sourceUrl.replace(/[?#].*$/, '')
+    const match = pathOnly.match(/\/([^/]+)\/?$/)
     const rawUsername = match?.[1] ?? ''
 
     if (!SAFE_USERNAME_RE.test(rawUsername)) {
@@ -184,95 +196,100 @@ async function fetchMetadataForUrl(url: string): Promise<OgMeta> {
   // Guard against SSRF: reject non-HTTPS schemes, private/internal network addresses,
   // and non-social or otherwise disallowed targets. This module is server-side and must
   // not be weaponised to probe internal services.
-  if (!isSecureUrl(url)) {
-    logger.warn({ url }, 'Rejected non-HTTPS URL')
-    return { error: 'Preview not available for this platform' }
-  }
-  if (isPrivateNetworkUrl(url)) {
-    logger.warn({ url }, 'Rejected private/internal network URL')
-    return { error: 'Preview not available for this platform' }
-  }
+  if (isSecureUrl(url)) {
+    if (!isPrivateNetworkUrl(url)) {
+      const platform = getPlatformConfigForUrl(url)
+      const platformKey = platform?.key ?? 'website'
+      if (isValidSocialUrl(url, platformKey)) {
+        if (platform?.ogUrl === undefined || platform?.ogUrl === null) {
+          logger.info({ url }, 'No ogUrl configured for platform, falling back to direct HTML fetch')
+          try {
+            const res = await fetch(url, {
+              method: 'GET',
+              headers: { Accept: 'text/html', 'User-Agent': BROWSER_USER_AGENT },
+              signal: AbortSignal.timeout(FETCH_TIMEOUT),
+            })
 
-  const platform = getPlatformConfigForUrl(url)
-  const platformKey = platform?.key ?? 'website'
-  if (!isValidSocialUrl(url, platformKey)) {
-    logger.warn({ url, platformKey }, 'Rejected invalid or insecure social URL')
-    return { error: 'Preview not available for this platform' }
-  }
+            if (!res.ok) {
+              logger.warn({ url, status: res.status }, 'Direct HTML fetch failed')
+              return { error: 'Preview not available for this platform' }
+            }
 
-  if (platform?.ogUrl === undefined || platform?.ogUrl === null) {
-    logger.info({ url }, 'No ogUrl configured for platform, falling back to direct HTML fetch')
-    try {
-      const res = await fetch(url, {
-        method: 'GET',
-        headers: { Accept: 'text/html', 'User-Agent': BROWSER_USER_AGENT },
-        signal: AbortSignal.timeout(FETCH_TIMEOUT),
-      })
+            const html = await res.text()
+            const meta = parseHtmlResponse(html, url)
+            if (meta) return meta
+          } catch (error) {
+            logger.warn({ url, error }, 'Direct HTML fetch failed')
+          }
 
-      if (!res.ok) {
-        logger.warn({ url, status: res.status }, 'Direct HTML fetch failed')
+          return { error: 'Preview not available for this platform' }
+        }
+
+        let endpoint: string
+        try {
+          endpoint = prepareEndpoint(platform.ogUrl, url)
+        } catch {
+          return { error: 'Preview not available for this platform' }
+        }
+        logger.debug({ url, endpoint, platform: platform.key }, 'Fetching metadata from endpoint')
+
+        try {
+          const res = await fetch(endpoint, {
+            method: 'GET',
+            headers: { Accept: 'application/json, text/html', 'User-Agent': BROWSER_USER_AGENT },
+            signal: AbortSignal.timeout(FETCH_TIMEOUT),
+          })
+
+          if (!res.ok) {
+            logger.warn({ url, status: res.status }, 'Endpoint request failed')
+            return { error: 'Preview not available for this platform' }
+          }
+
+          const contentType = res.headers.get('content-type') ?? ''
+          logger.debug({ url, contentType }, 'Response Content-Type')
+
+          if (contentType.includes('application/json')) {
+            const data = (await res.json()) as Record<string, unknown>
+            const meta = parseJsonResponse(data, platform, url)
+            if (meta) return meta
+          } else if (contentType.includes('text/html')) {
+            const html = await res.text()
+            const meta = parseHtmlResponse(html, url)
+            if (meta) return meta
+          } else {
+            logger.warn({ url, contentType }, 'Unsupported Content-Type')
+          }
+
+          logger.info({ url }, 'No metadata extracted from response')
+          return { error: 'Preview not available for this platform' }
+        } catch (error) {
+          if (error instanceof Error && error.name === 'TimeoutError') {
+            logger.warn({ url }, 'Metadata fetch timed out')
+          } else {
+            logger.warn({ url, error }, 'Metadata fetch failed')
+          }
+          return { error: 'Preview not available for this platform' }
+        }
+      } else {
+        logger.warn({ url, platformKey }, 'Rejected invalid or insecure social URL')
         return { error: 'Preview not available for this platform' }
       }
-
-      const html = await res.text()
-      const meta = parseHtmlResponse(html, url)
-      if (meta) return meta
-    } catch (error) {
-      logger.warn({ url, error }, 'Direct HTML fetch failed')
-    }
-
-    return { error: 'Preview not available for this platform' }
-  }
-
-  let endpoint: string
-  try {
-    endpoint = prepareEndpoint(platform.ogUrl, url)
-  } catch {
-    return { error: 'Preview not available for this platform' }
-  }
-  logger.debug({ url, endpoint, platform: platform.key }, 'Fetching metadata from endpoint')
-
-  try {
-    const res = await fetch(endpoint, {
-      method: 'GET',
-      headers: { Accept: 'application/json, text/html', 'User-Agent': BROWSER_USER_AGENT },
-      signal: AbortSignal.timeout(FETCH_TIMEOUT),
-    })
-
-    if (!res.ok) {
-      logger.warn({ url, status: res.status }, 'Endpoint request failed')
+    } else {
+      logger.warn({ url }, 'Rejected private/internal network URL')
       return { error: 'Preview not available for this platform' }
     }
-
-    const contentType = res.headers.get('content-type') ?? ''
-    logger.debug({ url, contentType }, 'Response Content-Type')
-
-    if (contentType.includes('application/json')) {
-      const data = (await res.json()) as Record<string, unknown>
-      const meta = parseJsonResponse(data, platform, url)
-      if (meta) return meta
-    } else if (contentType.includes('text/html')) {
-      const html = await res.text()
-      const meta = parseHtmlResponse(html, url)
-      if (meta) return meta
-    } else {
-      logger.warn({ url, contentType }, 'Unsupported Content-Type')
-    }
-
-    logger.info({ url }, 'No metadata extracted from response')
-    return { error: 'Preview not available for this platform' }
-  } catch (error) {
-    if (error instanceof Error && error.name === 'TimeoutError') {
-      logger.warn({ url }, 'Metadata fetch timed out')
-    } else {
-      logger.warn({ url, error }, 'Metadata fetch failed')
-    }
+  } else {
+    logger.warn({ url }, 'Rejected non-HTTPS URL')
     return { error: 'Preview not available for this platform' }
   }
 }
 
 /**
- * Fetches Open Graph metadata with an in-memory LRU cache (TTL: 1 hour, max: 100 entries).
+ * Fetches Open Graph metadata with an in-memory LRU cache (TTL: 1 hour, max: 100 entries)
+ * and in-flight request deduplication.
+ *
+ * Concurrent calls for the same URL while a fetch is already in progress share a single
+ * outbound request via the {@link IN_FLIGHT} promise map.
  *
  * This is the primary entry point consumed by both the `/api/social-metadata` API route
  * and the `fetchSocialMetadata` Server Action.
@@ -293,16 +310,26 @@ export async function getOgMetadata(url: string): Promise<OgMeta> {
     LRU_CACHE.delete(url)
   }
 
-  const data = await fetchMetadataForUrl(url)
+  // In-flight deduplication: reuse the existing promise for concurrent callers
+  const existing = IN_FLIGHT.get(url)
+  if (existing !== undefined) return existing
 
-  // Only cache successful results, not soft errors
-  if (data.error === undefined) {
-    if (LRU_CACHE.size >= METADATA_CACHE_MAX) {
-      const firstKey = LRU_CACHE.keys().next().value
-      if (firstKey !== undefined) LRU_CACHE.delete(firstKey)
-    }
-    LRU_CACHE.set(url, { data, ts: now })
-  }
+  const promise = fetchMetadataForUrl(url)
+    .then((data) => {
+      // Only cache successful results, not soft errors
+      if (data.error === undefined) {
+        if (LRU_CACHE.size >= METADATA_CACHE_MAX) {
+          const firstKey = LRU_CACHE.keys().next().value
+          if (firstKey !== undefined) LRU_CACHE.delete(firstKey)
+        }
+        LRU_CACHE.set(url, { data, ts: Date.now() })
+      }
+      return data
+    })
+    .finally(() => {
+      IN_FLIGHT.delete(url)
+    })
 
-  return data
+  IN_FLIGHT.set(url, promise)
+  return promise
 }
