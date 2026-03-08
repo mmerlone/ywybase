@@ -35,7 +35,7 @@ export function UserMenu(): JSX.Element {
   const { user: authUser, isLoading: authLoading } = useCurrentUser()
   const { signOut } = useAuthContext()
   const { profile, isLoading: isProfileLoading } = useProfile(authUser?.id)
-  const isLoading = authLoading ?? isProfileLoading
+  const isLoading = authLoading || isProfileLoading
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const router = useRouter()
   const open = Boolean(anchorEl)

@@ -24,6 +24,39 @@ import type { AuthUser, Session, AuthError, SupabaseClient } from '@supabase/sup
 
 const logger = buildLogger('auth-client')
 
+const invalidSessionErrorNames = new Set([
+  'AuthSessionMissingError',
+  'AuthInvalidTokenResponseError',
+  'AuthInvalidJwtError',
+])
+
+const invalidSessionErrorCodes = new Set([
+  'bad_jwt',
+  'invalid_token',
+  'session_not_found',
+  'refresh_token_not_found',
+  'refresh_token_already_used',
+])
+
+function shouldClearSessionForAuthError(error: AuthError): boolean {
+  if (invalidSessionErrorNames.has(error.name)) {
+    return error.name !== 'AuthSessionMissingError'
+  }
+
+  if (error.code !== undefined && error.code !== null && invalidSessionErrorCodes.has(error.code)) {
+    return true
+  }
+
+  const normalizedMessage = error.message.toLowerCase()
+  return (
+    normalizedMessage.includes('invalid jwt') ||
+    normalizedMessage.includes('jwt expired') ||
+    normalizedMessage.includes('invalid refresh token') ||
+    normalizedMessage.includes('refresh token not found') ||
+    normalizedMessage.includes('session from session_id claim in jwt does not exist')
+  )
+}
+
 /**
  * Handle invalid JWT token errors consistently across auth methods.
  * Clears the session and returns null without throwing.
@@ -34,8 +67,13 @@ const logger = buildLogger('auth-client')
  * @returns Always returns null
  */
 const handleInvalidJwtError = async (error: AuthError, operation: string, supabase: SupabaseClient): Promise<null> => {
-  // Don't clear session for missing session errors - this is normal
-  if (error.name === 'AuthSessionMissingError') {
+  if (shouldClearSessionForAuthError(error) === false) {
+    if (error.name !== 'AuthSessionMissingError') {
+      logger.warn(
+        { operation, name: error.name, code: error.code, error: error.message },
+        'Auth read failed without clearing client session'
+      )
+    }
     return null
   }
 

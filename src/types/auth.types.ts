@@ -118,13 +118,6 @@ export const SignOutReasonEnum = {
   UNKNOWN: 'unknown',
 } as const
 
-export const VerificationStatusEnum = {
-  IDLE: 'idle',
-  CHECKING: 'checking',
-  UNVERIFIED: 'unverified',
-  VERIFIED: 'verified',
-} as const
-
 /**
  * Represents an error that can be either:
  * - AppError: A full error instance from client-side error handling
@@ -318,8 +311,6 @@ export type FormTypeMap = {
 }
 
 export type FormType = keyof FormTypeMap
-
-export type VerificationStatusType = (typeof VerificationStatusEnum)[keyof typeof VerificationStatusEnum]
 
 // Type guard for form inputs
 export function isLoginFormInput(data: unknown): data is LoginFormInput {

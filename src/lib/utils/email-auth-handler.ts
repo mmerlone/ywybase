@@ -151,6 +151,35 @@ export async function handleEmailAuthCode(
 
     // Check if user is already authenticated/verified (bypass logic)
     if (userData.data.user) {
+      // For password reset, an active session does NOT mean the reset link was valid.
+      // The session may belong to a different user, and bypassing would silently skip
+      // the set-password step, leaving the user confused.
+      if (type === AuthOperationsEnum.FORGOT_PASSWORD) {
+        logSecurityEvent(
+          'authentication_failure',
+          extractSecurityContext(request, {
+            userId: userData.data.user.id,
+            details: {
+              reason: 'password_reset_bypass_prevented',
+              type,
+              originalErrorCode: errorCode,
+              sessionUserId: userData.data.user.id,
+            },
+            severity: 'medium',
+          }),
+          `${operationLabel}: active session found but bypass prevented — password reset link must be re-requested`
+        )
+
+        const errorUrl = new URL(errorRedirectPath, origin)
+        errorUrl.searchParams.set('code', errorCode === 'otp_expired' ? 'auth_link_expired' : 'auth_code_invalid')
+        return {
+          success: false,
+          response: applySecurityHeaders(NextResponse.redirect(errorUrl)),
+          error: 'Password reset link is invalid or expired. Please request a new one.',
+        }
+      }
+
+      // For sign-up: being already authenticated means the email is already verified — safe to bypass.
       const bypassReason = 'already_authenticated'
       const operationLabelMsg = 'already authenticated, bypassing error'
 
@@ -233,6 +262,37 @@ export async function handleEmailAuthCode(
 
     if (exchangeError || !data.session) {
       if (userData?.data?.user) {
+        // For password reset, a failed code exchange must not be silently bypassed.
+        // The user needs a valid new session tied to the reset link to reach set-password;
+        // falling back to an existing session could be a different user entirely.
+        if (type === AuthOperationsEnum.FORGOT_PASSWORD) {
+          logSecurityEvent(
+            'authentication_failure',
+            extractSecurityContext(request, {
+              userId: userData.data.user.id,
+              details: {
+                reason: 'password_reset_bypass_prevented',
+                type,
+                bypassReason: 'code_exchange_failed_but_active_session',
+                originalError: exchangeError?.message,
+                sessionUserId: userData.data.user.id,
+              },
+              severity: 'medium',
+            }),
+            `${operationLabel}: code exchange failed, active session bypass prevented — must re-request reset link`
+          )
+
+          const errorUrl = new URL(errorRedirectPath, origin)
+          errorUrl.searchParams.set('code', 'auth_link_expired')
+          return {
+            success: false,
+            response: applySecurityHeaders(NextResponse.redirect(errorUrl)),
+            error: 'Password reset link is invalid or expired. Please request a new one.',
+          }
+        }
+
+        // For sign-up: code exchange failed but the user already has a valid session,
+        // meaning the email was already verified. Safe to bypass.
         logSecurityEvent(
           logEventType,
           extractSecurityContext(request, {

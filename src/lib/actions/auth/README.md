@@ -54,7 +54,7 @@ const updateResult = await updatePassword({ currentPassword, newPassword, confir
 
 ## 💻 **Client Service** (`@/lib/actions/auth/client`)
 
-The client service now only provides read operations and OAuth flows. All write operations are performed by server actions.
+- **Client Service** (`src/lib/actions/auth/client.ts`): Use this for retrieving current session/user in Client Components, OAuth provider login, and handling auth state listeners. All write operations are performed by server actions.
 
 **Available Operations:**
 
