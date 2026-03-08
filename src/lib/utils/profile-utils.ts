@@ -166,6 +166,48 @@ const convertDbUserRole = (role?: string | null): Exclude<UserRole, 'guest'> => 
 }
 
 /**
+ * Convert database user status to application UserStatus.
+ * Validates the status exists in the enum and provides fallback.
+ *
+ * @param status - Raw status value from database
+ * @returns Validated UserStatus, defaulting to ACTIVE for unknown values
+ * @internal
+ */
+const convertDbUserStatus = (status?: string | null): UserStatus => {
+  if (!status) return UserStatusEnum.ACTIVE
+  const validStatuses = Object.values(UserStatusEnum) as string[]
+  return validStatuses.includes(status) ? (status as UserStatus) : UserStatusEnum.ACTIVE
+}
+
+/**
+ * Convert database theme string to application ThemePreference.
+ * Validates the value exists in the enum and provides fallback.
+ *
+ * @param theme - Raw theme value from database
+ * @returns Validated ThemePreference, defaulting to 'system' for unknown values
+ * @internal
+ */
+const convertDbThemePreference = (theme?: string | null): ThemePreference => {
+  if (!theme) return ThemePreferenceEnum.SYSTEM
+  const validThemes = Object.values(ThemePreferenceEnum) as string[]
+  return validThemes.includes(theme) ? (theme as ThemePreference) : ThemePreferenceEnum.SYSTEM
+}
+
+/**
+ * Convert database providers array to typed AuthProvider[].
+ * Filters out any provider values not present in AuthProvidersEnum.
+ *
+ * @param providers - Raw providers array from database
+ * @returns Validated AuthProvider array with unknown values removed
+ * @internal
+ */
+const convertDbAuthProviders = (providers?: string[] | null): AuthProvider[] => {
+  if (!providers) return []
+  const validProviders = Object.values(AuthProvidersEnum) as string[]
+  return providers.filter((p) => validProviders.includes(p)) as AuthProvider[]
+}
+
+/**
  * Convert database gender string to typed GenderPreference.
  * Validates against enum values and returns null for invalid entries.
  *
@@ -288,10 +330,10 @@ export const convertDbProfile = (dbProfile: DbProfile): Profile => {
     social_links: convertDbSocialLinks(dbSocialLinks),
     // Convert database role to application role (validates and provides fallback)
     role: convertDbUserRole(role),
-    status: (status as UserStatus) || UserStatusEnum.ACTIVE,
-    theme: (theme as ThemePreference) || 'system',
+    status: convertDbUserStatus(status),
+    theme: convertDbThemePreference(theme),
     // Auth-synced fields (read-only, managed by background jobs)
-    providers: (providers ?? []) as AuthProvider[],
+    providers: convertDbAuthProviders(providers),
     created_at,
     confirmed_at,
     last_sign_in_at,
