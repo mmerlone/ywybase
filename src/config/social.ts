@@ -54,9 +54,10 @@ export interface SocialPlatformConfig {
   urlPrefix: string
   /**
    * OG endpoint URL template for platforms that support it.
-   * Use {url} as placeholder for the encoded profile URL.
+   * Use {url} as placeholder for the encoded profile URL, or {username} for the extracted username.
    * The presence of this field allows OG fetching for the platform.
-   * @example 'https://www.linkedin.com/oembed?url={url}'
+   * @example 'https://api.github.com/users/{username}'
+   * @example 'https://www.linkedin.com/oembed?url={url}&format=json'
    */
   ogUrl?: string
   /**

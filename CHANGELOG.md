@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Initial project structure
-- Next.js 15.5.6 with App Router
+- Next.js 15.5.9 with App Router
 - Material UI v7 integration
 - Supabase authentication
 - TypeScript configuration

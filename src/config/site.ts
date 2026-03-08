@@ -4,7 +4,6 @@ import type { Metadata } from 'next'
 import { ROUTES } from '@/config/routes'
 
 export const GITHUB_URL = 'https://github.com/mmerlone/ywybase'
-// Maximum number of social links per profile
 
 type NavigationItemTarget = '_self' | '_blank' | '_parent' | '_top'
 export interface NavigationItem {

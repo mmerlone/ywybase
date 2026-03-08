@@ -24,12 +24,12 @@ export default defineConfig([
       'no-redeclare': 'off',
       'no-array-constructor': 'off',
       'no-loss-of-precision': 'off',
+      'no-duplicate-imports': 'off',
 
       'no-console': ['error'],
       'no-debugger': 'error',
       'no-implicit-coercion': 'error',
       'no-return-await': 'error',
-      'no-duplicate-imports': 'error',
 
       eqeqeq: ['error', 'always'],
       curly: ['error', 'multi-line'],

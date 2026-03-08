@@ -8,7 +8,6 @@ import { ywyGradients } from '@/themes/ywyGradients'
 // re-export the shadows
 export { extrudedShadow, carvedShadow }
 
-// Fallback to concrete theme (previously from SITE_CONFIG.theme)
 const THEME_NAME = 'concrete'
 const baseTheme = themes[THEME_NAME] ?? themes['ywybase']
 const theme = createTheme(baseTheme, ywyGradients)

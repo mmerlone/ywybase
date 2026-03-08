@@ -11,7 +11,7 @@
 - Server Actions are the primary data mutation pattern
 - Clear server/client boundaries (Server Components default, "use client" only when needed)
 
-**Tech Stack**: Next.js 15.5.9 App Router, React 18 Server Components, TypeScript strict mode, MUI v7 + Tailwind CSS, Supabase (auth/DB), React Query v5, Pino logging, Sentry error tracking.
+**Tech Stack**: Next.js 15.5.x App Router, React 18 Server Components, TypeScript strict mode, MUI v7 + Tailwind CSS, Supabase (auth/DB), React Query v5, Pino logging, Sentry error tracking.
 
 ## File Naming & Structure
 

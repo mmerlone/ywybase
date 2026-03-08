@@ -8,7 +8,7 @@
     "context7": {
       "url": "https://mcp.context7.com/mcp",
       "headers": {
-        "CONTEXT7_API_KEY": "ctx7sk-95b85ff8-7a1b-4912-9086-0bba1551cdfe"
+        "CONTEXT7_API_KEY": "${env:CONTEXT7_API_KEY}"
       }
     }
   }
