@@ -16,6 +16,7 @@
 import { load } from 'cheerio'
 
 import { buildLogger } from '@/lib/logger/server'
+import { isPrivateNetworkUrl, isSecureUrl } from './string-utils'
 import { getPlatformConfigForUrl } from './get-platform-from-url'
 import { getOgMetaFromMapping } from './social-og'
 
@@ -64,7 +65,18 @@ interface OEmbedResponse {
 }
 
 /**
+ * Allowed characters in a social username path segment.
+ * Permits alphanumerics, hyphens, underscores, dots, and at-signs.
+ * Explicitly excludes `..`, `%`, `/`, and other traversal/injection sequences.
+ */
+const SAFE_USERNAME_RE = /^[a-zA-Z0-9._@-]+$/
+
+/**
  * Prepares an OG endpoint URL by replacing `{url}` and `{username}` placeholders.
+ *
+ * The `{username}` value is extracted from the last path segment of `sourceUrl`
+ * and validated against {@link SAFE_USERNAME_RE} before substitution to prevent
+ * path traversal and endpoint injection.
  */
 function prepareEndpoint(ogUrl: string, sourceUrl: string): string {
   let endpoint = ogUrl
@@ -73,8 +85,14 @@ function prepareEndpoint(ogUrl: string, sourceUrl: string): string {
 
   if (endpoint.includes('{username}')) {
     const match = sourceUrl.match(/\/([^/?#]+)\/?$/)
-    const username = match?.[1] ?? ''
-    endpoint = endpoint.replace('{username}', username)
+    const rawUsername = match?.[1] ?? ''
+
+    if (!SAFE_USERNAME_RE.test(rawUsername)) {
+      logger.warn({ sourceUrl, rawUsername }, 'Username segment contains unsafe characters, rejecting')
+      throw new Error('Invalid username in URL')
+    }
+
+    endpoint = endpoint.replace('{username}', rawUsername)
   }
 
   return endpoint
@@ -162,6 +180,17 @@ function parseHtmlResponse(html: string, url: string): OgMeta | null {
  * @returns Parsed metadata, or `{ error }` when the site blocks the request
  */
 async function fetchMetadataForUrl(url: string): Promise<OgMeta> {
+  // Guard against SSRF: reject non-HTTPS schemes and private/internal network addresses.
+  // This module is server-side and must not be weaponised to probe internal services.
+  if (!isSecureUrl(url)) {
+    logger.warn({ url }, 'Rejected non-HTTPS URL')
+    return { error: 'Preview not available for this platform' }
+  }
+  if (isPrivateNetworkUrl(url)) {
+    logger.warn({ url }, 'Rejected private/internal network URL')
+    return { error: 'Preview not available for this platform' }
+  }
+
   const platform = getPlatformConfigForUrl(url)
 
   if (platform?.ogUrl === undefined || platform?.ogUrl === null) {
@@ -188,7 +217,12 @@ async function fetchMetadataForUrl(url: string): Promise<OgMeta> {
     return { error: 'Preview not available for this platform' }
   }
 
-  const endpoint = prepareEndpoint(platform.ogUrl, url)
+  let endpoint: string
+  try {
+    endpoint = prepareEndpoint(platform.ogUrl, url)
+  } catch {
+    return { error: 'Preview not available for this platform' }
+  }
   logger.debug({ url, endpoint, platform: platform.key }, 'Fetching metadata from endpoint')
 
   try {
