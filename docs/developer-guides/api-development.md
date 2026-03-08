@@ -184,8 +184,8 @@ export const GET = withRateLimit(
   withApiErrorHandler(async (request: NextRequest) => {
     // Query parameters
     const { searchParams } = new URL(request.url)
-    const limit = parseInt(searchParams.get('limit') || '10')
-    const offset = parseInt(searchParams.get('offset') || '0')
+    const limit = Math.min(Math.max(parseInt(searchParams.get('limit') || '10', 10) || 10, 1), 100)
+    const offset = Math.max(parseInt(searchParams.get('offset') || '0', 10) || 0, 0)
 
     // Path parameters (from route pattern)
     // Example: /api/users/[userId]/profile

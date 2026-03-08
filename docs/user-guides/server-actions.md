@@ -145,27 +145,40 @@ if (result.success) {
 }
 ```
 
-### `completePasswordReset(data)`
+### `setPassword(data)`
 
-Completes password reset by setting new password.
+Completes the password reset flow by setting a new password. This action must be called
+**after** the user has clicked the password reset email link, which triggers the
+`/api/auth/reset-password` route. That route performs the PKCE code exchange and
+establishes an authenticated session scoped to the reset request. `setPassword` then
+calls `supabase.auth.updateUser({ password })` against that session — the session
+**is** the implicit reset token. There is no explicit token parameter.
+
+> **Flow summary:**
+>
+> 1. User requests reset via `forgotPassword` → receives email
+> 2. User clicks link → `/api/auth/reset-password` exchanges the PKCE code, sets session
+> 3. User is redirected to the set-password form → calls `setPassword`
 
 **Parameters:**
 
 ```typescript
-interface CompletePasswordResetData {
+interface ResetPasswordPassFormInput {
   password: string
   confirmPassword: string
 }
 ```
 
-**Returns:** `AuthResponse<User>`
+**Returns:** `AuthResponse<undefined>`
 
 **Example:**
 
 ```typescript
-import { completePasswordReset } from '@/lib/actions/auth/server'
+import { setPassword } from '@/lib/actions/auth/server'
 
-const result = await completePasswordReset({
+// Only valid after the PKCE code exchange in /api/auth/reset-password
+// has established the reset session.
+const result = await setPassword({
   password: 'new-secure-password',
   confirmPassword: 'new-secure-password',
 })
@@ -223,27 +236,6 @@ import { resendVerification } from '@/lib/actions/auth/server'
 const result = await resendVerification()
 if (result.success) {
   console.log('Verification email resent')
-}
-```
-
-### `checkVerificationStatus(userId)`
-
-Checks email verification status for a user.
-
-**Parameters:**
-
-- `userId` (string): User ID to check
-
-**Returns:** `AuthResponse<{ verified: boolean; email: string }>`
-
-**Example:**
-
-```typescript
-import { checkVerificationStatus } from '@/lib/actions/auth/server'
-
-const result = await checkVerificationStatus('user-uuid')
-if (result.success) {
-  console.log('Verification status:', result.data.verified)
 }
 ```
 

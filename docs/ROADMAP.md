@@ -343,87 +343,18 @@ _Lower priority_ (already mostly handled via responsive `sx` props)
 - v2.2 (March 6, 2026) - Merged rate-limiting audit and useIsMobile annotations; added UI/UX section
 - v2.3 (March 6, 2026) - Added profile/auth sync monitoring backlog with database and dashboard implementation scope
 
----
+/\*\*
 
-## Plan Review (Temp Attachments)
+## src/lib/utils/timezoneMapping.ts TODO:
 
-### Resend verification plan (task.md + RESEND.md)
-
-**Status:** Mostly complete.
-
-**Missing steps / integration gaps**
-
-- Robust link generation using request headers and safe `URL` construction is still pending for `signUpWithEmail`, `resendVerification`, and `forgotPassword`.
-- Client-side safety net refinement for `AuthURLHandler.tsx` and global auth redirect monitoring is still pending.
-- Final verification remains open: lint, type-check, and manual redirect flow verification.
-
-### Redundant profile fields cleanup (REDUNDANT.md)
-
-**Status:** Partially complete.
-
-**Missing steps / integration gaps**
-
-- Server actions: `getAdminUserDetails()` and `getUserDetails()` still need updates to merge auth verification data.
-- Admin dashboard components still reference old verification fields in places.
-- Tests and documentation updates are pending, and Supabase types regeneration is not verified.
-
-### Social links feature (SOCIAL.md)
-
-**Status:** Core feature complete.
-
-**Missing steps / integration gaps**
-
-- Enhance fetch OG UX.
-- Documentation for social links is still pending.
-- Comprehensive tests (unit/integration/e2e) are not implemented.
-
-### Avatar refactor plan (AVATAR.md)
-
-**Status:** Not implemented as specified.
-
-**Missing steps / integration gaps**
-
-- Reusable `UserAvatar` component not found; `AvatarSection` and dashboard avatar rendering remain separate implementations.
-- Planned consolidation into a single shared component (and related updates) has not landed.
-
-### Dashboard UX notes (DASHBOARD.md)
-
-**Status:** Outstanding.
-
-**Missing steps / integration gaps**
-
-- Missing provider badge and iconography updates.
-- Theme mismatch between local storage and database persists.
-- Birth date formatting and privacy/communication layout improvements pending.
-- Cookie preference mismatch with local storage pending.
-- Social links still need to be integrated into the profile form.
-- Account tab still missing provider badge and conditional password form logic.
-- Global reusable sidebar and shared user aside component not yet extracted.
-
-### Code review follow-ups (REVIEW.md)
-
-**Status:** Partially addressed.
-
-**Missing steps / integration gaps**
-
-- `last_sign_in_at` sort still fetches all users without pagination (scalability risk).
-- Pagination count mismatch remains when auth users are missing.
-- Large user details page still needs component extraction.
-
-### Profile-auth sync enhancement plan
-
-**Status:** Planned.
-
-**Tracked scope**
-
-- Split the current auth/profile sync SQL into focused migrations instead of keeping all operational logic in the initial schema file.
-- Add the missing sync monitoring, alerting, and materialized reporting layers.
-- Expose sync visibility and remediation through admin-only dashboard surfaces under `/dashboard`.
-
-**Plan reference**
-
-- [docs/plan-profileAuthSyncEnhancement.prompt.md](./plan-profileAuthSyncEnhancement.prompt.md)
-
-### User menu UX
-
-- Implement states loading, redirecting, logging out, etc in the user menu items.
+- Timezone Mapping Utilities
+-
+- Maps any IANA timezone identifier to one of the 64 canonical timezone regions
+- and provides UTC offset computation for timezone display.
+-
+- The 64 canonical regions come from the timezone-boundary-builder "now" variant,
+- which groups all IANA timezones by their current observance rules.
+-
+- @module timezoneMapping
+- @see {@link https://github.com/evansiroky/timezone-boundary-builder}
+  \*/

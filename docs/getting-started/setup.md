@@ -115,7 +115,7 @@ NEXT_PUBLIC_APP_URL=https://your-domain.com
 LOG_LEVEL=info
 
 # Required for production
-SUPABASE_SERVICE_ROLE_KEY=your-service-key
+SUPABASE_SECRET_KEY=your-secret-key
 REDIS_URL=your-redis-url
 ```
 
@@ -233,7 +233,10 @@ Use Server Actions for data operations:
 // src/lib/actions/profile.ts
 'use server'
 
+import { createClient } from '@/lib/supabase/server'
 import { withServerActionErrorHandling } from '@/lib/error/server'
+import { createServerActionSuccess } from '@/lib/actions/utils'
+import type { AuthResponse, Profile } from '@/types'
 
 export const getProfile = withServerActionErrorHandling(
   async (userId: string): Promise<AuthResponse<Profile>> => {
@@ -333,7 +336,7 @@ src/
    # Add environment variables
    vercel env add NEXT_PUBLIC_SUPABASE_URL
    vercel env add NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
-   vercel env add SUPABASE_SERVICE_ROLE_KEY
+   vercel env add SUPABASE_SECRET_KEY
    ```
 
 3. **Deploy**:

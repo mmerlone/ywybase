@@ -113,9 +113,11 @@ const result = await forgotPassword({
 })
 ```
 
-#### `completePasswordReset(data)`
+#### `setPassword(data)`
 
-Completes password reset by setting new password.
+Completes the password reset flow by setting a new password. Requires an active reset
+session established by the `/api/auth/reset-password` PKCE code exchange — no explicit
+token parameter is needed.
 
 ```typescript
 import { setPassword } from '@/lib/actions/auth/server'
@@ -148,19 +150,6 @@ Resends verification email for current logged-in user.
 import { resendVerification } from '@/lib/actions/auth/server'
 
 const result = await resendVerification()
-```
-
-#### `checkVerificationStatus(userId)`
-
-Checks email verification status for a user.
-
-```typescript
-import { checkVerificationStatus } from '@/lib/actions/auth/server'
-
-const formData = new FormData()
-formData.append('userId', 'user-123')
-
-const result = await checkVerificationStatus(formData)
 ```
 
 ### Profile Server Actions
