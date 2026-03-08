@@ -172,12 +172,12 @@ class DocumentationValidator {
 
       // Headings should have proper spacing
       if (line.startsWith('#')) {
-        const headingMatch = line.match(/^(#+)\s*(.+)$/)
+        const headingMatch = line.match(/^(#+)(\s+)(.*)$/)
         if (headingMatch) {
-          const [, hashes] = headingMatch
+          const [, , spaces] = headingMatch
 
-          // Check for multiple spaces after #
-          if (hashes && hashes + '  ' === line.slice(0, hashes.length + 2)) {
+          // Check for multiple spaces after # (more than one space)
+          if (spaces && spaces.length > 1) {
             this.results.warnings.push({
               type: 'formatting',
               file: filePath,

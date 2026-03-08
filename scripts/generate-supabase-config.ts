@@ -18,7 +18,7 @@
  *
  * @author YwyBase Team
  * @since 1.0.0
- * @todo: make it scallable
+ * @todo: make it scalable
  */
 
 import { execSync } from 'child_process'

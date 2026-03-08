@@ -30,7 +30,8 @@ import dotenv from 'dotenv'
 dotenv.config({ path: join(process.cwd(), '.env.local') })
 
 // Configuration
-const SUPABASE_PROJECT_ID = process.env.NEXT_PUBLIC_SUPABASE_PROJECT_ID ?? process.env.SUPABASE_PROJECT_ID
+// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+const SUPABASE_PROJECT_ID = process.env.NEXT_PUBLIC_SUPABASE_PROJECT_ID || process.env.SUPABASE_PROJECT_ID
 const OUTPUT_FILE = join(process.cwd(), 'src/types/supabase.ts')
 
 if (!SUPABASE_PROJECT_ID) {

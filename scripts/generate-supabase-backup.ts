@@ -128,9 +128,12 @@ function backupDatabase(): void {
 -- To restore:
 -- 1. Create a new Supabase project or reset existing one
 -- 2. Run: psql [connection-string] < ${BACKUP_FILE}
+--
+-- Note: No outer transaction wrapper is used because the schema dump may
+-- contain DDL statements that cannot run inside a transaction block
+-- (e.g., CREATE INDEX CONCURRENTLY, CREATE EXTENSION, ALTER TYPE).
+-- Each logical section is self-contained.
 -- ============================================================================
-
-BEGIN;
 
 `
 
@@ -172,7 +175,8 @@ ${schemaOutput}
       `
 
       const tablesOutput = execSync(
-        `supabase db exec --project-ref ${SUPABASE_PROJECT_ID} --sql "${tablesQuery.replace(/"/g, '\\"').replace(/\n/g, ' ')}"`,
+        `supabase db exec --project-ref ${SUPABASE_PROJECT_ID} --sql "${tablesQuery.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, ' ')}"`,
+
         { encoding: 'utf-8' }
       )
 
@@ -196,7 +200,8 @@ ${schemaOutput}
           // Get row count first
           const countQuery = `SELECT COUNT(*) FROM public.${table};`
           const countOutput = execSync(
-            `supabase db exec --project-ref ${SUPABASE_PROJECT_ID} --sql "${countQuery.replace(/"/g, '\\"')}"`,
+            `supabase db exec --project-ref ${SUPABASE_PROJECT_ID} --sql "${countQuery.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`,
+
             { encoding: 'utf-8' }
           )
 
@@ -208,7 +213,8 @@ ${schemaOutput}
 
             try {
               const dataOutput = execSync(
-                `supabase db exec --project-ref ${SUPABASE_PROJECT_ID} --sql "${dataQuery.replace(/"/g, '\\"')}"`,
+                `supabase db exec --project-ref ${SUPABASE_PROJECT_ID} --sql "${dataQuery.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`,
+
                 { encoding: 'utf-8', maxBuffer: 50 * 1024 * 1024 }
               )
 
@@ -250,7 +256,8 @@ ${schemaOutput}
       `
 
       const cronOutput = execSync(
-        `supabase db exec --project-ref ${SUPABASE_PROJECT_ID} --sql "${cronQuery.replace(/"/g, '\\"').replace(/\n/g, ' ')}"`,
+        `supabase db exec --project-ref ${SUPABASE_PROJECT_ID} --sql "${cronQuery.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, ' ')}"`,
+
         { encoding: 'utf-8' }
       )
 
@@ -270,8 +277,6 @@ ${cronOutput}
 
     // Footer
     backupSQL += `
-COMMIT;
-
 -- ============================================================================
 -- END OF BACKUP
 -- ============================================================================
