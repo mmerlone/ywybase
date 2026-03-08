@@ -1,6 +1,6 @@
 'use client'
 
-import { Alert, Box, Button, CircularProgress, Paper, Stack, Typography } from '@mui/material'
+import { Alert, Box, Button, CircularProgress, Link, Paper, Stack, Typography } from '@mui/material'
 import { MarkEmailRead as EmailIcon } from '@mui/icons-material'
 import { motion } from 'motion/react'
 import { useSearchParams } from 'next/navigation'
@@ -611,6 +611,24 @@ export default function AuthForm({ initialOperation = AuthOperationsEnum.LOGIN }
                   uiText.buttons[operation]
                 )}
               </Button>
+
+              {operation === AuthOperationsEnum.SIGN_UP && (
+                <Typography
+                  variant="caption"
+                  align="center"
+                  color="text.secondary"
+                  sx={{ display: 'block', mt: 1, lineHeight: 1.5 }}>
+                  By creating an account, you agree to our{' '}
+                  <Link href="/terms" underline="hover" color="text.secondary" sx={{ fontWeight: 500 }}>
+                    Terms of Service
+                  </Link>{' '}
+                  and{' '}
+                  <Link href="/privacy" underline="hover" color="text.secondary" sx={{ fontWeight: 500 }}>
+                    Privacy Policy
+                  </Link>
+                  .
+                </Typography>
+              )}
             </Stack>
           </form>
           {(operation === AuthOperationsEnum.LOGIN || operation === AuthOperationsEnum.SIGN_UP) && (
