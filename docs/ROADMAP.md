@@ -1,6 +1,6 @@
 # YwyBase Development Backlog
 
-**Last Updated**: March 6, 2026
+**Last Updated**: March 8, 2026
 **Version**: 2.3
 **Status**: Active Development
 
@@ -12,12 +12,59 @@
 2. All endpoints should be rate-limited.
 3. AI documentation should be enhanced with the full API patterns.
 4. Obsolete dead code: review src/lib/supabase/ and the services/ subfolder.
+5. Social metadata module: review fixes and enhancements needed (see Priority Roadmap).
 
 ---
 
 ## Priority Roadmap (ordered)
 
-### 1) Rate Limiting
+### 1) Social Metadata Enhancements
+
+**Code Review Date**: March 8, 2026
+
+**Current State**
+
+- Server-side OG metadata fetching with in-memory LRU cache (1 hour TTL, 100 entries).
+- Platform-specific OG endpoints for GitHub and LinkedIn.
+- Fallback to HTML scraping for unsupported platforms.
+- Security: SSRF protection via HTTPS requirement and private network blocking.
+
+**Code Review Findings**
+
+| Issue                          | Severity | Location                | Description                                                           |
+| ------------------------------ | -------- | ----------------------- | --------------------------------------------------------------------- |
+| Concurrent request duplication | Medium   | `fetchMetadataForUrl()` | Multiple simultaneous requests for same URL trigger duplicate fetches |
+| Platform config mismatch       | Low      | `src/config/social.ts`  | Twitter/X and Instagram have no `ogUrl`, always fallback to HTML      |
+| Regex edge case                | Low      | `prepareEndpoint()`     | Username extraction may fail on URLs with query params                |
+
+**Planned Work**
+
+_Priority 1 — Client-Side Caching (React Query)_
+
+- Create custom hook `useSocialMetadata()` wrapping `fetchSocialMetadata` Server Action.
+- Configure stale time to match server TTL (1 hour).
+- Implement in `SocialLinksSection.tsx` and `TabSocialLinks.tsx`.
+- Benefit: Request deduplication, stale-while-revalidate, built-in loading states.
+
+_Priority 2 — Request Deduplication_
+
+- Add Promise-based request deduplication in `fetchMetadataForUrl()`.
+- Use `Map<string, Promise<OgMeta>>` pattern to reuse in-flight requests.
+
+_Priority 3 — Platform Coverage_
+
+- Add `ogUrl` for Twitter/X if API available.
+- Document Instagram limitations (private API, requires HTML fallback).
+
+_Priority 4 — Minor Fixes_
+
+- Improve `SAFE_USERNAME_RE` regex for edge cases with query parameters.
+
+**Story Points**: 5
+
+---
+
+### 2) Rate Limiting
 
 **Current state (implemented)**
 
@@ -309,6 +356,7 @@ _Lower priority_ (already mostly handled via responsive `sx` props)
 
 ## 📊 **Total Story Points by Category**
 
+- **Social Metadata**: 5 points
 - **Compliance & Audit**: 16 points
 - **RBAC**: 26 points
 - **Profile/Auth Sync**: 13 points
@@ -320,7 +368,7 @@ _Lower priority_ (already mostly handled via responsive `sx` props)
 - **Analytics**: 3 points
 - **UI/UX**: 3 points
 
-**Total Remaining**: 137 story points
+**Total Remaining**: 142 story points
 
 ---
 
@@ -342,6 +390,7 @@ _Lower priority_ (already mostly handled via responsive `sx` props)
 - v2.1 (February 5, 2026) - Priority ordering and WIP/status updates
 - v2.2 (March 6, 2026) - Merged rate-limiting audit and useIsMobile annotations; added UI/UX section
 - v2.3 (March 6, 2026) - Added profile/auth sync monitoring backlog with database and dashboard implementation scope
+- v2.4 (March 8, 2026) - Added social metadata enhancements backlog (React Query, fixes, platform coverage)
 
 /\*\*
 
