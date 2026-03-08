@@ -2,8 +2,8 @@
 import { Box, Card, Stack, Typography, Divider, Link } from '@mui/material'
 
 import { ProviderBadge } from '@/components/auth/ProviderBadge'
-import { UserRoleBadge } from '@/components/dashboard/users/profile/UserRoleBadge'
-import { UserStatusBadge } from '@/components/dashboard/users/profile/UserStatusBadge'
+import { UserRoleBadge } from '@/components/common/UserRoleBadge'
+import { UserStatusBadge } from '@/components/common/UserStatusBadge'
 import { UserAvatar } from '@/components/profile/UserAvatar'
 import { UserAvatarForm } from '@/components/profile/UserAvatarForm'
 import { getUserBadges } from '@/lib/utils/profile-utils'
@@ -64,7 +64,10 @@ export function UserCard({
 
   const badgeData = getUserBadges(profile)
   const badges = badgeData
-    ? [<UserStatusBadge key="status" status={badgeData.status} />, <UserRoleBadge key="role" role={badgeData.role} />]
+    ? [
+        <UserStatusBadge key="status" status={badgeData.status} variant="inverse" />,
+        <UserRoleBadge key="role" role={badgeData.role} variant="inverse" />,
+      ]
     : []
 
   return (

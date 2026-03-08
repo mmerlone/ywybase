@@ -175,19 +175,22 @@ export function TzClockDateUx({ timezone, showDate = false }: TzClockDateUxProps
 
   // Memoize Intl formatters for performance
   const timeFormatters = useMemo(() => {
-    const is24Hour = !new Intl.DateTimeFormat(navigator.language, { hour: 'numeric' })
+    // Use 'en-US' as fallback for SSR; client will have navigator.language
+    const locale = typeof navigator !== 'undefined' ? navigator.language : 'en-US'
+
+    const is24Hour = !new Intl.DateTimeFormat(locale, { hour: 'numeric' })
       .formatToParts(new Date())
       .find((part) => part.type === 'dayPeriod')
 
     return {
-      fullTime: new Intl.DateTimeFormat(navigator.language, {
+      fullTime: new Intl.DateTimeFormat(locale, {
         timeZone: timezone,
         hour: '2-digit',
         minute: '2-digit',
         second: '2-digit',
         hour12: !is24Hour,
       }),
-      date: new Intl.DateTimeFormat(navigator.language, {
+      date: new Intl.DateTimeFormat(locale, {
         timeZone: timezone,
         weekday: 'short',
         month: 'long',

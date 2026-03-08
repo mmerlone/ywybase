@@ -212,7 +212,6 @@ export function LocationSelector({
             }
             noOptionsText="No states/provinces found"
           />
-          {errors?.state && <FormHelperText>{errors.state.message}</FormHelperText>}
         </FormControl>
       </Grid>
 

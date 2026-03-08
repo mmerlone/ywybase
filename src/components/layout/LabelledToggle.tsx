@@ -139,7 +139,8 @@ function LabelledToggleInner<T extends string | number>(
               <FormControlLabel
                 key={optionId}
                 value={String(opt.value)}
-                disabled={disabled ?? opt.disabled}
+                // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+                disabled={disabled || opt.disabled}
                 control={
                   <Radio
                     id={optionId}
@@ -168,7 +169,7 @@ function LabelledToggleInner<T extends string | number>(
                 className={cn(
                   'relative z-1 cursor-pointer',
                   'flex items-center justify-center w-full h-full',
-                  (opt.disabled ?? disabled) ? 'opacity-50 cursor-not-allowed' : undefined
+                  opt.disabled || disabled ? 'opacity-50 cursor-not-allowed' : undefined
                 )}
                 sx={{
                   m: 0,

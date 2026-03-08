@@ -1,3 +1,5 @@
+'use client'
+
 import { AppBar, Box, Button, Skeleton, Toolbar, Typography } from '@mui/material'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'

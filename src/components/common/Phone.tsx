@@ -37,7 +37,7 @@ interface ParsedPhone {
   phone: string | null | undefined
   /** Raw national number digits (without country code or formatting) */
   nationalPhone: string
-  /** Full international formatted number (e.g., '+1 (555) 123-4567') or '(555) ***-4567' if obfsucate: true */
+  /** Full international formatted number (e.g., '+1 (555) 123-4567') or '(555) ***-4567' if obfuscate: true */
   displayPhone: string
   /** Nationally formatted number with masking (e.g., '(555) ***-4567') */
   nationalDisplayPhone: string
