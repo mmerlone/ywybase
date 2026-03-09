@@ -46,7 +46,7 @@ const args = parseArgs({
 
 // Configuration
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL
-const PROJECT_ID = process.env.SUPABASE_PROJECT_ID || process.env.NEXT_PUBLIC_SUPABASE_PROJECT_ID
+const PROJECT_ID = process.env.SUPABASE_PROJECT_ID ?? process.env.NEXT_PUBLIC_SUPABASE_PROJECT_ID
 const DB_PASSWORD = process.env.SUPABASE_DB_PASSWORD
 
 // Validate required environment variables

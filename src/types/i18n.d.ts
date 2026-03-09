@@ -6,4 +6,4 @@ declare module 'i18next' {
   }
 }
 
-export * from './i18n.types'
+export type { Language, LanguageCode } from './i18n.types'

@@ -1,10 +1,9 @@
 'use client'
 
-import { FormControl, FormHelperText, SxProps, Theme, useTheme } from '@mui/material'
+import { FormControl, FormHelperText, type SxProps, type Theme, useTheme } from '@mui/material'
 import { styled } from '@mui/material/styles'
-import { Control, Controller, FieldError } from 'react-hook-form'
+import { type Control, Controller, type FieldError } from 'react-hook-form'
 import PhoneInput from 'react-phone-input-2'
-import 'react-phone-input-2/lib/style.css'
 
 interface PhoneInputProps {
   name: string
@@ -159,6 +158,8 @@ export function FormPhoneInput({
 }: PhoneInputProps): JSX.Element {
   const theme = useTheme()
 
+  // CSS styling handled via styled components below
+
   return (
     <Controller
       name={name}
@@ -166,7 +167,7 @@ export function FormPhoneInput({
       render={({ field: { onChange, value } }) => (
         <FormControl
           fullWidth={fullWidth}
-          error={!!error}
+          error={Boolean(error)}
           margin="normal"
           sx={{
             '& .react-tel-input': {
@@ -184,7 +185,7 @@ export function FormPhoneInput({
           }}>
           <StyledPhoneInput
             country="us"
-            value={(value as string) || ''}
+            value={(value as string) ?? ''}
             onChange={onChange}
             inputProps={{
               name,

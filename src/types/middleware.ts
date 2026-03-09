@@ -5,7 +5,7 @@
  * Provides types for middleware handlers, responses, and configuration.
  */
 
-import { NextRequest, NextResponse } from 'next/server'
+import { type NextRequest, type NextResponse } from 'next/server'
 
 /**
  * Valid response types that middleware can return.

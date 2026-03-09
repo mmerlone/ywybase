@@ -2,20 +2,20 @@
  * Standard log levels for consistent logging across the application.
  * Maps to Pino's log levels. Only includes levels actually used.
  */
-export enum LogLevelEnum {
-  TRACE = 'trace',
-  DEBUG = 'debug',
-  INFO = 'info',
-  WARN = 'warn',
-  ERROR = 'error',
-  FATAL = 'fatal',
-}
+export const LogLevelEnum = {
+  TRACE: 'trace',
+  DEBUG: 'debug',
+  INFO: 'info',
+  WARN: 'warn',
+  ERROR: 'error',
+  FATAL: 'fatal',
+} as const
 
 /**
  * Type representing log level values.
  * Derived from LogLevelEnum for type safety.
  */
-export type LogLevel = `${LogLevelEnum}`
+export type LogLevel = (typeof LogLevelEnum)[keyof typeof LogLevelEnum]
 
 /**
  * Context object that can be passed to logger methods.
@@ -76,13 +76,28 @@ export interface Logger {
 }
 
 /**
- * Helper to safely convert unknown errors to Error type for logging
+ * Helper to safely convert unknown errors to Error type for logging.
+ * Always returns an Error, converting non-Error values appropriately.
  */
 export function toError(err: unknown): Error {
   if (err instanceof Error) return err
   if (typeof err === 'string') return new Error(err)
-  if (err && typeof err === 'object' && 'message' in err) {
+  if (err !== null && typeof err === 'object' && 'message' in err) {
     return new Error(String(err.message))
   }
   return new Error(String(err))
+}
+
+/**
+ * Helper to normalize query errors to Error | null for React Query hooks.
+ * Returns null for falsy values (no error), Error for Error instances,
+ * and converts other truthy values to Error.
+ *
+ * @example
+ * // In React Query hooks:
+ * return { error: toErrorOrNull(error) }
+ */
+export function toErrorOrNull(err: unknown): Error | null {
+  if (err === null || err === undefined) return null
+  return toError(err)
 }

@@ -129,7 +129,7 @@ function cacheCountry(cacheKey: string, country: string): void {
 export async function detectCountry(ipAddress?: string): Promise<string | null> {
   try {
     // Generate cache key (use provided IP or 'auto-detect' for auto-detection)
-    const cacheKey = ipAddress || 'auto-detect'
+    const cacheKey = ipAddress ?? 'auto-detect'
 
     // Check cache first
     const cachedCountry = getCachedCountry(cacheKey)
@@ -141,7 +141,10 @@ export async function detectCountry(ipAddress?: string): Promise<string | null> 
     // Get API key from server-side environment variable
     const apiKey = process.env.IPGEOLOCATION_API_KEY
     if (apiKey === null || apiKey === undefined) {
-      logger.error({}, 'IPGEOLOCATION_API_KEY not found in server environment variables')
+      logger.error(
+        { operation: 'detectLocation', missing: 'IPGEOLOCATION_API_KEY' },
+        'IPGEOLOCATION_API_KEY not found in server environment variables'
+      )
       return null
     }
 

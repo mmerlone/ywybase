@@ -7,9 +7,10 @@
 
 import type { AlertColor } from '@mui/material'
 import { cookies } from 'next/headers'
-import { NextRequest, NextResponse } from 'next/server'
+import { type NextRequest, type NextResponse } from 'next/server'
 
 import { FLASH_COOKIE_NAME, FLASH_COOKIE_MAX_AGE } from './flash-messages.constants'
+import { safeJsonParse } from './json'
 
 /**
  * Flash message data structure.
@@ -70,20 +71,40 @@ export async function getFlashMessage(): Promise<FlashMessage | null> {
   const cookieStore = await cookies()
   const flashCookie = cookieStore.get(FLASH_COOKIE_NAME)
 
-  if (!flashCookie?.value) {
+  if (flashCookie?.value === undefined) {
     return null
   }
 
+  const clearFlashCookie = (): void => {
+    try {
+      cookieStore.delete(FLASH_COOKIE_NAME)
+    } catch {
+      // In Server Components, cookies are read-only; client fallback will clear.
+    }
+  }
+
   try {
-    const flashData = JSON.parse(flashCookie.value) as FlashMessage
+    const parsed = safeJsonParse<FlashMessage>(
+      flashCookie.value,
+      (obj): obj is FlashMessage =>
+        typeof obj === 'object' &&
+        obj !== null &&
+        'message' in obj &&
+        typeof (obj as Record<string, unknown>).message === 'string' &&
+        'severity' in obj &&
+        typeof (obj as Record<string, unknown>).severity === 'string'
+    )
 
-    // Clear the cookie after reading
-    cookieStore.delete(FLASH_COOKIE_NAME)
+    if (parsed === null) {
+      clearFlashCookie()
+      return null
+    }
 
-    return flashData
+    clearFlashCookie()
+    return parsed
   } catch {
-    // Invalid JSON, clear cookie
-    cookieStore.delete(FLASH_COOKIE_NAME)
+    // Invalid JSON, clear cookie if possible
+    clearFlashCookie()
     return null
   }
 }

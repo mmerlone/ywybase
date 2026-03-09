@@ -1,11 +1,12 @@
-import type {
-  LoginFormInput,
-  SignUpFormInput,
-  ResetPasswordEmailFormInput,
-  ResetPasswordPassFormInput,
-  UpdatePasswordFormInput,
+import {
+  AuthOperationsEnum,
+  type AddPasswordFormInput,
+  type LoginFormInput,
+  type SignUpFormInput,
+  type ResetPasswordEmailFormInput,
+  type ResetPasswordPassFormInput,
+  type UpdatePasswordFormInput,
 } from '@/types/auth.types'
-import { AuthOperationsEnum } from '@/types/auth.types'
 
 /**
  * Default values for each authentication operation
@@ -41,4 +42,13 @@ export const authFormDefaults = {
     newPassword: '',
     confirmPassword: '',
   } satisfies UpdatePasswordFormInput,
+
+  [AuthOperationsEnum.RESEND_VERIFICATION]: {
+    email: '',
+  } satisfies ResetPasswordEmailFormInput,
+
+  [AuthOperationsEnum.ADD_PASSWORD]: {
+    password: '',
+    confirmPassword: '',
+  } satisfies AddPasswordFormInput,
 } as const

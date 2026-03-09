@@ -6,7 +6,7 @@ import { forwardRef, useId, useMemo, useState } from 'react'
 
 import { logger } from '@/lib/logger/client'
 import { cn } from '@/lib/utils'
-import type { LabelledToggleOption } from '@/types'
+import type { LabelledToggleOption } from '@/types/components.types'
 import { carvedShadow, extrudedShadow } from '@/theme'
 
 export interface LabelledToggleProps<T extends string | number> {
@@ -53,7 +53,7 @@ function LabelledToggleInner<T extends string | number>(
   const uniqueName = name ?? uniqueId
 
   // Sync internal value with controlled value without using effects
-  const effectiveValue = value !== undefined ? value : internalValue
+  const effectiveValue = value ?? internalValue
 
   const selectedIndex = useMemo(() => {
     if (effectiveValue === undefined) return -1
@@ -139,6 +139,7 @@ function LabelledToggleInner<T extends string | number>(
               <FormControlLabel
                 key={optionId}
                 value={String(opt.value)}
+                // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
                 disabled={disabled || opt.disabled}
                 control={
                   <Radio

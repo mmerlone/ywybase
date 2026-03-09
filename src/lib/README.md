@@ -7,15 +7,16 @@ This directory contains the core library modules that power the application. Eac
 ```
 src/lib/
 ├── actions/        # Server Actions (Auth, Profile, Location)
-├── auth/           # Auth client-side logic
+├── auth/           # Auth admin/guard utilities
 ├── error/          # Centralized error handling
 ├── logger/         # Logging utilities
-├── security/       # Security utilities
 ├── supabase/       # Database integration & services
 ├── utils/          # Utility functions
 ├── validators/     # Data validation schemas
 └── utils.ts        # General utilities
 ```
+
+**Note**: Security functionality is located in `src/middleware/security/` and `src/config/security.ts`
 
 ## 🚀 **Quick Start for Developers**
 
@@ -68,8 +69,8 @@ Handles user authentication with Supabase integration.
 
 **How to extend**:
 
-- Add new auth methods in `actions.ts`
-- Create new auth providers in `service.ts`
+- Add new auth methods in `src/lib/actions/auth/server.ts`
+- Update auth guards in `src/lib/auth/guards.ts`
 - Update types in `@/types/auth.types`
 
 ### **Error Handling** (`error/`)
@@ -96,28 +97,28 @@ Structured logging system with performance monitoring.
 - Update configuration in `config.ts`
 - Follow the context-first pattern: `logger.info({ context }, "message")`
 
-### **Security** (`security/`)
+### **Supabase** (`supabase/`)
 
-Security utilities for comprehensive application protection.
+Database integration with explicit client separation.
 
-**What's here**: Security headers, CSRF protection, rate limiting, input sanitization, audit logging
-
-**How to extend**:
-
-- Add new security utilities following existing patterns
-- Update configuration in `@/config/security.ts`
-- Use proper TypeScript types from `@/types/security.types.ts`
-- Follow security best practices and audit requirements
-
-Database integration with service layer architecture.
-
-**What's here**: Client/server separation, session management, services
+**What's here**: Client/server separation, session management
 
 **How to extend**:
 
 - Create new actions in `actions/`
-- Extend the base service class in `supabase/services/`
 - Add new client/server utilities
+
+### **Security** (`middleware/security/`)
+
+Security middleware and configuration for application protection.
+
+**What's here**: Rate limiting, CSRF protection, security headers, input sanitization
+
+**How to extend**:
+
+- Add new security configurations in `src/config/security.ts`
+- Update middleware in `src/middleware/security/`
+- Add new validation rules in `src/lib/validators/`
 
 ### **Utils** (`utils/`)
 

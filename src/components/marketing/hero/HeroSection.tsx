@@ -1,10 +1,11 @@
 import { Box, Button, Container, Typography } from '@mui/material'
 import type {} from '@mui/material/themeCssVarsAugmentation'
 import Link from 'next/link'
-
 import { SITE_CONFIG } from '@/config/site'
 
 export function HeroSection(): JSX.Element {
+  const siteName = SITE_CONFIG.name
+  const siteDescription = SITE_CONFIG.description
   return (
     <Box
       component="section"
@@ -54,7 +55,7 @@ export function HeroSection(): JSX.Element {
             mb: 4,
             textShadow: 'var(--text-shadow-strong)',
           }}>
-          Welcome to {SITE_CONFIG.name}
+          Welcome to {siteName}
         </Typography>
         <Typography
           variant="h5"
@@ -64,7 +65,7 @@ export function HeroSection(): JSX.Element {
             maxWidth: '800px',
             mx: 'auto',
           }}>
-          {SITE_CONFIG.description}
+          {siteDescription}
         </Typography>
         <Box
           sx={{

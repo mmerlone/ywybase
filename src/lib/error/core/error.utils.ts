@@ -7,7 +7,24 @@
  * @module error/core/error.utils
  */
 
-import type { ErrorContext, AppError } from '@/types/error.types'
+import type { ErrorContext, AppError, AppErrorJSON } from '@/types/error.types'
+
+/**
+ * Type guard to check if an unknown value matches the AppErrorJSON structure.
+ *
+ * @param error - Value to check
+ * @returns True if value is a valid AppErrorJSON object
+ */
+export function isAppErrorJSON(error: unknown): error is AppErrorJSON {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    'message' in error &&
+    'errorType' in error &&
+    'isOperational' in error
+  )
+}
 
 /**
  * Check if error context contains authentication-related fields.
@@ -109,4 +126,42 @@ export function getErrorType(context: ErrorContext): string {
  */
 export function isAppError(error: unknown): error is AppError {
   return error instanceof Error && 'code' in error && 'context' in error && 'isOperational' in error
+}
+
+/**
+ * Check if an error is a Next.js dynamic server usage error.
+ *
+ * These errors occur when code using dynamic APIs (cookies, headers)
+ * runs during static generation. Next.js uses these as control flow
+ * to automatically opt routes into dynamic rendering.
+ *
+ * **Important**: These errors should be re-thrown, not caught/wrapped.
+ * Next.js needs to catch them to properly handle static/dynamic detection.
+ *
+ * @param error - Error to check
+ * @returns True if this is a Next.js dynamic server usage error
+ *
+ * @example
+ * ```typescript
+ * try {
+ *   await someOperation()
+ * } catch (error) {
+ *   // Re-throw Next.js control flow errors
+ *   if (isDynamicServerError(error)) {
+ *     throw error
+ *   }
+ *   // Handle other errors
+ *   handleClientError(error, { operation: 'someOperation' })
+ * }
+ * ```
+ */
+export function isDynamicServerError(error: unknown): boolean {
+  // Next.js marks dynamic server usage errors with a specific digest property
+  // This is the public contract - errors thrown during static generation
+  // for dynamic API usage (cookies, headers) have digest: 'DYNAMIC_SERVER_USAGE'
+  return (
+    error instanceof Error &&
+    'digest' in error &&
+    (error as Error & { digest?: string }).digest === 'DYNAMIC_SERVER_USAGE'
+  )
 }

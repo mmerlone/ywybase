@@ -1,4 +1,4 @@
-import { AuthOperationsEnum } from '@/types/auth.types'
+import { AuthOperationsEnum, type AuthOperations } from '@/types/auth.types'
 
 /**
  * Utility functions for authentication components
@@ -8,47 +8,54 @@ import { AuthOperationsEnum } from '@/types/auth.types'
 /**
  * Type guard to check if an operation requires email field
  */
-export function operationRequiresEmail(operation: AuthOperationsEnum): boolean {
-  return [AuthOperationsEnum.LOGIN, AuthOperationsEnum.SIGN_UP, AuthOperationsEnum.FORGOT_PASSWORD].includes(operation)
+export function operationRequiresEmail(operation: AuthOperations): boolean {
+  const emailOperations: AuthOperations[] = [
+    AuthOperationsEnum.LOGIN,
+    AuthOperationsEnum.SIGN_UP,
+    AuthOperationsEnum.FORGOT_PASSWORD,
+  ]
+  return emailOperations.includes(operation)
 }
 
 /**
  * Type guard to check if an operation requires password fields
  */
-export function operationRequiresPassword(operation: AuthOperationsEnum): boolean {
-  return [
+export function operationRequiresPassword(operation: AuthOperations): boolean {
+  const passwordOperations: AuthOperations[] = [
     AuthOperationsEnum.LOGIN,
     AuthOperationsEnum.SIGN_UP,
     AuthOperationsEnum.SET_PASSWORD,
     AuthOperationsEnum.UPDATE_PASSWORD,
-  ].includes(operation)
+  ]
+  return passwordOperations.includes(operation)
 }
 
 /**
  * Type guard to check if an operation requires name field
  */
-export function operationRequiresName(operation: AuthOperationsEnum): boolean {
+export function operationRequiresName(operation: AuthOperations): boolean {
   return operation === AuthOperationsEnum.SIGN_UP
 }
 
 /**
  * Type guard to check if an operation requires terms acceptance
  */
-export function operationRequiresTerms(operation: AuthOperationsEnum): boolean {
+export function operationRequiresTerms(operation: AuthOperations): boolean {
   return operation === AuthOperationsEnum.SIGN_UP
 }
 
 /**
  * Type guard to check if an operation shows social login buttons
  */
-export function operationShowsSocialLogin(operation: AuthOperationsEnum): boolean {
-  return [AuthOperationsEnum.LOGIN, AuthOperationsEnum.SIGN_UP].includes(operation)
+export function operationShowsSocialLogin(operation: AuthOperations): boolean {
+  const socialLoginOperations: AuthOperations[] = [AuthOperationsEnum.LOGIN, AuthOperationsEnum.SIGN_UP]
+  return socialLoginOperations.includes(operation)
 }
 
 /**
  * Get password field requirements for different operations
  */
-export function getPasswordRequirements(operation: AuthOperationsEnum): {
+export function getPasswordRequirements(operation: AuthOperations): {
   showCurrentPassword: boolean
   showNewPassword: boolean
   showConfirmPassword: boolean
@@ -100,16 +107,20 @@ export function getPasswordRequirements(operation: AuthOperationsEnum): {
 /**
  * Format operation enum for display purposes
  */
-export function formatOperationForDisplay(operation: AuthOperationsEnum): string {
+export function formatOperationForDisplay(operation: AuthOperations): string {
   return operation
     .split('-')
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ')
 }
 
 /**
  * Check if operation is a password reset flow
  */
-export function isPasswordResetOperation(operation: AuthOperationsEnum): boolean {
-  return [AuthOperationsEnum.FORGOT_PASSWORD, AuthOperationsEnum.SET_PASSWORD].includes(operation)
+export function isPasswordResetOperation(operation: AuthOperations): boolean {
+  const passwordResetOperations: AuthOperations[] = [
+    AuthOperationsEnum.FORGOT_PASSWORD,
+    AuthOperationsEnum.SET_PASSWORD,
+  ]
+  return passwordResetOperations.includes(operation)
 }

@@ -11,20 +11,20 @@ import { buildLogger } from '@/lib/logger/client'
 import { randomUUID } from 'crypto'
 import type { NextRequest } from 'next/server'
 import {
-  SecurityEventType,
-  SecurityEventContext,
-  SecuritySeverity,
-  AuditTrailEntry,
-  UserActionAudit,
-  SecurityReport,
-  SecurityEventLogger,
-  SecurityContextExtractor,
-  SecurityContextSanitizer,
-  AuditTrailCreator,
-  UserActionAuditor,
-  SecurityEventHelpers,
-  AuthEventType,
-  ValidationResult,
+  type SecurityEventType,
+  type SecurityEventContext,
+  type SecuritySeverity,
+  type AuditTrailEntry,
+  type UserActionAudit,
+  type SecurityReport,
+  type SecurityEventLogger,
+  type SecurityContextExtractor,
+  type SecurityContextSanitizer,
+  type AuditTrailCreator,
+  type UserActionAuditor,
+  type SecurityEventHelpers,
+  type AuthEventType,
+  type ValidationResult,
   isSecurityEventType,
 } from '@/types/security.types'
 
@@ -44,13 +44,13 @@ function sanitizeNestedObject(obj: Record<string, unknown>, piiFields: string[])
       // Handle the value based on its type
       if (Array.isArray(value)) {
         // Handle arrays: map each element and check PII
-        sanitized[key] = value.map((element) => {
+        sanitized[key] = (value as unknown[]).map((element) => {
           if (typeof element === 'object' && element !== null && !Array.isArray(element)) {
             // Nested object - recurse
             return sanitizeNestedObject(element as Record<string, unknown>, piiFields)
           } else if (Array.isArray(element)) {
             // Nested array - map recursively
-            return element.map((nestedElement) => {
+            return (element as unknown[]).map((nestedElement) => {
               if (typeof nestedElement === 'object' && nestedElement !== null && !Array.isArray(nestedElement)) {
                 return sanitizeNestedObject(nestedElement as Record<string, unknown>, piiFields)
               } else {
@@ -121,16 +121,16 @@ export const sanitizeSecurityContext: SecurityContextSanitizer = (
 
     // First: Apply special-case sanitization for specific fields
     piiFields.forEach((field) => {
-      if (field === 'email' && sanitized.details?.email && typeof sanitized.details.email === 'string') {
+      if (field === 'email' && sanitized.details?.email !== undefined && typeof sanitized.details.email === 'string') {
         // Keep domain for email
-        const email = sanitized.details.email as string
+        const email = sanitized.details.email
         const parts = email.split('@')
         sanitized.details.email = parts.length === 2 ? `***@${parts[1]}` : '[REDACTED_EMAIL]'
-      } else if (field === 'ip_address' && sanitized.ip) {
+      } else if (field === 'ip_address' && sanitized.ip !== undefined) {
         // Keep first two octets for IP
         const parts = sanitized.ip.split('.')
         sanitized.ip = parts.length === 4 ? `${parts[0]}.${parts[1]}.***.**` : '[REDACTED_IP]'
-      } else if (field === 'user_agent' && sanitized.userAgent) {
+      } else if (field === 'user_agent' && sanitized.userAgent !== undefined) {
         // Redact user agent
         sanitized.userAgent = '[REDACTED_USER_AGENT]'
       }
@@ -164,11 +164,11 @@ export const extractSecurityContext: SecurityContextExtractor = (
 ): SecurityEventContext => {
   return {
     ip:
-      request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-      request.headers.get('x-real-ip') ||
-      request.headers.get('x-vercel-forwarded-for') ||
+      request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
+      request.headers.get('x-real-ip') ??
+      request.headers.get('x-vercel-forwarded-for') ??
       'unknown',
-    userAgent: request.headers.get('user-agent') || 'unknown',
+    userAgent: request.headers.get('user-agent') ?? 'unknown',
     path: request.nextUrl.pathname,
     method: request.method,
     timestamp: new Date().toISOString(),
@@ -188,7 +188,7 @@ export const createAuditTrailEntry: AuditTrailCreator = (
     event,
     sanitizedContext,
     timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'unknown',
+    environment: process.env.NODE_ENV ?? 'unknown',
     version: process.env.npm_package_version,
   }
 
@@ -223,8 +223,8 @@ export const logSecurityEvent: SecurityEventLogger = (
     // Add standard context
     const fullContext: SecurityEventContext = {
       ...context,
-      timestamp: context.timestamp || new Date().toISOString(),
-      severity: context.severity || getSeverityForEvent(event),
+      timestamp: context.timestamp ?? new Date().toISOString(),
+      severity: context.severity ?? getSeverityForEvent(event),
     }
 
     // Sanitize context for logging
@@ -234,12 +234,12 @@ export const logSecurityEvent: SecurityEventLogger = (
     const logEntry = {
       event,
       context: sanitizedContext,
-      environment: process.env.NODE_ENV || 'unknown',
-      message: message || `Security event: ${event}`,
+      environment: process.env.NODE_ENV ?? 'unknown',
+      message: message ?? `Security event: ${event}`,
     }
 
     // Log based on severity
-    const severity = fullContext.severity || 'medium'
+    const severity = fullContext.severity ?? 'medium'
 
     switch (severity) {
       case 'critical':
@@ -284,8 +284,8 @@ export const auditUserAction: UserActionAuditor = (
       resourceId: options.resourceId,
       oldValues: options.oldValues ? sanitizeNestedObject(options.oldValues, piiFields) : undefined,
       newValues: options.newValues ? sanitizeNestedObject(options.newValues, piiFields) : undefined,
-      ip: request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown',
-      userAgent: request.headers.get('user-agent') || 'unknown',
+      ip: request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown',
+      userAgent: request.headers.get('user-agent') ?? 'unknown',
       timestamp: new Date().toISOString(),
       success: options.success !== false,
       error: options.error,
@@ -322,7 +322,7 @@ export const auditUserAction: UserActionAuditor = (
       if (mappedType) {
         eventType = mappedType
       } else if (isSecurityEventType(action)) {
-        eventType = action as SecurityEventType
+        eventType = action
       } else {
         // Safe fallback: use admin_action for unknown sensitive operations
         eventType = 'admin_action'
@@ -436,7 +436,7 @@ export function validateAuditConfig(): ValidationResult {
     }
 
     // Check retention configuration
-    if (!config.retention || typeof config.retention !== 'object') {
+    if (config.retention === undefined || typeof config.retention !== 'object') {
       issues.push('Log retention configuration missing')
     } else {
       Object.entries(config.retention).forEach(([type, days]) => {

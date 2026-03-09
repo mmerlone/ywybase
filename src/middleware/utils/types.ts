@@ -1,6 +1,6 @@
-import { NextResponse } from 'next/server'
+import { type NextResponse } from 'next/server'
 import type { Logger } from '@/types/logger.types'
-import { User, Session as SupabaseSession } from '@supabase/supabase-js'
+import { type User, type Session as SupabaseSession } from '@supabase/supabase-js'
 
 export type AuthUser = User
 

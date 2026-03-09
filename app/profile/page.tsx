@@ -1,23 +1,26 @@
-import { Container, Typography, Box, Alert } from '@mui/material'
+import { Container, Typography, Box } from '@mui/material'
 import { redirect } from 'next/navigation'
 import type { Metadata } from 'next'
-import { getProfile } from '@/lib/actions/profile'
-import { ProfileForm } from '@/components/profile/ProfileForm'
+import { getCachedProfile } from '@/lib/actions/profile'
+import ProfileForm from '@/components/profile/ProfileForm'
 import { createClient } from '@/lib/supabase/server'
-import { serverLogger as logger } from '@/lib/logger'
+import { logger } from '@/lib/logger/server'
 import { getProfileOgImageUrl, fullUrl, SITE_CONFIG } from '@/config/site'
+import type { Profile } from '@/types/profile.types'
 
 /**
  * Generate metadata for the profile page
- *
- * Creates dynamic OG images based on user profile data.
- * Falls back to default site metadata if user is not authenticated.
+ * Uses getCachedProfile for request-level memoization (dedupes with ProfilePage)
  */
 export async function generateMetadata(): Promise<Metadata> {
   const supabase = await createClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
+
+  // Fetch site configs for name
+  // Use static site config
+  const siteName = SITE_CONFIG.name
 
   // If no user, return default metadata
   if (!user) {
@@ -27,10 +30,10 @@ export async function generateMetadata(): Promise<Metadata> {
     }
   }
 
-  // Fetch profile data for OG image
+  // Fetch profile data for OG image (cached - dedupes with ProfilePage call)
   let profile = null
   try {
-    const result = await getProfile(user.id)
+    const result = await getCachedProfile(user.id)
     if (result.success) {
       profile = result.data
     }
@@ -41,22 +44,22 @@ export async function generateMetadata(): Promise<Metadata> {
     )
   }
 
-  const displayName = profile?.display_name || user.email?.split('@')[0] || 'User'
-  const bio = profile?.bio || undefined
-  const avatarUrl = profile?.avatar_url || undefined
+  const displayName = profile?.display_name ?? user.email?.split('@')[0] ?? 'User'
+  const bio = profile?.bio ?? undefined
+  const avatarUrl = profile?.avatar_url ?? undefined
 
   const ogImageUrl = getProfileOgImageUrl({
     name: displayName,
-    avatar: avatarUrl ? fullUrl(avatarUrl) : undefined,
+    avatar: avatarUrl !== null && avatarUrl !== undefined ? fullUrl(avatarUrl) : undefined,
     bio,
   })
 
   return {
     title: `${displayName} - Profile`,
-    description: bio || 'Manage your profile settings and preferences',
+    description: bio ?? 'Manage your profile settings and preferences',
     openGraph: {
-      title: `${displayName} - ${SITE_CONFIG.name}`,
-      description: bio || `View profile on ${SITE_CONFIG.name}`,
+      title: `${displayName} - ${siteName}`,
+      description: bio ?? `View profile on ${siteName}`,
       images: [
         {
           url: ogImageUrl,
@@ -68,8 +71,8 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     twitter: {
       card: 'summary_large_image',
-      title: `${displayName} - ${SITE_CONFIG.name}`,
-      description: bio || `View profile on ${SITE_CONFIG.name}`,
+      title: `${displayName} - ${siteName}`,
+      description: bio ?? `View profile on ${siteName}`,
       images: [ogImageUrl],
     },
   }
@@ -85,33 +88,17 @@ export default async function ProfilePage(): Promise<JSX.Element> {
     redirect('/auth')
   }
 
-  // Fetch profile data server-side
-  let profile = null
-  let error = null
-
+  // Fetch profile data on the server for SSR
+  let profile: Profile | null = null
   try {
-    const result = await getProfile(user.id)
+    const result = await getCachedProfile(user.id)
     if (result.success) {
       profile = result.data ?? null
-    } else {
-      error = result.error
-      // Convert AppErrorJSON to Error for logging
-      const errorObj =
-        typeof result.error === 'string'
-          ? new Error(result.error)
-          : new Error(result.error?.message || 'Failed to load profile')
-      logger.error({ err: errorObj, userId: user.id }, 'Failed to load profile')
     }
   } catch (err) {
-    const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred'
-    error = errorMessage
     logger.error(
-      {
-        err: err instanceof Error ? err : new Error(errorMessage),
-        userId: user.id,
-        stack: err instanceof Error ? err.stack : undefined,
-      },
-      'Unexpected error in ProfilePage'
+      { err: err instanceof Error ? err : new Error('Unknown error'), userId: user.id },
+      'Failed to fetch profile for SSR'
     )
   }
 
@@ -122,13 +109,7 @@ export default async function ProfilePage(): Promise<JSX.Element> {
       </Typography>
 
       <Box sx={{ width: '100%' }}>
-        {error ? (
-          <Alert severity="error" sx={{ mb: 3 }}>
-            Failed to load profile. Please try again later.
-          </Alert>
-        ) : (
-          <ProfileForm user={user} profile={profile} />
-        )}
+        <ProfileForm profile={profile} />
       </Box>
     </Container>
   )

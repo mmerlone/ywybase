@@ -2,7 +2,7 @@ import { Box, Button, Typography } from '@mui/material'
 
 import { uiText } from './config/uiText'
 
-import { AuthOperationsEnum } from '@/types/auth.types'
+import { AuthOperationsEnum, type AuthOperations } from '@/types/auth.types'
 
 /**
  * Success message component for post-submission states
@@ -10,7 +10,7 @@ import { AuthOperationsEnum } from '@/types/auth.types'
  */
 
 interface AuthSuccessMessageProps {
-  operation: AuthOperationsEnum
+  operation: AuthOperations
   onBackToLogin: () => void
 }
 

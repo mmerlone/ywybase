@@ -9,7 +9,7 @@ import {
   type ResetPasswordEmailFormInput,
   type ResetPasswordPassFormInput,
   type UpdatePasswordFormInput,
-} from '@/lib/validators'
+} from '@/lib/validators/auth'
 import { AuthOperationsEnum } from '@/types/auth.types'
 
 /**

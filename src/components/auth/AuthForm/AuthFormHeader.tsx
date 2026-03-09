@@ -2,7 +2,7 @@ import { Typography } from '@mui/material'
 
 import { uiText } from './config/uiText'
 
-import { AuthOperationsEnum } from '@/types/auth.types'
+import { type AuthOperations } from '@/types/auth.types'
 
 /**
  * Dynamic header component that displays appropriate title and description
@@ -10,7 +10,7 @@ import { AuthOperationsEnum } from '@/types/auth.types'
  */
 
 interface AuthFormHeaderProps {
-  operation: AuthOperationsEnum
+  operation: AuthOperations
 }
 
 export function AuthFormHeader({ operation }: AuthFormHeaderProps): JSX.Element {

@@ -4,14 +4,32 @@ import { DarkMode, LightMode, SettingsBrightness } from '@mui/icons-material'
 import { Skeleton, ToggleButton, ToggleButtonGroup } from '@mui/material'
 import { useColorScheme } from '@mui/material/styles'
 
-import { ThemePreference, ThemePreferenceEnum } from '../../types'
+import { type ThemePreference, ThemePreferenceEnum } from '@/types/theme.types'
+import { useAuthContext } from '../providers/AuthProvider'
+import { useProfile } from '@/hooks/useProfile'
+import { buildLogger } from '@/lib/logger/client'
+
+const logger = buildLogger('ThemeToggle')
 
 export function ThemeToggle(): JSX.Element {
   const { mode, setMode } = useColorScheme()
+  const { authUser } = useAuthContext()
+  const { updateThemePreference } = useProfile(authUser?.id)
 
-  const handleThemeChange = (_event: React.MouseEvent<HTMLElement>, newTheme: string | null): void => {
+  const handleThemeChange = async (_event: React.MouseEvent<HTMLElement>, newTheme: string | null): Promise<void> => {
     if (newTheme !== null) {
-      setMode(newTheme as ThemePreference)
+      const selectedTheme = newTheme as ThemePreference
+      setMode(selectedTheme)
+
+      // Persist to database if user is logged in
+      if (authUser?.id) {
+        try {
+          await updateThemePreference(selectedTheme)
+        } catch (error) {
+          // Error is already logged in useProfile/updateThemePreference
+          logger.error({ error, selectedTheme }, 'Failed to persist theme preference')
+        }
+      }
     }
   }
 

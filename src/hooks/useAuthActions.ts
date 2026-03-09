@@ -10,9 +10,8 @@ import {
   forgotPassword,
   signOut as signOutAction,
 } from '@/lib/actions/auth/server'
-import { handleClientError as handleError } from '@/lib/error'
-import type { SerializableError } from '@/types'
-import { AuthProvidersEnum } from '@/types/auth.types'
+import { handleError as handleError } from '@/lib/error/handlers/client.handler'
+import type { AuthProvider, SerializableError } from '@/types/auth.types'
 
 /**
  * Authentication actions hook.
@@ -26,6 +25,9 @@ import { AuthProvidersEnum } from '@/types/auth.types'
  * - Call server actions
  * - Handle operation-specific errors
  * - Return operation results
+ *
+ * @internal This hook is used internally by `useAuth` in `src/hooks/useAuth.ts`.
+ * For authentication in components, use `useAuthContext` from `@/components/providers`.
  *
  * @param params - Configuration object
  * @param params.setErrorAction - Function to set error state
@@ -75,7 +77,7 @@ export const useAuthActions = ({
   refreshSessionAction: () => Promise<void>
 }): {
   signIn: (email: string, password: string) => Promise<{ error: SerializableError | null }>
-  signInWithProvider: (provider: AuthProvidersEnum) => Promise<{ error: SerializableError | null }>
+  signInWithProvider: (provider: AuthProvider) => Promise<{ error: SerializableError | null }>
   signUpWithEmail: (
     email: string,
     password: string,
@@ -104,8 +106,8 @@ export const useAuthActions = ({
                   email,
                   hook: 'useAuthActions',
                 })
-              : result.error ||
-                handleError(new Error('Login failed'), { operation: 'login', email, hook: 'useAuthActions' })
+              : (result.error ??
+                handleError(new Error('Login failed'), { operation: 'login', email, hook: 'useAuthActions' }))
           setErrorAction(appError)
           return { error: appError }
         }
@@ -131,7 +133,7 @@ export const useAuthActions = ({
 
   // Login with OAuth provider
   const signInWithProvider = useCallback(
-    async (provider: AuthProvidersEnum): Promise<{ error: SerializableError | null }> => {
+    async (provider: AuthProvider): Promise<{ error: SerializableError | null }> => {
       try {
         setIsLoadingAction(true)
         setErrorAction(null) // Clear previous errors
@@ -191,7 +193,7 @@ export const useAuthActions = ({
         const result = await signUpWithEmailAction({
           email,
           password,
-          name: options?.name || '',
+          name: options?.name ?? '',
           confirmPassword,
           acceptTerms,
         })
@@ -203,14 +205,13 @@ export const useAuthActions = ({
                   email,
                   hook: 'useAuthActions',
                 })
-              : result.error ||
-                handleError(new Error('Registration failed'), { operation: 'sign-up', email, hook: 'useAuthActions' })
+              : (result.error ??
+                handleError(new Error('Registration failed'), { operation: 'sign-up', email, hook: 'useAuthActions' }))
           setErrorAction(appError)
           return { error: appError }
         }
-        // Trigger session refresh after successful signup (if session is available)
-        // Note: Session may not be available if email confirmation is required
-        await refreshSessionAction()
+        // Don't refresh session after signup - user is signed out and needs to verify email first
+        // await refreshSessionAction()
         return { error: null }
       } catch (error) {
         const appError = handleError(error, {
@@ -225,7 +226,7 @@ export const useAuthActions = ({
         setIsLoadingAction(false)
       }
     },
-    [refreshSessionAction, setErrorAction, setIsLoadingAction]
+    [setErrorAction, setIsLoadingAction]
   )
 
   // Reset password
@@ -244,12 +245,12 @@ export const useAuthActions = ({
                   email,
                   hook: 'useAuthActions',
                 })
-              : result.error ||
+              : (result.error ??
                 handleError(new Error('Password reset failed'), {
                   operation: 'forgot-password',
                   email,
                   hook: 'useAuthActions',
-                })
+                }))
           setErrorAction(appError)
           return { error: appError }
         }
@@ -284,8 +285,8 @@ export const useAuthActions = ({
                 operation: 'sign-out',
                 hook: 'useAuthActions',
               })
-            : result.error ||
-              handleError(new Error('Sign out failed'), { operation: 'sign-out', hook: 'useAuthActions' })
+            : (result.error ??
+              handleError(new Error('Sign out failed'), { operation: 'sign-out', hook: 'useAuthActions' }))
         setErrorAction(appError)
         return { error: appError }
       }

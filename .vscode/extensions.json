@@ -1,0 +1,12 @@
+{
+  "recommendations": [
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "ms-vscode.vscode-typescript-next",
+    "ms-playwright.playwright",
+    "mikestead.dotenv",
+    "yoavbls.pretty-ts-errors",
+    "unifiedjs.vscode-mdx",
+    "christian-kohler.path-intellisense"
+  ]
+}

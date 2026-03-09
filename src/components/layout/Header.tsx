@@ -1,20 +1,39 @@
-import { AppBar, Box, Button, Toolbar, Typography } from '@mui/material'
-import Link from 'next/link'
+'use client'
 
-import { UserMenu } from '../auth/UserMenu'
+import { AppBar, Box, Button, Skeleton, Toolbar, Typography } from '@mui/material'
+import dynamic from 'next/dynamic'
+import Link from 'next/link'
+import { useAuthContext } from '@/components/providers/AuthProvider'
+import { filterNavItemsByRole } from '@/config/routes'
+import { normalizeUserRole } from '@/lib/utils/role-utils'
+
 import { LogoIcon } from '../icons/logo'
 
-import { ThemeToggle } from './ThemeToggle'
-
 import { SITE_CONFIG } from '@/config/site'
+
+const ThemeToggle = dynamic(() => import('./ThemeToggle').then((m) => m.ThemeToggle), {
+  ssr: false,
+  loading: () => <Skeleton variant="rectangular" width={106} height={36} sx={{ borderRadius: 1 }} />,
+})
+
+const UserMenu = dynamic(() => import('../auth/UserMenu').then((m) => m.UserMenu), {
+  ssr: false,
+  loading: () => <Skeleton variant="circular" width={32} height={32} sx={{ ml: 2 }} />,
+})
 
 interface HeaderProps {
   supabaseEnabled?: boolean
 }
 
 export function Header({ supabaseEnabled = true }: HeaderProps): JSX.Element {
+  const siteName = SITE_CONFIG.name
+  const isFixed = SITE_CONFIG.layout.fixedHeader
+  const { authUser } = useAuthContext()
+  const userRole = normalizeUserRole(authUser?.app_metadata?.role)
+  const navigationItems = filterNavItemsByRole(SITE_CONFIG.navigation, userRole)
+
   return (
-    <AppBar position={SITE_CONFIG.layout.fixedHeader ? 'sticky' : 'static'} elevation={2}>
+    <AppBar position={isFixed ? 'sticky' : 'static'} elevation={2}>
       <Toolbar>
         <LogoIcon />
         <Typography
@@ -27,11 +46,11 @@ export function Header({ supabaseEnabled = true }: HeaderProps): JSX.Element {
             fontWeight: 700,
             letterSpacing: '.1rem',
           }}>
-          {SITE_CONFIG.name}
+          {siteName}
         </Typography>
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          {SITE_CONFIG.navigation.map((navItem) => {
+          {navigationItems.map((navItem) => {
             return (
               <Button
                 component={Link}

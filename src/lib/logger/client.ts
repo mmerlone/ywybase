@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /**
  * Client-Side Logger
  *
@@ -19,10 +20,12 @@
  * @module logger/client
  */
 
-import { LogLevelEnum } from '@/types/logger.types'
-import type { Logger, LoggerContext, LogLevel } from '@/types/logger.types'
+import { LogLevelEnum, type Logger, type LoggerContext, type LogLevel } from '@/types/logger.types'
+import { maskEmail } from './utils'
 
-const isDevelopment = process.env.NODE_ENV !== 'production'
+const isProduction = process.env.NODE_ENV === 'production'
+const isEdgeRuntime = typeof process !== 'undefined' && process.env?.NEXT_RUNTIME === 'edge'
+const shouldEnableLogging = !isProduction || isEdgeRuntime
 
 /**
  * Create a no-op logger for production environments.
@@ -66,9 +69,15 @@ const createConsoleLogger = (baseContext: LoggerContext = {}): Logger => {
    * @internal
    */
   const log = (level: LogLevel, context: LoggerContext, message: string): void => {
-    if (!isDevelopment) return
+    if (!shouldEnableLogging) return
 
     const mergedContext = { ...baseContext, ...context }
+
+    // Automatically mask email for PII compliance
+    if (typeof mergedContext.email === 'string') {
+      mergedContext.email = maskEmail(mergedContext.email)
+    }
+
     const timestamp = new Date().toISOString()
 
     // Format error if present
@@ -77,7 +86,7 @@ const createConsoleLogger = (baseContext: LoggerContext = {}): Logger => {
         message: mergedContext.err.message,
         stack: mergedContext.err.stack,
         name: mergedContext.err.name,
-      } as unknown as Error
+      }
     }
 
     // Format the output similar to pino-pretty
@@ -129,7 +138,7 @@ const createConsoleLogger = (baseContext: LoggerContext = {}): Logger => {
  * logger.error({ err }, 'Operation failed')
  * ```
  */
-export const logger: Logger = isDevelopment ? createConsoleLogger() : createNoOpLogger()
+export const logger: Logger = shouldEnableLogging ? createConsoleLogger() : createNoOpLogger()
 
 /**
  * Create a child logger with module context.

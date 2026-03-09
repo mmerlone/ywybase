@@ -1,6 +1,6 @@
 'use client'
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient, type QueryObserverResult } from '@tanstack/react-query'
 import { useCallback, useRef, useEffect } from 'react'
 
 import { QUERY_CONFIG, QUERY_KEYS } from '@/config/query'
@@ -11,9 +11,10 @@ import {
   getProfile,
   updateProfile as updateProfileAction,
   uploadAvatar as uploadAvatarAction,
+  deleteAvatar as deleteAvatarAction,
 } from '@/lib/actions/profile'
-import type { Profile } from '@/types/database'
-import { ThemePreference } from '@/types/theme.types'
+import type { Profile, ProfileUpdate } from '@/types/profile.types'
+import { type ThemePreference } from '@/types/theme.types'
 
 /**
  * User profile management hook with React Query integration.
@@ -89,11 +90,13 @@ export function useProfile(
   isLoading: boolean
   isUpdating: boolean
   isUploadingAvatar: boolean
+  isDeletingAvatar: boolean
   error: Error | null
   updateProfile: (updates: Partial<Profile>) => Promise<Profile>
   updateThemePreference: (theme: ThemePreference) => Promise<void>
   uploadAvatar: (file: File) => Promise<string>
-  refetch: () => void
+  deleteAvatar: () => Promise<void>
+  refetch: () => Promise<QueryObserverResult<Profile | null, Error>>
 } {
   const queryClient = useQueryClient()
   const abortControllerRef = useRef<AbortController | null>(null)
@@ -115,7 +118,7 @@ export function useProfile(
     refetch,
   } = useQuery<Profile | null>({
     queryKey: QUERY_KEYS.profile(userId),
-    initialData: initialData || undefined,
+    initialData: initialData ?? undefined,
     queryFn: async () => {
       if (userId === null || userId === undefined) return null
       try {
@@ -124,22 +127,22 @@ export function useProfile(
           throw new Error(typeof result.error === 'string' ? result.error : 'Failed to load profile')
         }
         return result.data ?? null
-      } catch (error) {
+      } catch (err) {
         const errorContext = {
           userId,
           operation: 'loadProfile',
-          ...(error instanceof Error ? { stack: error.stack } : {}),
+          ...(err instanceof Error ? { stack: err.stack } : {}),
         }
 
         logger.error(
           {
-            error,
+            error: err,
             ...errorContext,
           },
           'Failed to load profile'
         )
 
-        throw error
+        throw err
       }
     },
     enabled: userId !== null && userId !== undefined,
@@ -147,12 +150,12 @@ export function useProfile(
     gcTime: QUERY_CONFIG.profile.gcTime,
     refetchOnWindowFocus: false, // Prevent refetch on window focus to avoid unnecessary reloads
     refetchOnMount: false, // Only refetch if data is stale
-    retry: (failureCount, error) => {
+    retry: (failureCount, err) => {
       if (
-        error instanceof BusinessError &&
-        error.statusCode !== null &&
-        error.statusCode !== undefined &&
-        QUERY_CONFIG.retry.nonRetryableStatusCodes.includes(error.statusCode as 400 | 401 | 403 | 404)
+        err instanceof BusinessError &&
+        err.statusCode !== null &&
+        err.statusCode !== undefined &&
+        QUERY_CONFIG.retry.nonRetryableStatusCodes.includes(err.statusCode as 400 | 401 | 403 | 404)
       ) {
         return false
       }
@@ -169,7 +172,7 @@ export function useProfile(
     MutationContext
   >({
     mutationKey: [...QUERY_KEYS.profile(userId), 'update'],
-    mutationFn: async (updates: Partial<Profile>) => {
+    mutationFn: async (updates: Partial<ProfileUpdate>) => {
       if (userId === null || userId === undefined) {
         throw new BusinessError({
           code: ErrorCodes.validation.invalidInput(),
@@ -189,13 +192,13 @@ export function useProfile(
           throw new Error(typeof result.error === 'string' ? result.error : 'Failed to update profile')
         }
         return result.data
-      } catch (error) {
+      } catch (err) {
         // Don't throw if aborted - this is expected behavior
-        if (error instanceof Error && error.name === 'AbortError') {
+        if (err instanceof Error && err.name === 'AbortError') {
           logger.debug({ userId, operation: 'updateProfile' }, 'Profile update aborted')
-          throw error
+          throw err
         }
-        throw error
+        throw err
       }
     },
     onMutate: async (updates) => {
@@ -214,22 +217,22 @@ export function useProfile(
 
       return { previousProfile }
     },
-    onError: (error, _, context) => {
+    onError: (err, _, context) => {
       const errorContext = {
         userId,
         operation: 'updateProfile',
-        ...(error instanceof BusinessError
+        ...(err instanceof BusinessError
           ? {
-              code: error.code,
-              statusCode: error.statusCode,
-              isOperational: error.isOperational,
+              code: err.code,
+              statusCode: err.statusCode,
+              isOperational: err.isOperational,
             }
           : {}),
       }
 
       logger.error(
         {
-          error,
+          error: err,
           ...errorContext,
         },
         'Profile update failed'
@@ -245,10 +248,15 @@ export function useProfile(
 
       // Invalidate queries to trigger refetch, but use refetchType: 'active' to only refetch active queries
       // This prevents unnecessary refetches that could cause component remounts
-      queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.profile(userId),
-        refetchType: 'active', // Only refetch if the query is currently being used
-      })
+      void queryClient
+        .invalidateQueries({
+          queryKey: QUERY_KEYS.profile(userId),
+          refetchType: 'active', // Only refetch if the query is currently being used
+        })
+        .catch((err) => {
+          // Log but don't throw - invalidation failures are non-critical
+          logger.warn({ err }, 'Failed to invalidate profile queries')
+        })
     },
   })
 
@@ -285,10 +293,10 @@ export function useProfile(
         return Object.assign({}, old, { avatar_url: avatarUrl })
       })
     },
-    onError: (error) => {
+    onError: (err) => {
       logger.error(
         {
-          error,
+          error: err,
           userId,
           operation: 'uploadAvatar',
         },
@@ -297,10 +305,61 @@ export function useProfile(
     },
     onSettled: () => {
       // Invalidate queries to trigger refetch, but use refetchType: 'active' to only refetch active queries
-      queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.profile(userId),
-        refetchType: 'active',
+      void queryClient
+        .invalidateQueries({
+          queryKey: QUERY_KEYS.profile(userId),
+          refetchType: 'active',
+        })
+        .catch((err) => {
+          // Log but don't throw - invalidation failures are non-critical
+          logger.warn({ err }, 'Failed to invalidate profile queries')
+        })
+    },
+  })
+
+  const { mutateAsync: deleteAvatarMutation, isPending: isDeletingAvatar } = useMutation<void, Error, void, undefined>({
+    mutationKey: [...QUERY_KEYS.profile(userId), 'deleteAvatar'],
+    mutationFn: async () => {
+      if (userId === null || userId === undefined) {
+        throw new BusinessError({
+          code: ErrorCodes.validation.invalidInput(),
+          message: 'User ID is required for avatar deletion',
+          statusCode: 400,
+          context: { operation: 'deleteAvatar' },
+        })
+      }
+
+      const result = await deleteAvatarAction(userId)
+      if (!result.success) {
+        throw new Error(typeof result.error === 'string' ? result.error : 'Failed to delete avatar')
+      }
+    },
+    onSuccess: () => {
+      queryClient.setQueryData(QUERY_KEYS.profile(userId), (old: Profile | null) => {
+        if (!old) return old
+        return Object.assign({}, old, { avatar_url: null })
       })
+    },
+    onError: (err) => {
+      logger.error(
+        {
+          error: err,
+          userId,
+          operation: 'deleteAvatar',
+        },
+        'Avatar deletion failed'
+      )
+    },
+    onSettled: () => {
+      void queryClient
+        .invalidateQueries({
+          queryKey: QUERY_KEYS.profile(userId),
+          refetchType: 'active',
+        })
+        .catch((err) => {
+          // Log but don't throw - invalidation failures are non-critical
+          logger.warn({ userId, error: err, operation: 'deleteAvatar' }, 'Failed to invalidate profile queries')
+        })
     },
   })
 
@@ -328,21 +387,25 @@ export function useProfile(
 
   return {
     /** The user's profile data, or null if not loaded/found */
-    profile: profile || null,
+    profile: profile ?? null,
     /** True if the initial profile load is in progress (not background refetching) */
     isLoading: isLoading,
     /** True if a profile update mutation is in progress */
     isUpdating,
     /** True if an avatar upload is in progress */
     isUploadingAvatar,
+    /** True if an avatar deletion is in progress */
+    isDeletingAvatar,
     /** Any error that occurred during fetching or updating, or null if no error */
-    error: error || null,
+    error: error ?? null,
     /** Function to update profile fields with optimistic updates */
     updateProfile,
     /** Function to update the user's theme preference */
     updateThemePreference,
     /** Function to upload avatar image */
     uploadAvatar,
+    /** Function to delete avatar from storage and profile */
+    deleteAvatar: deleteAvatarMutation,
     /** Function to manually refetch the profile data */
     refetch,
   }

@@ -1,43 +1,27 @@
 # YwyBase Project Patterns & Rules
 
+This file consolidates project patterns and rules. For the complete source of truth, see **[AGENTS.md](../AGENTS.md)**.
+
 ## Core Architecture
 
 ### Framework & Technology Stack
 
-- **Next.js 15.5.6** with App Router
-- **React 18.3.1** with Server Components
+- **Next.js 15.5.x** with App Router
+- **React 18.3.x** with Server Components
 - **TypeScript 5.x** in strict mode
-- **MUI 7.3.4** with Pigment CSS for UI components
-- **Tailwind CSS 4.1.14** for utility-first styling
+- **MUI 7.3.x** with Pigment CSS for UI components
+- **Tailwind CSS 4.1.x** for utility-first styling
 - **Supabase** for authentication and database
-- **React Query 5.90.11** for server state management
-- **React Hook Form 7.45.4** with Zod validation
-- **Pino 10.0.0** for logging
+- **React Query 5.90.x** for server state management
+- **React Hook Form 7.45.x** with Zod validation
+- **Pino 10.0.x** for logging
 - **Sentry 10** for error tracking
-
-### Package Management
-
-- **pnpm** is the ONLY package manager to use
-- Never use npm or yarn for any operations
-- All scripts use `pnpm run` or `pnpm` commands
 
 ## Project Structure Rules
 
 ### Directory Organization
 
-```
-/app                    # Next.js App Router (all routes)
-/src                   # Source code
-  /components         # Reusable UI components
-  /contexts           # React contexts
-  /hooks              # Custom React hooks
-  /lib                # Utilities and services
-  /types              # TypeScript definitions
-  /config             # Configuration files
-/scripts              # Build and utility scripts
-/public               # Static assets
-/supabase             # Database migrations and config
-```
+Follow `docs/structure.md` as canonical reference.
 
 ### File Naming Conventions
 
@@ -46,7 +30,6 @@
 - **Utilities**: `camelCase.ts` (e.g., `formatDate.ts`)
 - **Routes**: `kebab-case` directories (e.g., `user-profile/`)
 - **Types**: `PascalCase.ts` (e.g., `UserType.ts`)
-- **Config**: `camelCase.ts` (e.g., `siteConfig.ts`)
 
 ### Import Order & Aliases
 
@@ -140,7 +123,7 @@ const { data, error, isLoading } = useQuery({
 
 ```typescript
 // In Server Components and API routes
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from '@/lib/supabase/server'
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY)
 ```
 
@@ -148,7 +131,7 @@ const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANO
 
 ```typescript
 // In Client Components
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { createClientComponentClient } from '@/lib/supabase/auth/client'
 const supabase = createClientComponentClient()
 ```
 
@@ -280,17 +263,7 @@ return <h1>{t('welcome.title')}</h1>
 
 ### Development
 
-- `pnpm dev` for development server
-- Port 3000 by default
-- Hot reload enabled
-- Pino pretty logging
-
-### Production
-
-- `pnpm build` for production build
-- Standalone output mode
-- Optimized bundles
-- Environment-specific configurations
+### Development
 
 ## Git Workflow
 
@@ -363,3 +336,7 @@ return <h1>{t('welcome.title')}</h1>
 - Standalone output
 - TypeScript build errors not ignored
 - MUI transpilation configured
+
+---
+
+**Note**: For complete patterns and rules, see **[AGENTS.md](../AGENTS.md)** as the source of truth.

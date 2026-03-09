@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+import { type NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
 class SentryExampleAPIError extends Error {

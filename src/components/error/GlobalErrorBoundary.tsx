@@ -2,8 +2,7 @@
 
 import { ErrorOutline as ErrorIcon, Home as HomeIcon, Refresh as RefreshIcon } from '@mui/icons-material'
 import { Alert, Box, Button, Container, Paper, Typography } from '@mui/material'
-import type React from 'react'
-import { Component, type ReactNode } from 'react'
+import { Component, type ReactNode, type ErrorInfo } from 'react'
 
 import { ErrorCodes } from '@/lib/error/codes'
 import { logger } from '@/lib/logger/client'
@@ -17,7 +16,7 @@ interface Props {
 interface State {
   hasError: boolean
   error?: Error | AppError
-  errorInfo?: React.ErrorInfo
+  errorInfo?: ErrorInfo
 }
 
 export class GlobalErrorBoundary extends Component<Props, State> {
@@ -30,7 +29,7 @@ export class GlobalErrorBoundary extends Component<Props, State> {
     return { hasError: true, error }
   }
 
-  override componentDidCatch(error: Error | AppError, errorInfo: React.ErrorInfo): void {
+  override componentDidCatch(error: Error | AppError, errorInfo: ErrorInfo): void {
     // Enhanced logging with structured error information
     // Create a base error context with common error information
     const errorContext = {
@@ -41,7 +40,7 @@ export class GlobalErrorBoundary extends Component<Props, State> {
 
     // Add AppError-specific properties if this is an AppError
     if (error !== null && error !== undefined && 'code' in error) {
-      const appError = error as AppError
+      const appError = error
       Object.assign(errorContext, {
         errorCode: appError.code,
         errorContext: appError.context,
@@ -70,16 +69,20 @@ export class GlobalErrorBoundary extends Component<Props, State> {
 
     // Capture error to Sentry for issue tracking
     if (typeof window !== 'undefined') {
-      import('@sentry/nextjs').then((Sentry) => {
-        Sentry.withScope((scope) => {
-          scope.setTag('errorBoundary', true)
-          scope.setTag('component', 'GlobalErrorBoundary')
-          scope.setContext('componentStack', {
-            componentStack: errorInfo.componentStack,
+      import('@sentry/nextjs')
+        .then((Sentry) => {
+          Sentry.withScope((scope) => {
+            scope.setTag('errorBoundary', true)
+            scope.setTag('component', 'GlobalErrorBoundary')
+            scope.setContext('componentStack', {
+              componentStack: errorInfo.componentStack,
+            })
+            Sentry.captureException(error)
           })
-          Sentry.captureException(error)
         })
-      })
+        .catch((err) => {
+          logger.error({ err }, 'Failed to load Sentry in Error Boundary')
+        })
     }
 
     // Log error to monitoring service in production

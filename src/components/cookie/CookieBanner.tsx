@@ -20,10 +20,10 @@ import {
   Typography,
 } from '@mui/material'
 import Link from 'next/link'
-import { ChangeEvent, useCallback, useState } from 'react'
+import { type ChangeEvent, useCallback, useState } from 'react'
 
 import { useCookieConsent } from '@/hooks/useCookieConsent'
-import { CookiePreferences } from '@/types/cookie.types'
+import { type CookiePreferences } from '@/types/cookie.types'
 
 export function CookieBanner(): JSX.Element | null {
   const [showDetails, setShowDetails] = useState(false)
@@ -37,7 +37,7 @@ export function CookieBanner(): JSX.Element | null {
   }))
 
   const handleAcceptAll = useCallback(() => {
-    acceptAll()
+    acceptAll().catch(() => {})
   }, [acceptAll])
 
   const handleAcceptSelected = useCallback(() => {
@@ -45,11 +45,11 @@ export function CookieBanner(): JSX.Element | null {
       analytics: localPreferences.analytics,
       marketing: localPreferences.marketing,
       functional: localPreferences.functional,
-    })
+    }).catch(() => {})
   }, [acceptSelected, localPreferences])
 
   const handleDecline = useCallback(() => {
-    decline()
+    decline().catch(() => {})
   }, [decline])
 
   const handlePreferenceChange = useCallback(

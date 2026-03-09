@@ -15,11 +15,12 @@
  * @module error/middlewares/server-actions
  */
 
-import type { ZodIssue } from 'zod'
+import { type z } from 'zod'
 
 import type { BaseErrorContext, ServerActionContext, AuthResponse } from '@/types/error.types'
 
 import { handleServerError as handleError } from '@/lib/error/server'
+import { isDynamicServerError } from '@/lib/error/core/error.utils'
 import { buildLogger } from '@/lib/logger/server'
 
 const logger = buildLogger('server-actions-middleware')
@@ -30,7 +31,7 @@ const logger = buildLogger('server-actions-middleware')
  */
 interface ZodValidationError {
   /** Array of validation issues from Zod */
-  issues: ZodIssue[]
+  issues: z.core.$ZodIssue[]
 }
 
 /**
@@ -89,14 +90,13 @@ export function withServerActionErrorHandling<Args extends readonly unknown[], T
     const { operation, context = {}, revalidatePaths, successMessage } = options
 
     try {
-      logger.info({ operation, argsCount: args.length }, `Starting server action: ${operation}`)
+      logger.debug({ operation, argsCount: args.length }, `Starting server action: ${operation}`)
 
-      // Execute the original handler
       const result = await handler(...args)
 
       // Log successful completion
       const duration = Date.now() - startTime
-      logger.info(
+      logger.debug(
         {
           operation,
           duration,
@@ -124,6 +124,12 @@ export function withServerActionErrorHandling<Args extends readonly unknown[], T
 
       return result
     } catch (error) {
+      // Re-throw Next.js dynamic server errors - they're control flow for static/dynamic detection
+      // Next.js catches these to automatically opt routes into dynamic rendering
+      if (isDynamicServerError(error)) {
+        throw error
+      }
+
       // Handle unexpected errors with structured error handling
       const duration = Date.now() - startTime
 
@@ -257,7 +263,7 @@ export function handleServerActionValidation<T>(
     const validationError = handleError(validation.error, {
       ...context,
       // Validation details are handled by ValidationErrorContext
-      validationErrors: validation.error?.issues || [],
+      validationErrors: validation.error?.issues ?? [],
     })
 
     // Serialize AppError to plain object for client
@@ -319,7 +325,7 @@ export async function batchServerActions<T = unknown>(
   let successCount = 0
   let errorCount = 0
 
-  logger.info({ operation, operationsCount: operations.length }, `Starting batch operation: ${operation}`)
+  logger.debug({ operation, operationsCount: operations.length }, `Starting batch operation: ${operation}`)
 
   for (const serverAction of operations) {
     try {
@@ -351,7 +357,7 @@ export async function batchServerActions<T = unknown>(
   const hasErrors = errorCount > 0
   const duration = Date.now()
 
-  logger.info(
+  logger.debug(
     {
       operation,
       totalOperations: operations.length,

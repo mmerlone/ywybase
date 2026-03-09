@@ -5,6 +5,8 @@
  * Routes not defined in ROUTES will be implicitly public.
  */
 
+import { UserRoleEnum, type UserRole } from '@/types/admin.types'
+
 // Route interfaces
 interface BaseRoute {
   path: string
@@ -20,10 +22,53 @@ export interface RouteConfig extends BaseRoute {
   protected?: boolean
   requireVerifiedEmail?: boolean
   redirectIfAuthenticated?: string
-  roles?: readonly string[]
+  roles?: readonly UserRole[]
 }
 
+/**
+ * Minimal link shape for navigation items that need role-based filtering.
+ */
+export interface RouteLinkItem {
+  /** Path or URL for the navigation destination. */
+  link: string
+}
+
+/**
+ * Centralized route configuration object.
+ *
+ * Routes not defined in this object are public by default and do not require authentication.
+ * Each route can specify protection requirements, roles, and redirection behavior.
+ *
+ * @example
+ * ```typescript
+ * // Public route example (routes omitted here are public by default)
+ * HOME: {
+ *   path: '/',
+ *   title: 'Home',
+ *   public: true,
+ * },
+ * ```
+ */
 export const ROUTES = {
+  // Public routes
+  HOME: {
+    path: '/',
+    title: 'Home',
+    public: true,
+  },
+  ABOUT: {
+    path: '/about',
+    title: 'About',
+    public: true,
+  },
+
+  // Demo routes
+  DEMOS: {
+    path: '/demos',
+    title: 'Demos',
+    public: true,
+  },
+
   // Auth routes
   AUTH: {
     path: '/auth',
@@ -38,14 +83,14 @@ export const ROUTES = {
     title: 'Profile',
     protected: true,
     requireVerifiedEmail: false,
-    roles: ['user'] as readonly string[],
+    roles: [UserRoleEnum.USER] as readonly UserRole[],
   },
   ACCOUNT: {
     path: '/account',
     title: 'Account',
     protected: true,
     requireVerifiedEmail: false,
-    roles: ['user'] as readonly string[],
+    roles: [UserRoleEnum.USER] as readonly UserRole[],
   },
   // Future implementation
   DASHBOARD: {
@@ -53,14 +98,21 @@ export const ROUTES = {
     title: 'Dashboard',
     protected: true,
     requireVerifiedEmail: false,
-    roles: ['user'] as readonly string[],
+    roles: [UserRoleEnum.ADMIN, UserRoleEnum.ROOT] as readonly UserRole[],
+  },
+  DASHBOARD_USERS: {
+    path: '/dashboard/users',
+    title: 'User Management',
+    protected: true,
+    requireVerifiedEmail: false,
+    roles: [UserRoleEnum.ADMIN, UserRoleEnum.ROOT] as readonly UserRole[],
   },
   SETTINGS: {
     path: '/settings',
     title: 'Settings',
     protected: true,
     requireVerifiedEmail: false,
-    roles: ['user'] as readonly string[],
+    roles: [UserRoleEnum.USER] as readonly UserRole[],
   },
 
   // Future implementation - Admin routes
@@ -69,7 +121,7 @@ export const ROUTES = {
     title: 'Admin',
     protected: true,
     requireVerifiedEmail: true,
-    roles: ['admin'] as readonly string[],
+    roles: [UserRoleEnum.ADMIN, UserRoleEnum.ROOT] as readonly UserRole[],
   },
 } satisfies Record<string, RouteConfig>
 
@@ -99,10 +151,36 @@ export const getRouteByKey = (key: RouteKey): RouteConfig => {
 }
 
 export const getRouteByPath = (path: string): RouteConfig | null => {
-  const route = (Object.values(ROUTES) as RouteConfig[]).find(
-    (route) => path === route.path || path.startsWith(route.path + '/')
-  )
-  return route || null
+  const route = (Object.values(ROUTES) as RouteConfig[]).find((r) => path === r.path || path.startsWith(r.path + '/'))
+  return route ?? null
+}
+
+/**
+ * Filter navigation items based on role requirements from the route config.
+ *
+ * @param items - Navigation items containing a link destination.
+ * @param role - Normalized user role enum value.
+ * @returns Filtered navigation items visible to the provided role.
+ */
+export const filterNavItemsByRole = <T extends RouteLinkItem>(items: readonly T[], role: UserRole): T[] => {
+  return items.filter((item) => {
+    if (!item.link.startsWith('/')) return true
+
+    const routeConfig = getRouteByPath(item.link)
+    const roles = routeConfig?.roles ?? []
+
+    // Guest role: only show public/unprotected routes
+    if (role === UserRoleEnum.GUEST) {
+      // If route is public or has no roles, allow
+      if (routeConfig?.public === true || roles.length === 0) return true
+      return false
+    }
+
+    if (roles.length === 0) return true
+    if (role === UserRoleEnum.ROOT) return true
+
+    return roles.includes(role)
+  })
 }
 
 // Arrays of routes by type - using simple filtering
@@ -118,4 +196,6 @@ export const VERIFIED_EMAIL_REQUIRED_ROUTES = ALL_ROUTES.filter(
 export const PROTECTED_PATHS = PROTECTED_ROUTES.map((route) => route.path)
 export const AUTH_PATHS = AUTH_ROUTES.map((route) => route.path)
 export const VERIFIED_EMAIL_REQUIRED_PATHS = VERIFIED_EMAIL_REQUIRED_ROUTES.map((route) => route.path)
-export const ADMIN_PATHS = ALL_ROUTES.filter((route) => route.roles?.includes('admin')).map((route) => route.path)
+export const ADMIN_PATHS = ALL_ROUTES.filter(
+  (route) => (route.roles?.includes(UserRoleEnum.ADMIN) ?? false) || (route.roles?.includes(UserRoleEnum.ROOT) ?? false)
+).map((route) => route.path)

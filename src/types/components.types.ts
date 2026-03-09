@@ -11,37 +11,37 @@ import type React from 'react'
  * Standard component size options.
  * Used to provide consistent sizing across different UI components.
  */
-export enum ComponentSizeEnum {
+export const ComponentSizeEnum = {
   /** Small size variant */
-  SM = 'sm',
+  SM: 'sm',
   /** Medium size variant (default) */
-  MD = 'md',
+  MD: 'md',
   /** Large size variant */
-  LG = 'lg',
-}
+  LG: 'lg',
+} as const
 
 /**
  * Type representing component size values.
  * Derived from ComponentSizeEnum for type safety.
  */
-export type ComponentSize = `${ComponentSizeEnum}`
+export type ComponentSize = (typeof ComponentSizeEnum)[keyof typeof ComponentSizeEnum]
 
 /**
  * Standard component visual variants.
  * Used to provide consistent styling patterns across different UI components.
  */
-export enum ComponentVariantsEnum {
+export const ComponentVariantsEnum = {
   /** Primary variant - typically used for main actions */
-  PRIMARY = 'primary',
+  PRIMARY: 'primary',
   /** Secondary variant - typically used for supporting actions */
-  SECONDARY = 'secondary',
-}
+  SECONDARY: 'secondary',
+} as const
 
 /**
  * Type representing component variant values.
  * Derived from ComponentVariantsEnum for type safety.
  */
-export type ComponentVariant = `${ComponentVariantsEnum}`
+export type ComponentVariant = (typeof ComponentVariantsEnum)[keyof typeof ComponentVariantsEnum]
 
 /**
  * Configuration for a toggle button or radio button option with a label.

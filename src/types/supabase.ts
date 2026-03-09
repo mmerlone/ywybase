@@ -1,7 +1,7 @@
 /**
  * Auto-generated file - DO NOT EDIT
  *
- * Generated: 2026-01-09T22:04:30.618Z
+ * Generated: 2026-02-27T14:40:38.794Z
  * Project ID: jbhkkxnssbivgznxdjyt
  *
  * To regenerate these types, run:
@@ -24,28 +24,32 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          banned_until: string | null
           bio: string | null
           birth_date: string | null
           city: string | null
           company: string | null
+          confirmed_at: string | null
           country_code: string | null
+          created_at: string | null
           display_name: string
           email: string
-          email_verified: boolean | null
           first_name: string | null
           gender: string | null
           id: string
           is_onboarded: boolean | null
           job_title: string | null
-          last_active_at: string | null
           last_name: string | null
+          last_sign_in_at: string | null
           locale: string | null
           notification_preferences: Json | null
           phone: string | null
-          phone_verified: boolean | null
           privacy_settings: Json | null
+          providers: string[] | null
+          role: Database['public']['Enums']['user_role']
           social_links: Json | null
           state: string | null
+          status: string
           theme: string
           timezone: string | null
           updated_at: string
@@ -53,28 +57,32 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          banned_until?: string | null
           bio?: string | null
           birth_date?: string | null
           city?: string | null
           company?: string | null
+          confirmed_at?: string | null
           country_code?: string | null
+          created_at?: string | null
           display_name: string
           email: string
-          email_verified?: boolean | null
           first_name?: string | null
           gender?: string | null
           id: string
           is_onboarded?: boolean | null
           job_title?: string | null
-          last_active_at?: string | null
           last_name?: string | null
+          last_sign_in_at?: string | null
           locale?: string | null
           notification_preferences?: Json | null
           phone?: string | null
-          phone_verified?: boolean | null
           privacy_settings?: Json | null
+          providers?: string[] | null
+          role?: Database['public']['Enums']['user_role']
           social_links?: Json | null
           state?: string | null
+          status?: string
           theme?: string
           timezone?: string | null
           updated_at?: string
@@ -82,28 +90,32 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          banned_until?: string | null
           bio?: string | null
           birth_date?: string | null
           city?: string | null
           company?: string | null
+          confirmed_at?: string | null
           country_code?: string | null
+          created_at?: string | null
           display_name?: string
           email?: string
-          email_verified?: boolean | null
           first_name?: string | null
           gender?: string | null
           id?: string
           is_onboarded?: boolean | null
           job_title?: string | null
-          last_active_at?: string | null
           last_name?: string | null
+          last_sign_in_at?: string | null
           locale?: string | null
           notification_preferences?: Json | null
           phone?: string | null
-          phone_verified?: boolean | null
           privacy_settings?: Json | null
+          providers?: string[] | null
+          role?: Database['public']['Enums']['user_role']
           social_links?: Json | null
           state?: string | null
+          status?: string
           theme?: string
           timezone?: string | null
           updated_at?: string
@@ -116,13 +128,59 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      fix_sync_issues: {
+        Args: {
+          dry_run?: boolean
+          fix_auth_to_profile?: boolean
+          fix_profile_to_auth?: boolean
+          user_id_param?: string
+        }
+        Returns: {
+          email: string
+          fixes_applied: Json
+          status: string
+          user_id: string
+        }[]
+      }
+      get_sync_summary: {
+        Args: never
+        Returns: {
+          in_sync_count: number
+          most_common_mismatches: Json
+          out_of_sync_count: number
+          sync_percentage: number
+          total_users: number
+          users_needing_attention: number
+        }[]
+      }
       is_avatar_owner: {
         Args: { object_name: string; user_id: string }
         Returns: boolean
       }
+      report_profile_auth_sync: {
+        Args: never
+        Returns: {
+          auth_users_updated_at: string
+          details: Json
+          email: string
+          out_of_sync_fields: Json
+          profiles_updated_at: string
+          sync_status: string
+          user_id: string
+        }[]
+      }
+      sync_auth_to_profiles: { Args: never; Returns: undefined }
+      sync_profiles_to_auth: { Args: never; Returns: undefined }
+      update_user_role: {
+        Args: {
+          new_role: Database['public']['Enums']['user_role']
+          target_user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      user_role: 'user' | 'moderator' | 'admin' | 'root'
     }
     CompositeTypes: {
       [_ in never]: never
@@ -241,6 +299,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      user_role: ['user', 'moderator', 'admin', 'root'],
+    },
   },
 } as const

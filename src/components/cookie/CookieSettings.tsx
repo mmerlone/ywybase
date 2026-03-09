@@ -6,7 +6,7 @@ import React, { Suspense, useRef, useState } from 'react'
 
 import { useSnackbar } from '@/contexts/SnackbarContext'
 import { useCookieConsent } from '@/hooks/useCookieConsent'
-import { CookiePreferences } from '@/types/cookie.types'
+import { type CookiePreferences } from '@/types/cookie.types'
 
 function CookieSettingsContent(): JSX.Element {
   const { hasConsent, preferences, acceptSelected, decline, isLoading } = useCookieConsent()
@@ -51,7 +51,7 @@ function CookieSettingsContent(): JSX.Element {
 
   const handleResetConsent = (): void => {
     try {
-      decline()
+      decline().catch(() => {})
       // Reset local preferences to default values (all false except necessary)
       setLocalPreferences({
         necessary: true,
@@ -189,7 +189,10 @@ function CookieSettingsContent(): JSX.Element {
       </Box>
 
       <Typography variant="caption" color="text.secondary" sx={{ mt: 2, display: 'block' }}>
-        Changes will take effect immediately. You may need to refresh the page to see some changes.
+        Changes will take effect immediately. You may need to refresh the page to see some changes. Note that cookie
+        preferences are stored per browser, so you&apos;ll need to set them again if you use a different browser or
+        clear your cookies. Cookies are small files stored on your device that help websites remember your preferences
+        using industry-standard protocols to improve your experience.
       </Typography>
     </>
   )

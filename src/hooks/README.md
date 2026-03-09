@@ -4,13 +4,19 @@ This directory contains custom React hooks that provide reusable stateful logic 
 
 ## 🏗️ **Available Hooks**
 
-### Authentication Hooks
+### Authentication Hooks (Internal)
 
-- `useAuth` - Authentication state and methods (Compatibility layer)
+> **Note:** These hooks are internal implementation details used by `AuthProvider`.
+> For authentication in your components, use `useAuthContext` from `@/components/providers/AuthProvider`.
+
+- `useAuth` - Core auth state composition (internal, used by AuthProvider)
+- `useAuthState` - Auth state management (internal)
+- `useAuthActions` - Auth operations (internal)
+- `useAuthError` - Error utilities (internal)
+
+### Public Hooks
+
 - `useAuthForm` - Form handling for auth flows with React Hook Form and Zod
-
-### UI/UX Hooks
-
 - `useCookieConsent` - GDPR cookie management and preferences
 - `useIsMobile` - Viewport detection for responsive design
 - `useProfile` - User profile data fetching and updates (via React Query)
@@ -19,11 +25,12 @@ This directory contains custom React hooks that provide reusable stateful logic 
 ## 🚀 **Basic Usage**
 
 ```typescript
-import { useAuth } from '@/hooks/useAuth'
+// For auth operations, use the context hook from providers
+import { useAuthContext, useCurrentUser } from '@/components/providers/AuthProvider'
 import { useProfile } from '@/hooks/useProfile'
 
 function UserProfile({ userId }: { userId: string }) {
-  const { authUser } = useAuth()
+  const { user } = useCurrentUser()
   const { profile, isLoading } = useProfile(userId)
 
   if (isLoading) return <div>Loading...</div>
@@ -64,23 +71,24 @@ export function useFeature(initialValue = '') {
 
 ## 📚 **Hook Guides**
 
-### **useAuth** (`useAuth.ts`)
+### **useAuthContext** (`@/components/providers`)
 
-Manages authentication state and provides auth operations via the client-side `authService`.
+Access authentication state and operations in your components.
 
-**What it does**: Handles user sessions, login/logout, and auth state changes.
+**What it does**: Provides access to the current auth context, including user state and auth operations.
 
 **How to use**:
 
 ```typescript
-const { authUser, signIn, signOut, isLoading, error } = useAuth()
+import { useAuthContext } from '@/components/providers/AuthProvider'
 
-// Login user
-await signIn('user@example.com', 'password')
+function MyComponent() {
+  const { user, signIn, signOut, isLoading } = useAuthContext()
 
-// Check authentication status
-if (authUser) {
-  // User is authenticated
+  if (isLoading) return <div>Loading...</div>
+  if (!user) return <button onClick={signIn}>Sign In</button>
+
+  return <button onClick={signOut}>Sign Out</button>
 }
 ```
 

@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /**
  * Isomorphic logger for utilities that run in both client and server environments
  *
@@ -56,37 +57,59 @@ export function buildIsomorphicLogger(moduleName: string): Logger {
   let loggerPromise: Promise<Logger> | undefined
 
   const ensureLogger = (): Promise<Logger> => {
-    if (!loggerPromise) {
-      loggerPromise = getLogger()
-    }
+    loggerPromise ??= getLogger()
     return loggerPromise
+  }
+
+  /**
+   * Handles logger initialization errors with environment-specific reporting
+   */
+  const handleLoggerError = (error: unknown, logLevel: string): void => {
+    if (typeof window === 'undefined') {
+      // Server environment - log the error with context
+      console.error(`[${moduleName}] Logger initialization failed for ${logLevel}:`, error)
+    }
+    // Client environment - silent fail to avoid breaking UI
   }
 
   return {
     trace: (context, message): void => {
-      void ensureLogger().then((logger) => logger.trace(context, message))
+      void ensureLogger()
+        .then((logger) => logger.trace(context, message))
+        .catch((error) => handleLoggerError(error, 'trace'))
     },
     debug: (context, message): void => {
-      void ensureLogger().then((logger) => logger.debug(context, message))
+      void ensureLogger()
+        .then((logger) => logger.debug(context, message))
+        .catch((error) => handleLoggerError(error, 'debug'))
     },
     info: (context, message): void => {
-      void ensureLogger().then((logger) => logger.info(context, message))
+      void ensureLogger()
+        .then((logger) => logger.info(context, message))
+        .catch((error) => handleLoggerError(error, 'info'))
     },
     warn: (context, message): void => {
-      void ensureLogger().then((logger) => logger.warn(context, message))
+      void ensureLogger()
+        .then((logger) => logger.warn(context, message))
+        .catch((error) => handleLoggerError(error, 'warn'))
     },
     error: (context, message): void => {
-      void ensureLogger().then((logger) => logger.error(context, message))
+      void ensureLogger()
+        .then((logger) => logger.error(context, message))
+        .catch((error) => handleLoggerError(error, 'error'))
     },
     fatal: (context, message): void => {
-      void ensureLogger().then((logger) => logger.fatal(context, message))
+      void ensureLogger()
+        .then((logger) => logger.fatal(context, message))
+        .catch((error) => handleLoggerError(error, 'fatal'))
     },
     child: (context): Logger => {
-      // For child loggers, we need to wait for initialization
       const childLogger = buildIsomorphicLogger(moduleName)
-      void ensureLogger().then((logger) => {
-        cachedLogger = logger.child(context)
-      })
+      void ensureLogger()
+        .then((logger) => {
+          cachedLogger = logger.child(context)
+        })
+        .catch((error) => handleLoggerError(error, 'child'))
       return childLogger
     },
   }

@@ -1,7 +1,6 @@
-import i18n from 'i18next'
-import type { InitOptions, i18n as I18nInstance } from 'i18next'
+import i18n, { type InitOptions, type i18n as I18nInstance } from 'i18next'
 
-import { defaultLanguage, Language } from './settings'
+import { defaultLanguage, type Language } from './settings'
 
 // Server-side initialization only - no React dependencies
 const initServerI18n = async (lng: Language = defaultLanguage): Promise<I18nInstance> => {

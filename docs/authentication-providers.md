@@ -75,3 +75,8 @@ YwyBase supports multiple authentication providers via Supabase. This guide expl
 - The callback/redirect URI for each provider is shown in your Supabase project's Auth > Providers page.
 - After enabling a provider, test the login flow in your app.
 - For more details, see the [Supabase Social Auth Docs](https://supabase.com/docs/guides/auth/social-login).
+
+---
+
+**Last Updated**: March 6, 2026
+**Version**: 1.0.0

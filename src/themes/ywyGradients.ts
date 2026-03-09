@@ -1,4 +1,4 @@
-import { ThemeOptions } from '@mui/material/styles'
+import { type ThemeOptions } from '@mui/material/styles'
 
 /**
  * ywyGradients: ThemeOptions extension for global CSS variable gradients and text shadows.

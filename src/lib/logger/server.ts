@@ -25,8 +25,9 @@
  * @module logger/server
  */
 
-import pino, { LoggerOptions } from 'pino'
+import pino, { type LoggerOptions } from 'pino'
 import type { Logger } from '@/types/logger.types'
+import { maskEmail } from './utils'
 
 const isProduction = process.env.NODE_ENV === 'production'
 
@@ -40,7 +41,7 @@ const options: LoggerOptions = {
   // Global context - appears in every log
   base: {
     app: 'ywybase',
-    version: process.env.NEXT_PUBLIC_APP_VERSION || '1.0.0',
+    version: process.env.NEXT_PUBLIC_APP_VERSION ?? '1.0.0',
     env: process.env.NODE_ENV,
   },
 
@@ -49,6 +50,7 @@ const options: LoggerOptions = {
     err: pino.stdSerializers.err, // Stack traces, error details
     req: pino.stdSerializers.req, // Clean request data
     res: pino.stdSerializers.res, // Clean response data
+    email: (val: unknown) => (typeof val === 'string' ? maskEmail(val) : val),
   },
 
   // PII redaction - security & compliance
@@ -87,6 +89,7 @@ const options: LoggerOptions = {
 
 // Configure transports based on environment
 if (isProduction) {
+  // eslint-disable-next-line no-console
   console.log('✅ Production logging: JSON to stdout with serializers and redaction')
 } else {
   // Development: Pretty console output

@@ -5,8 +5,9 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
 import moment from 'moment-timezone'
 import { Controller, useFormContext } from 'react-hook-form'
 
-import { FormSection, FormFieldSkeleton } from '@/components/forms'
-import { ProfileFormValues } from '@/lib/validators'
+import { FormSection } from '@/components/forms/FormSection'
+import { FormFieldSkeleton } from '@/components/forms/FormFieldSkeleton'
+import { type ProfileFormValues, PROFILE_FIELD_LIMITS } from '@/lib/validators/profile'
 
 interface PersonalInfoProps {
   errors: Partial<Record<string, { message?: string }>>
@@ -35,10 +36,10 @@ export function PersonalInfo({ errors, disabled = false, isLoading = false }: Pe
                   fullWidth
                   label="First Name"
                   variant="outlined"
-                  error={!!errors.first_name}
+                  error={Boolean(errors.first_name)}
                   helperText={errors.first_name?.message}
                   disabled={disabled}
-                  value={(field.value ?? '') as string}
+                  value={field.value ?? ''}
                 />
               )}
             />
@@ -59,10 +60,10 @@ export function PersonalInfo({ errors, disabled = false, isLoading = false }: Pe
                   fullWidth
                   label="Last Name"
                   variant="outlined"
-                  error={!!errors.last_name}
+                  error={Boolean(errors.last_name)}
                   helperText={errors.last_name?.message}
                   disabled={disabled}
-                  value={(field.value ?? '') as string}
+                  value={field.value ?? ''}
                 />
               )}
             />
@@ -84,7 +85,7 @@ export function PersonalInfo({ errors, disabled = false, isLoading = false }: Pe
                   fullWidth
                   label="Gender"
                   variant="outlined"
-                  error={!!errors.gender}
+                  error={Boolean(errors.gender)}
                   helperText={errors.gender?.message}
                   disabled={disabled}
                   value={(value ?? '') as string}
@@ -122,7 +123,7 @@ export function PersonalInfo({ errors, disabled = false, isLoading = false }: Pe
                     slotProps={{
                       textField: {
                         fullWidth: true,
-                        error: !!errors.birth_date,
+                        error: Boolean(errors.birth_date),
                         helperText: errors.birth_date?.message,
                         disabled,
                       },
@@ -149,10 +150,10 @@ export function PersonalInfo({ errors, disabled = false, isLoading = false }: Pe
                   fullWidth
                   label="Language"
                   variant="outlined"
-                  error={!!errors.locale}
+                  error={Boolean(errors.locale)}
                   helperText={errors.locale?.message}
                   disabled={disabled}
-                  value={(value ?? '') as string}
+                  value={value ?? ''}
                   onChange={(e) => onChange((e.target as HTMLInputElement).value || null)}>
                   <MenuItem value="en">English</MenuItem>
                   <MenuItem value="es">Español</MenuItem>
@@ -178,14 +179,14 @@ export function PersonalInfo({ errors, disabled = false, isLoading = false }: Pe
                   {...field}
                   fullWidth
                   multiline
-                  rows={4}
+                  rows={10}
                   label="Bio"
                   variant="outlined"
-                  error={!!errors.bio}
+                  error={Boolean(errors.bio)}
                   helperText={errors.bio?.message ?? 'Tell us about yourself'}
                   disabled={disabled}
-                  slotProps={{ htmlInput: { maxLength: 500 } }}
-                  value={(field.value ?? '') as string}
+                  slotProps={{ htmlInput: { maxLength: PROFILE_FIELD_LIMITS.BIO_MAX_LENGTH } }}
+                  value={field.value ?? ''}
                 />
               )}
             />

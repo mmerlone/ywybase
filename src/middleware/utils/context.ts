@@ -1,6 +1,6 @@
-import { NextRequest } from 'next/server'
+import { type NextRequest } from 'next/server'
 import { buildLogger } from '@/lib/logger/client'
-import { RequestContext } from './types'
+import { type RequestContext } from './types'
 
 function generateRequestId(): string {
   try {
@@ -15,7 +15,7 @@ function generateRequestId(): string {
 }
 
 export function createContext(request: NextRequest): RequestContext {
-  const requestId = request.headers.get('x-request-id') || generateRequestId()
+  const requestId = request.headers.get('x-request-id') ?? generateRequestId()
 
   return {
     requestId,

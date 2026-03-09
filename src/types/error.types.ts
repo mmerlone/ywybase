@@ -4,124 +4,132 @@
  * Error domains for structured error codes.
  * Defines the high-level categories of errors.
  */
-export enum ErrorDomainEnum {
-  AUTH = 'AUTH',
-  VALIDATION = 'VALIDATION',
-  DATABASE = 'DATABASE',
-  NETWORK = 'NETWORK',
-  SERVER = 'SERVER',
-  PERMISSION = 'PERMISSION',
-  CONFIGURATION = 'CONFIGURATION',
-  BUSINESS = 'BUSINESS',
-}
+export const ErrorDomainEnum = {
+  AUTH: 'AUTH',
+  VALIDATION: 'VALIDATION',
+  DATABASE: 'DATABASE',
+  NETWORK: 'NETWORK',
+  SERVER: 'SERVER',
+  PERMISSION: 'PERMISSION',
+  CONFIGURATION: 'CONFIGURATION',
+  BUSINESS: 'BUSINESS',
+} as const
+
+/**
+ * Type representing error domain values.
+ * Derived from ErrorDomainEnum for type safety.
+ */
+export type ErrorDomain = (typeof ErrorDomainEnum)[keyof typeof ErrorDomainEnum]
 
 /**
  * Error types for structured error handling.
  * Defines the different categories of errors that can occur in the application.
  */
-export enum ErrorTypeEnum {
-  APP_ERROR = 'AppError',
-  AUTH_ERROR = 'AuthError',
-  VALIDATION_ERROR = 'ValidationError',
-  DATABASE_ERROR = 'DatabaseError',
-  NETWORK_ERROR = 'NetworkError',
-  PERMISSION_ERROR = 'PermissionError',
-  CONFIGURATION_ERROR = 'ConfigurationError',
-  BUSINESS_ERROR = 'BusinessError',
-  SERVER_ERROR = 'ServerError',
-}
+export const ErrorTypeEnum = {
+  APP_ERROR: 'AppError',
+  AUTH_ERROR: 'AuthError',
+  VALIDATION_ERROR: 'ValidationError',
+  DATABASE_ERROR: 'DatabaseError',
+  NETWORK_ERROR: 'NetworkError',
+  PERMISSION_ERROR: 'PermissionError',
+  CONFIGURATION_ERROR: 'ConfigurationError',
+  BUSINESS_ERROR: 'BusinessError',
+  SERVER_ERROR: 'ServerError',
+} as const
 
 /**
  * Authentication error codes.
  * Format: AUTH/SPECIFIC_ERROR
  */
-export enum AuthErrorCodeEnum {
-  INVALID_CREDENTIALS = 'INVALID_CREDENTIALS',
-  EMAIL_NOT_CONFIRMED = 'EMAIL_NOT_CONFIRMED',
-  SESSION_EXPIRED = 'SESSION_EXPIRED',
-  USER_NOT_FOUND = 'USER_NOT_FOUND',
-  WEAK_PASSWORD = 'WEAK_PASSWORD',
-  EMAIL_ALREADY_IN_USE = 'EMAIL_ALREADY_IN_USE',
-  INVALID_TOKEN = 'INVALID_TOKEN',
-  UNKNOWN_SUPABASE_ERROR = 'UNKNOWN_SUPABASE_ERROR',
-}
+export const AuthErrorCodeEnum = {
+  INVALID_CREDENTIALS: 'INVALID_CREDENTIALS',
+  EMAIL_NOT_CONFIRMED: 'EMAIL_NOT_CONFIRMED',
+  SESSION_EXPIRED: 'SESSION_EXPIRED',
+  USER_NOT_FOUND: 'USER_NOT_FOUND',
+  WEAK_PASSWORD: 'WEAK_PASSWORD',
+  EMAIL_ALREADY_IN_USE: 'EMAIL_ALREADY_IN_USE',
+  INVALID_TOKEN: 'INVALID_TOKEN',
+  PROVIDER_DISABLED: 'PROVIDER_DISABLED',
+  UNKNOWN_SUPABASE_ERROR: 'UNKNOWN_SUPABASE_ERROR',
+} as const
 
 /**
  * Authentication error types for categorizing different auth issues.
  */
-export enum AuthErrorTypeEnum {
-  REFRESH_TOKEN = 'refresh_token',
-  ACCESS_TOKEN = 'access_token',
-  SESSION = 'session',
-  CREDENTIALS = 'credentials',
-  VERIFICATION = 'verification',
-}
+export const AuthErrorTypeEnum = {
+  REFRESH_TOKEN: 'refresh_token',
+  ACCESS_TOKEN: 'access_token',
+  SESSION: 'session',
+  CREDENTIALS: 'credentials',
+  VERIFICATION: 'verification',
+} as const
 
 /**
  * Validation error codes.
  * Format: VALIDATION/SPECIFIC_ERROR
  */
-export enum ValidationErrorCodeEnum {
-  INVALID_INPUT = 'INVALID_INPUT',
-  DUPLICATE_ENTRY = 'DUPLICATE_ENTRY',
-  CONSTRAINT_VIOLATION = 'CONSTRAINT_VIOLATION',
-  FOREIGN_KEY_VIOLATION = 'FOREIGN_KEY_VIOLATION',
-  NOT_NULL_VIOLATION = 'NOT_NULL_VIOLATION',
-  SAME_PASSWORD = 'SAME_PASSWORD',
-}
+export const ValidationErrorCodeEnum = {
+  INVALID_INPUT: 'INVALID_INPUT',
+  DUPLICATE_ENTRY: 'DUPLICATE_ENTRY',
+  CONSTRAINT_VIOLATION: 'CONSTRAINT_VIOLATION',
+  FOREIGN_KEY_VIOLATION: 'FOREIGN_KEY_VIOLATION',
+  NOT_NULL_VIOLATION: 'NOT_NULL_VIOLATION',
+  SAME_PASSWORD: 'SAME_PASSWORD',
+} as const
 
 /**
  * Database error codes.
  * Format: DATABASE/SPECIFIC_ERROR
  */
-export enum DatabaseErrorCodeEnum {
-  NOT_FOUND = 'NOT_FOUND',
-  RELATION_NOT_FOUND = 'RELATION_NOT_FOUND',
-  NO_CONTENT = 'NO_CONTENT',
-  UNKNOWN_POSTGREST_ERROR = 'UNKNOWN_POSTGREST_ERROR',
-  UNKNOWN_ERROR = 'UNKNOWN_ERROR',
-}
+export const DatabaseErrorCodeEnum = {
+  NOT_FOUND: 'NOT_FOUND',
+  RELATION_NOT_FOUND: 'RELATION_NOT_FOUND',
+  NO_CONTENT: 'NO_CONTENT',
+  UNKNOWN_POSTGREST_ERROR: 'UNKNOWN_POSTGREST_ERROR',
+  UNKNOWN_ERROR: 'UNKNOWN_ERROR',
+} as const
 
 /**
  * Network error codes.
  * Format: NETWORK/SPECIFIC_ERROR
  */
-export enum NetworkErrorCodeEnum {
-  CONNECTION_ERROR = 'CONNECTION_ERROR',
-  TIMEOUT = 'TIMEOUT',
-  RATE_LIMIT_EXCEEDED = 'RATE_LIMIT_EXCEEDED',
-}
+export const NetworkErrorCodeEnum = {
+  CONNECTION_ERROR: 'CONNECTION_ERROR',
+  TIMEOUT: 'TIMEOUT',
+  RATE_LIMIT_EXCEEDED: 'RATE_LIMIT_EXCEEDED',
+} as const
 
 /**
  * Server error codes.
  * Format: SERVER/SPECIFIC_ERROR
  */
-export enum ServerErrorCodeEnum {
-  UNKNOWN_ERROR = 'UNKNOWN_ERROR',
-  INTERNAL_ERROR = 'INTERNAL_ERROR',
-}
+export const ServerErrorCodeEnum = {
+  UNKNOWN_ERROR: 'UNKNOWN_ERROR',
+  INTERNAL_ERROR: 'INTERNAL_ERROR',
+  DYNAMIC_SERVER_USAGE: 'DYNAMIC_SERVER_USAGE',
+} as const
 
 /**
  * Configuration error codes.
  * Format: CONFIGURATION/SPECIFIC_ERROR
  */
-export enum ConfigurationErrorCodeEnum {
-  MISSING_ENV_VAR = 'MISSING_ENV_VAR',
-}
+export const ConfigurationErrorCodeEnum = {
+  MISSING_ENV_VAR: 'MISSING_ENV_VAR',
+} as const
 
 /**
  * Error codes supported by the error page
  */
-export enum ErrorPageCodeEnum {
-  VERIFICATION_FAILED = 'verification_failed',
-  INVALID_VERIFICATION_LINK = 'invalid_verification_link',
-  AUTH_CODE_INVALID = 'auth_code_invalid',
-  AUTH_LINK_EXPIRED = 'auth_link_expired',
-  ACCESS_DENIED = 'access_denied',
-  CONFIGURATION_ERROR = 'configuration_error',
-}
+export const ErrorPageCodeEnum = {
+  VERIFICATION_FAILED: 'verification_failed',
+  INVALID_VERIFICATION_LINK: 'invalid_verification_link',
+  AUTH_CODE_INVALID: 'auth_code_invalid',
+  AUTH_LINK_EXPIRED: 'auth_link_expired',
+  ACCESS_DENIED: 'access_denied',
+  CONFIGURATION_ERROR: 'configuration_error',
+} as const
 
-export type ErrorPageCode = `${ErrorPageCodeEnum}`
+export type ErrorPageCode = (typeof ErrorPageCodeEnum)[keyof typeof ErrorPageCodeEnum]
 
 /**
  * Standardized response type for authentication operations
@@ -140,7 +148,7 @@ export type AuthResponse<T = unknown> = {
   pending?: boolean
 }
 
-export type ErrorType = `${ErrorTypeEnum}`
+export type ErrorType = (typeof ErrorTypeEnum)[keyof typeof ErrorTypeEnum]
 
 /**
  * Base context interface for errors
@@ -169,7 +177,7 @@ export interface AuthErrorContext extends BaseErrorContext {
   sessionExpired?: boolean
   supabaseCode?: string
   status?: number
-  authErrorType?: AuthErrorTypeEnum
+  authErrorType?: (typeof AuthErrorTypeEnum)[keyof typeof AuthErrorTypeEnum]
   shouldSwitchToLogin?: boolean
 }
 

@@ -1,14 +1,15 @@
-import { Autocomplete, Grid, TextField } from '@mui/material'
+import { Autocomplete, Grid, TextField, Box } from '@mui/material'
 import { useEffect, useState } from 'react'
 import { Controller, useFormContext } from 'react-hook-form'
 
-import { FormSection, FormFieldSkeleton } from '@/components/forms'
+import { FormSection } from '@/components/forms/FormSection'
+import { FormFieldSkeleton } from '@/components/forms/FormFieldSkeleton'
 import { LocationSelector } from '@/components/forms/LocationSelector'
 import { useSnackbar } from '@/contexts/SnackbarContext'
 import { logger } from '@/lib/logger/client'
 import { getTimezones } from '@/lib/utils/timezone'
-import { ProfileFormValues } from '@/lib/validators'
-import { Timezone } from '@/types/timezone.types'
+import { type ProfileFormValues } from '@/lib/validators/profile'
+import { type Timezone } from '@/types/timezone.types'
 
 interface LocationInfoProps {
   disabled?: boolean
@@ -29,14 +30,14 @@ export function LocationInfo({ disabled = false, isLoading: isFormLoading = fals
     const loadTimezones = (): void => {
       try {
         const tzList = getTimezones()
-        setTimezones(tzList as Timezone[])
+        setTimezones(tzList)
 
         // Get user's detected timezone if available
         try {
           const detectedTz = Intl.DateTimeFormat().resolvedOptions().timeZone
           setUserDetectedTz(detectedTz)
         } catch {
-          logger.warn({}, "Could not detect user's timezone")
+          logger.warn({ component: 'LocationInfo', operation: 'detectTimezone' }, "Could not detect user's timezone")
         }
       } catch (err: unknown) {
         logger.error({ err: err instanceof Error ? err : new Error(String(err)) }, 'Failed to load timezones')
@@ -76,9 +77,9 @@ export function LocationInfo({ disabled = false, isLoading: isFormLoading = fals
         </Grid>
       </Grid>
 
+      {/* Timezone Dropdown */}
       <Grid container spacing={2} sx={{ mt: 1 }}>
-        {/* Timezone */}
-        <Grid size={{ xs: 12, sm: 6, md: 6 }}>
+        <Grid size={{ xs: 12 }}>
           {isFormLoading ? (
             <FormFieldSkeleton />
           ) : (
@@ -86,16 +87,12 @@ export function LocationInfo({ disabled = false, isLoading: isFormLoading = fals
               name="timezone"
               control={control}
               render={({ field }): JSX.Element => {
-                // Only set value if it exists in the timezones list, otherwise use empty string
-                const value =
-                  field.value !== null && field.value !== undefined && timezones.some((tz) => tz.value === field.value)
-                    ? String(field.value)
-                    : ''
+                const selectedOption = field.value ? (timezones.find((tz) => tz.value === field.value) ?? null) : null
 
                 return (
                   <Autocomplete
                     options={timezones}
-                    value={value ? timezones.find((tz) => tz.value === value) || null : null}
+                    value={selectedOption}
                     onChange={(_, newValue) => {
                       field.onChange(newValue?.value ?? null)
                     }}
@@ -114,7 +111,7 @@ export function LocationInfo({ disabled = false, isLoading: isFormLoading = fals
                         {...params}
                         label="Timezone"
                         variant="outlined"
-                        error={!!errors.timezone}
+                        error={Boolean(errors.timezone)}
                         helperText={errors.timezone?.message?.toString() ?? ' '}
                         placeholder={
                           field.value === null || field.value === undefined
@@ -160,7 +157,7 @@ export function LocationInfo({ disabled = false, isLoading: isFormLoading = fals
 
         {/* Timezone Note */}
         <Grid size={{ xs: 12 }}>
-          <Grid
+          <Box
             sx={{
               mt: 1,
               fontSize: '0.875rem',
@@ -168,7 +165,7 @@ export function LocationInfo({ disabled = false, isLoading: isFormLoading = fals
               fontStyle: 'italic',
             }}>
             Your local time will be used for scheduling and notifications.
-          </Grid>
+          </Box>
         </Grid>
       </Grid>
     </FormSection>

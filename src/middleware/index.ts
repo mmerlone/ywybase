@@ -1,5 +1,4 @@
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
+import { NextResponse, type NextRequest } from 'next/server'
 import { buildLogger } from '@/lib/logger/client'
 import { authenticateRequest } from './auth'
 import { authorizeRequest } from './authorization'
@@ -8,6 +7,9 @@ import { getRouteByPath } from '@/config/routes'
 import { securityMiddleware } from './security'
 import { generateCSPNonce } from './security/headers'
 import { requestLoggerMiddleware } from './request-logger'
+import { updateSession } from './session'
+import { setFlashMessageInMiddleware } from '@/lib/utils/flash-messages.server'
+import { isSameOrSubpath } from '@/lib/utils/paths'
 
 import { forbidden } from './utils/responses'
 import { handleMiddlewareError } from './utils/errors'
@@ -44,30 +46,13 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
       return securityResult.shortCircuitResponse
     }
 
-    // Handle email confirmation links with PKCE code exchange
-    // Skip if already in API route to prevent redirect loops
-    // Also skip error pages to prevent loops with error codes
-    if (!pathname.startsWith('/api/auth/') && !pathname.startsWith('/error')) {
-      const searchParams = request.nextUrl.searchParams
-      const code = searchParams.get('code')
-
-      // Known error codes should not be treated as PKCE codes
-      const errorCodes = ['invalid_auth_link', 'auth_code_invalid', 'auth_link_expired', 'verification_failed']
-      const isErrorCode = code && errorCodes.includes(code)
-
-      if (code && !isErrorCode) {
-        // This is a PKCE auth code from email confirmation
-        // Redirect to API route to handle the exchange
-        const confirmUrl = new URL('/api/auth/confirm', request.url)
-        confirmUrl.searchParams.set('code', code)
-
-        logger.info({ pathname }, 'Redirecting auth code to confirmation API route')
-        return NextResponse.redirect(confirmUrl)
-      }
-    }
+    // Session refresh — rotates access tokens via Supabase SSR and writes fresh
+    // cookies to response. Must run before authentication so getUser() validates
+    // a current token, not an about-to-expire one.
+    response = await updateSession(request, response)
 
     // 1. Create request context
-    const ctx = await createContext(request)
+    const ctx = createContext(request)
 
     // 3. Request Logging
     // The response from requestLoggerMiddleware is not directly used here,
@@ -82,7 +67,7 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     // 5. Authentication
     const auth = await authenticateRequest(request)
 
-    logger.info({ pathname, authenticated: !!auth.user }, 'middleware.auth.completed')
+    logger.info({ pathname, authenticated: Boolean(auth.user) }, 'middleware.auth.completed')
 
     // Handle authentication redirects/short-circuits
     if (auth.response) {
@@ -93,14 +78,27 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     // 6. Authorization
     const authz = await authorizeRequest(request, auth.user, routeConfig)
 
-    if (authz.redirect) {
+    if (authz.redirect !== undefined) {
       logger.info({ pathname, redirect: authz.redirect }, 'middleware.authz.redirect')
       return NextResponse.redirect(new URL(authz.redirect, request.url))
     }
 
     if (authz.allowed === false) {
+      const isApiRoute = isSameOrSubpath(pathname, '/api')
+      if (!isApiRoute) {
+        const authzResponse = NextResponse.redirect(new URL('/', request.url))
+        setFlashMessageInMiddleware(
+          request,
+          authzResponse,
+          'You do not have permission to access that page.',
+          'warning'
+        )
+        logger.info({ pathname, redirect: '/', reason: 'unauthorized' }, 'middleware.authz.redirect')
+        return authzResponse
+      }
+
       logger.warn({ pathname }, 'middleware.authz.forbidden')
-      return forbidden(authz.error?.message || 'Access Denied')
+      return forbidden(authz.error?.message ?? 'Access Denied')
     }
 
     // 7. Proceed with the request
@@ -111,21 +109,4 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     logger.error({ err, pathname }, 'middleware.failed')
     return handleMiddlewareError(err, { pathname })
   }
-}
-
-/**
- * Configure which routes the middleware should run on
- */
-export const config = {
-  matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public folder
-     * - healthcheck (health check endpoint)
-     */
-    '/((?!_next/static|_next/image|favicon.ico|public/|healthcheck).*)',
-  ],
 }

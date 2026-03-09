@@ -94,13 +94,13 @@ export const downloadPersonalData = withServerActionErrorHandling(
           createdAt: user.created_at,
           lastSignIn: user.last_sign_in_at,
         },
-        profile: profile || null,
+        profile: profile ?? null,
       }
 
       // Convert to JSON string
       const jsonData = JSON.stringify(personalData, null, 2)
 
-      logger.info({ userId: user.id }, 'Personal data exported successfully')
+      logger.info({ userId: user.id, email: user.email }, 'Personal data exported successfully')
       return createServerActionSuccess(jsonData, 'Personal data exported successfully')
     } catch (error) {
       logger.error({ userId: user.id, error }, 'Failed to export personal data')
@@ -146,24 +146,15 @@ export const downloadPersonalData = withServerActionErrorHandling(
  * ```
  */
 export const deleteAccount = withServerActionErrorHandling(
-  async (password: string): Promise<AuthResponse> => {
-    if (!password || typeof password !== 'string' || password.length === 0) {
-      throw new AuthError({
-        code: ErrorCodes.auth.invalidCredentials(),
-        message: 'Password is required to delete account',
-        context: { operation: 'delete-account' },
-        statusCode: 400,
-      })
-    }
-
+  async (password?: string): Promise<AuthResponse> => {
     const supabase = await createClient()
 
-    // Get current user
+    // Get current user with identities
     const {
       data: { user },
     } = await supabase.auth.getUser()
 
-    if (!user?.email) {
+    if (!user?.id) {
       throw new AuthError({
         code: ErrorCodes.auth.invalidToken(),
         message: 'User authentication required',
@@ -172,22 +163,53 @@ export const deleteAccount = withServerActionErrorHandling(
       })
     }
 
-    try {
-      // Verify password using admin client
-      const adminClient = await createAdminClient()
-      const { data, error } = await adminClient.auth.signInWithPassword({
-        email: user.email,
-        password,
-      })
+    // Check if user has an email/password identity
+    // Supabase identities array contains the providers linked to the account
+    const hasEmailProvider = user.identities?.some((identity) => identity.provider === 'email')
 
-      if (error || !data.user) {
-        logger.warn({ userId: user.id }, 'Account deletion failed: Invalid password')
-        throw new AuthError({
-          code: ErrorCodes.auth.invalidCredentials(),
-          message: 'Invalid password',
-          context: { operation: 'delete-account' },
-          statusCode: 401,
+    try {
+      const adminClient = await createAdminClient()
+
+      // If user has email provider, they must provide a password
+      if (hasEmailProvider) {
+        if (!password || typeof password !== 'string' || password.length === 0) {
+          throw new AuthError({
+            code: ErrorCodes.auth.invalidCredentials(),
+            message: 'Password is required to delete account',
+            context: { operation: 'delete-account' },
+            statusCode: 400,
+          })
+        }
+
+        // Fail closed: if hasEmailProvider but no user.email, do not proceed
+        if (!user.email) {
+          logger.warn(
+            { userId: user.id, email: user.email },
+            'Account deletion failed: Email missing for password verification'
+          )
+          throw new AuthError({
+            code: ErrorCodes.auth.invalidCredentials(),
+            message: 'Email is required to verify password for account deletion',
+            context: { operation: 'delete-account' },
+            statusCode: 400,
+          })
+        }
+
+        // Verify password using admin client
+        const { data, error } = await adminClient.auth.signInWithPassword({
+          email: user.email,
+          password,
         })
+
+        if (error || !data.user) {
+          logger.warn({ userId: user.id, email: user.email }, 'Account deletion failed: Invalid password')
+          throw new AuthError({
+            code: ErrorCodes.auth.invalidCredentials(),
+            message: 'Invalid password',
+            context: { operation: 'delete-account' },
+            statusCode: 401,
+          })
+        }
       }
 
       // Delete user via admin API (cascades to related data)
@@ -200,14 +222,23 @@ export const deleteAccount = withServerActionErrorHandling(
       // Sign out the user's session to clear client-side cookies/tokens
       await supabase.auth.signOut()
 
-      logger.info({ userId: user.id }, 'Account deleted successfully')
+      logger.info({ userId: user.id, email: user.email }, 'Account deleted successfully')
       return createServerActionSuccess(undefined, 'Account deleted successfully')
     } catch (error) {
       if (error instanceof AuthError) {
         throw error
       }
       logger.error({ userId: user.id, error }, 'Failed to delete account')
-      throw error
+      throw new AuthError({
+        code: ErrorCodes.auth.unknownError(),
+        message: 'Failed to delete account',
+        context: {
+          operation: 'delete-account',
+          userId: user.id,
+          originalError: error,
+        },
+        statusCode: 500,
+      })
     }
   },
   {

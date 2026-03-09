@@ -1,9 +1,10 @@
 'use client'
 
-import { Alert, Box, Button, CircularProgress, Paper, Stack, Typography } from '@mui/material'
+import { Alert, Box, Button, CircularProgress, Link, Paper, Stack, Typography } from '@mui/material'
+import { MarkEmailRead as EmailIcon } from '@mui/icons-material'
 import { motion } from 'motion/react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { useCallback, useEffect, useState, startTransition } from 'react'
+import { useSearchParams } from 'next/navigation'
+import { useCallback, useEffect, useMemo, useState, startTransition, useRef } from 'react'
 import { FormProvider } from 'react-hook-form'
 
 import { PasswordMeter } from '../PasswordMeter'
@@ -16,18 +17,27 @@ import { LoginButtons } from './LoginButtons'
 
 import { useAuthContext } from '@/components/providers/AuthProvider'
 import { useAuthForm } from '@/hooks/useAuthForm'
-import { loginWithEmail, signUpWithEmail, forgotPassword, setPassword, updatePassword } from '@/lib/actions/auth/server'
-import { handleClientError as handleError } from '@/lib/error'
-import type { SerializableError } from '@/types/auth.types'
-import type { FormTypeMap, AuthOperations } from '@/types/auth.types'
+import { SITE_CONFIG } from '@/config/site'
+import { useRouter } from '@/lib/utils/navigation'
 import {
-  LoginFormInput,
-  SignUpFormInput,
-  ResetPasswordEmailFormInput,
-  ResetPasswordPassFormInput,
-  UpdatePasswordFormInput,
+  signUpWithEmail,
+  forgotPassword,
+  setPassword,
+  updatePassword,
+  resendVerification,
+} from '@/lib/actions/auth/server'
+import { handleError as handleError } from '@/lib/error/handlers/client.handler'
+import {
+  AuthOperationsEnum,
+  type SerializableError,
+  type FormTypeMap,
+  type AuthOperations,
+  type LoginFormInput,
+  type SignUpFormInput,
+  type ResetPasswordEmailFormInput,
+  type ResetPasswordPassFormInput,
+  type UpdatePasswordFormInput,
 } from '@/types/auth.types'
-import { AuthOperationsEnum } from '@/types/auth.types'
 
 const validOperations = Object.values(AuthOperationsEnum) as Array<keyof FormTypeMap>
 type FormOperationType = keyof FormTypeMap
@@ -41,20 +51,89 @@ interface AuthFormProps {
   initialOperation?: AuthOperations
 }
 
+/**
+ * TODO: Large AuthForm Component: 607 lines, consider splitting
+ * Multiple useEffect Hooks: Could be optimized with custom hooks
+ */
+
 export default function AuthForm({ initialOperation = AuthOperationsEnum.LOGIN }: AuthFormProps): JSX.Element {
-  const [operation, setOperation] = useState<AuthOperations>(initialOperation)
   const [error, setError] = useState<SerializableError | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [isRedirecting, setIsRedirecting] = useState(false)
+  const [isSocialLoading, setIsSocialLoading] = useState(false)
   const [emailSent, setEmailSent] = useState(false)
+  const [resendCooldown, setResendCooldown] = useState(0)
+  const cooldownTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const transitionTimerRef = useRef<NodeJS.Timeout | null>(null)
   const searchParams = useSearchParams()
+
+  // Derive the current operation directly from the URL so there is a single
+  // source of truth. `searchParams` → operation; no duplicated state.
+  const operation = useMemo((): AuthOperations => {
+    const op = searchParams.get('op')?.toLowerCase() ?? null
+    return op && validOperations.includes(op as FormOperationType) ? (op as AuthOperations) : initialOperation
+  }, [searchParams, initialOperation])
+  // Track when we're transitioning between operations to prevent validation
+  // from running on stale values during the morph animation
+  const isTransitioning = useRef(false)
+  // Track if the user has modified any form field - validation only runs after isDirty becomes true
+  const isDirtyRef = useRef(false)
+
   // Use runtime guard to ensure operation is a valid form operation
-  const formMethods = useAuthForm(isFormOperation(operation) ? operation : AuthOperationsEnum.LOGIN)
-  const { reset } = formMethods
-  // All operations are handled by server actions, only need clearError from context
-  const { clearError } = useAuthContext()
+  const formMethods = useAuthForm(
+    isFormOperation(operation) ? operation : AuthOperationsEnum.LOGIN,
+    isTransitioning,
+    isDirtyRef
+  )
+  const { reset, clearErrors, formState } = formMethods
+  // Use auth context for login to keep UI state in sync
+  const { clearError, signIn } = useAuthContext()
   const router = useRouter()
+
+  // Sync isDirtyRef with formState.isDirty to enable validation after user interaction
+  useEffect(() => {
+    isDirtyRef.current = formState.isDirty
+  }, [formState.isDirty])
+
+  // Handle resend cooldown timer
+  useEffect(() => {
+    // Clear any existing cooldown timer
+    if (cooldownTimerRef.current) {
+      clearInterval(cooldownTimerRef.current)
+      cooldownTimerRef.current = null
+    }
+
+    // Set new timer if cooldown is active
+    if (resendCooldown > 0) {
+      cooldownTimerRef.current = setInterval(() => {
+        setResendCooldown((prev) => prev - 1)
+      }, 1000)
+    }
+
+    // Cleanup function
+    return (): void => {
+      if (cooldownTimerRef.current) {
+        clearInterval(cooldownTimerRef.current)
+        cooldownTimerRef.current = null
+      }
+    }
+  }, [resendCooldown])
+
+  // Comprehensive cleanup on component unmount
+  useEffect(() => {
+    return (): void => {
+      // Clear all timers on unmount
+      if (cooldownTimerRef.current) {
+        clearInterval(cooldownTimerRef.current)
+        cooldownTimerRef.current = null
+      }
+      if (transitionTimerRef.current) {
+        clearTimeout(transitionTimerRef.current)
+        transitionTimerRef.current = null
+      }
+    }
+  }, [])
 
   useEffect(() => {
     const checkSignOutReason = (): void => {
@@ -81,49 +160,69 @@ export default function AuthForm({ initialOperation = AuthOperationsEnum.LOGIN }
     checkSignOutReason()
   }, [searchParams, router])
 
-  // Handle operation changes and form reset
+  // Track the previous operation so the effect below can detect real changes
+  // and skip the no-op on initial mount.
+  const prevOperationRef = useRef(operation)
+
+  // React to operation changes: clear stale form state, reset to new defaults,
+  // and guard validation during the morph animation.
+  // All deps are explicit — `clearErrors` and `reset` are stable refs from RHF.
   useEffect((): void => {
-    const op = searchParams.get('op')?.toLowerCase() ?? null
-    const newOperation =
-      op && validOperations.includes(op as FormOperationType) ? (op as AuthOperations) : AuthOperationsEnum.LOGIN
+    if (operation === prevOperationRef.current) return
+    prevOperationRef.current = operation
 
-    if (newOperation !== operation) {
-      // Batch state updates with startTransition for better performance
-      startTransition(() => {
-        setOperation(newOperation)
-        setError(null)
-        setEmailSent(false)
-      })
+    // Mark transitioning to prevent validation from running on stale values
+    // during the morph animation.
+    isTransitioning.current = true
 
-      // Use runtime guard to ensure newOperation is a valid form operation
-      const newConfig = isFormOperation(newOperation)
-        ? authFormDefaults[newOperation]
-        : authFormDefaults[AuthOperationsEnum.LOGIN]
-      reset(newConfig)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- reset is stable from react-hook-form
-  }, [searchParams, operation])
+    // Clear stale validation errors before the operation switches.
+    clearErrors()
+
+    // Batch non-form state resets.
+    startTransition(() => {
+      setError(null)
+      setEmailSent(false)
+    })
+
+    // Reset form to the defaults of the incoming operation.
+    const newConfig = isFormOperation(operation)
+      ? authFormDefaults[operation]
+      : authFormDefaults[AuthOperationsEnum.LOGIN]
+    reset(newConfig, {
+      keepErrors: false,
+      keepDirty: false,
+      keepIsSubmitted: false,
+      keepTouched: false,
+      keepIsValid: false,
+    })
+
+    // Re-enable validation after the browser has finished processing field
+    // blur/change events from the DOM transition.
+    if (transitionTimerRef.current) clearTimeout(transitionTimerRef.current)
+    transitionTimerRef.current = setTimeout(() => {
+      isTransitioning.current = false
+      transitionTimerRef.current = null
+    }, 50)
+  }, [operation, clearErrors, reset])
 
   const handleOperationChange = useCallback(
     (newOperation: AuthOperations): void => {
-      // Update the URL using Next.js router so useSearchParams reacts
-      const url = new URL(window.location.href)
-      url.searchParams.set('op', newOperation)
-      router.replace(`${url.pathname}${url.search}${url.hash}`)
+      // Update URL using custom router with RouteKey and query params
+      router.push('AUTH', undefined, { op: newOperation })
     },
     [router]
   )
 
-  const getErrorMessage = (error: SerializableError): string => {
-    switch (error.code) {
+  const getErrorMessage = (err: SerializableError): string => {
+    switch (err.code) {
       case 'AUTH/INVALID_CREDENTIALS':
-        return 'Invalid email or password. Please check your credentials and try again.'
+        return uiText.errors.invalidCredentials
       case 'AUTH/EMAIL_ALREADY_IN_USE':
-        return 'This email is already in use. Please login instead.'
+        return uiText.errors.emailAlreadyInUse
       case 'AUTH/EMAIL_NOT_CONFIRMED':
-        return 'Please verify your email address before logging in. Check your inbox for the confirmation link.'
+        return uiText.errors.emailNotConfirmed
       default:
-        return error.message
+        return err.message
     }
   }
 
@@ -146,25 +245,14 @@ export default function AuthForm({ initialOperation = AuthOperationsEnum.LOGIN }
       switch (operation) {
         case AuthOperationsEnum.LOGIN: {
           const { email, password } = data as LoginFormInput
-          const result = await loginWithEmail({ email, password })
+          const result = await signIn(email, password)
 
-          if (!result.success) {
-            // Use the serialized error from the server directly
-            if (typeof result.error === 'string') {
-              // Fallback for string errors
-              const appError = handleError(new Error(result.error), {
-                operation: AuthOperationsEnum.LOGIN,
-                code: 'AUTH/UNKNOWN',
-              })
-              setError(appError)
-            } else {
-              // Use the serialized AppErrorJSON from server
-              setError(result.error || null)
-            }
+          if (result.error) {
+            setError(result.error)
             return
           }
           setIsRedirecting(true)
-          router.push('/profile')
+          router.push('PROFILE')
           break
         }
         case AuthOperationsEnum.SIGN_UP: {
@@ -183,12 +271,12 @@ export default function AuthForm({ initialOperation = AuthOperationsEnum.LOGIN }
               handleOperationChange(AuthOperationsEnum.LOGIN)
               return
             }
-            setError(errorObj || null)
+            setError(errorObj ?? null)
             return
           }
 
           // Show success message and switch to login
-          setSuccessMessage('Account created! Please check your email to verify your account.')
+          setSuccessMessage(uiText.success.accountCreatedDescription)
           handleOperationChange(AuthOperationsEnum.LOGIN)
           break
         }
@@ -202,7 +290,7 @@ export default function AuthForm({ initialOperation = AuthOperationsEnum.LOGIN }
               typeof result.error === 'string'
                 ? handleError(new Error(result.error), { operation: 'resetPassword' })
                 : result.error
-            setError(errorObj || null)
+            setError(errorObj ?? null)
             return
           }
           setEmailSent(true)
@@ -220,12 +308,12 @@ export default function AuthForm({ initialOperation = AuthOperationsEnum.LOGIN }
               typeof result.error === 'string'
                 ? handleError(new Error(result.error), { operation: AuthOperationsEnum.SET_PASSWORD })
                 : result.error
-            setError(errorObj || null)
+            setError(errorObj ?? null)
             return
           }
 
           // Show success message before redirecting
-          setSuccessMessage(result.message || 'Password reset completed successfully')
+          setSuccessMessage(result.message ?? 'Password reset completed successfully')
           reset()
           break
         }
@@ -239,19 +327,35 @@ export default function AuthForm({ initialOperation = AuthOperationsEnum.LOGIN }
               typeof result.error === 'string'
                 ? handleError(new Error(result.error), { operation: 'updatePassword' })
                 : result.error
-            setError(errorObj || null)
+            setError(errorObj ?? null)
             return
           }
           setIsRedirecting(true)
-          router.push('/profile')
+          router.push('PROFILE')
+          break
+        }
+        case AuthOperationsEnum.RESEND_VERIFICATION: {
+          const { email } = data as ResetPasswordEmailFormInput
+          const result = await resendVerification(email)
+
+          if (!result.success) {
+            const errorObj =
+              typeof result.error === 'string'
+                ? handleError(new Error(result.error), { operation: AuthOperationsEnum.RESEND_VERIFICATION })
+                : result.error
+            setError(errorObj ?? null)
+            return
+          }
+          setEmailSent(true)
+          setResendCooldown(SITE_CONFIG.auth.resendVerificationCooldown)
           break
         }
       }
-    } catch (error) {
+    } catch (err) {
       // Handle any unexpected errors with structured error handling
-      const unexpectedError = handleError(error, {
+      const unexpectedError = handleError(err, {
         operation,
-        originalError: error,
+        originalError: err,
       })
       setError(unexpectedError)
     } finally {
@@ -261,35 +365,61 @@ export default function AuthForm({ initialOperation = AuthOperationsEnum.LOGIN }
 
   if (emailSent) {
     return (
-      <Paper
-        elevation={3}
-        sx={{
-          maxWidth: 600,
-          mx: 'auto',
-          p: 4,
-          textAlign: 'center',
-          bgcolor: 'background.paper',
-          borderRadius: 2,
-          boxShadow: 'var(--mui-shadows-4)',
-        }}>
-        <Typography variant="h6" component="h2" gutterBottom color="text.primary">
-          Check your email
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
-          We&apos;ve sent you a password reset link. Please check your email.
-        </Typography>
-        <Button
-          variant="contained"
-          color="primary"
-          fullWidth
-          onClick={() => {
-            setEmailSent(false)
-            handleOperationChange(AuthOperationsEnum.LOGIN)
-          }}
-          sx={{ mt: 2 }}>
-          Back to Login
-        </Button>
-      </Paper>
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.4, ease: 'easeOut' }}>
+        <Paper
+          elevation={4}
+          sx={{
+            maxWidth: 500,
+            mx: 'auto',
+            p: { xs: 4, md: 6 },
+            textAlign: 'center',
+            bgcolor: 'background.paper',
+            borderRadius: 3,
+            border: '1px solid',
+            borderColor: 'divider',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
+          }}>
+          <Box
+            sx={{
+              display: 'inline-flex',
+              p: 2,
+              borderRadius: '50%',
+              bgcolor: 'primary.light',
+              color: 'primary.main',
+              mb: 3,
+              opacity: 0.9,
+            }}>
+            <EmailIcon sx={{ fontSize: 48 }} />
+          </Box>
+          <Typography variant="h5" component="h2" gutterBottom fontWeight={700} color="text.primary">
+            {uiText.success.emailSent}
+          </Typography>
+          <Typography variant="body1" color="text.secondary" sx={{ mb: 4, lineHeight: 1.6 }}>
+            {uiText.success.emailSentDescription}
+          </Typography>
+          <Button
+            variant="contained"
+            color="primary"
+            size="large"
+            fullWidth
+            onClick={() => {
+              setEmailSent(false)
+              handleOperationChange(AuthOperationsEnum.LOGIN)
+            }}
+            sx={{
+              py: 1.5,
+              fontWeight: 600,
+              borderRadius: 2,
+              boxShadow: 'none',
+              '&:hover': { boxShadow: '0 4px 12px rgba(0,0,0,0.1)' },
+            }}>
+            {uiText.links.backToSignIn}
+          </Button>
+        </Paper>
+      </motion.div>
     )
   }
 
@@ -322,7 +452,7 @@ export default function AuthForm({ initialOperation = AuthOperationsEnum.LOGIN }
                 <Button
                   size="small"
                   variant="contained"
-                  onClick={() => router.push('/profile')}
+                  onClick={() => router.push('PROFILE')}
                   sx={{
                     textTransform: 'none',
                     whiteSpace: 'nowrap',
@@ -391,7 +521,7 @@ export default function AuthForm({ initialOperation = AuthOperationsEnum.LOGIN }
                 <AuthOperationSelector
                   currentOperation={operation}
                   onOperationChange={handleOperationChange}
-                  disabled={isLoading}
+                  disabled={isLoading || isSocialLoading}
                 />
               </Box>
             )}
@@ -401,44 +531,55 @@ export default function AuthForm({ initialOperation = AuthOperationsEnum.LOGIN }
               layout
               sx={{ flex: 1, minWidth: 0 }}
               transition={{ layout: { duration: 0.28, ease: [0.2, 0, 0.2, 1] } }}>
-              <AuthFormFields operation={operation} isLoading={isLoading} />
+              <AuthFormFields operation={operation} isLoading={isLoading || isSocialLoading} />
 
-              {operation !== AuthOperationsEnum.FORGOT_PASSWORD && operation !== AuthOperationsEnum.LOGIN && (
-                <motion.div layout>
-                  {operation === AuthOperationsEnum.UPDATE_PASSWORD ? (
-                    <PasswordMeter
-                      password={formMethods.watch('newPassword')}
-                      confirmPassword={formMethods.watch('confirmPassword')}
-                    />
-                  ) : (
-                    <PasswordMeter
-                      password={formMethods.watch('password')}
-                      confirmPassword={formMethods.watch('confirmPassword')}
-                    />
-                  )}
-                </motion.div>
-              )}
+              {operation !== AuthOperationsEnum.FORGOT_PASSWORD &&
+                operation !== AuthOperationsEnum.LOGIN &&
+                operation !== AuthOperationsEnum.RESEND_VERIFICATION && (
+                  <motion.div layout>
+                    {operation === AuthOperationsEnum.UPDATE_PASSWORD ? (
+                      <PasswordMeter
+                        password={formMethods.watch('newPassword')}
+                        confirmPassword={formMethods.watch('confirmPassword')}
+                      />
+                    ) : (
+                      <PasswordMeter
+                        password={formMethods.watch('password')}
+                        confirmPassword={formMethods.watch('confirmPassword')}
+                      />
+                    )}
+                  </motion.div>
+                )}
 
               {(operation === AuthOperationsEnum.LOGIN || operation === AuthOperationsEnum.SIGN_UP) && (
-                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
+                  <Button
+                    variant="text"
+                    size="small"
+                    onClick={() => handleOperationChange(AuthOperationsEnum.RESEND_VERIFICATION)}
+                    disabled={isLoading || isSocialLoading}
+                    sx={{ textTransform: 'none' }}>
+                    Resend verification email
+                  </Button>
                   <Button
                     variant="text"
                     size="small"
                     onClick={() => handleOperationChange(AuthOperationsEnum.FORGOT_PASSWORD)}
-                    disabled={isLoading}
+                    disabled={isLoading || isSocialLoading}
                     sx={{ textTransform: 'none' }}>
                     Forgot password
                   </Button>
                 </Box>
               )}
               {(operation === AuthOperationsEnum.UPDATE_PASSWORD ||
-                operation === AuthOperationsEnum.FORGOT_PASSWORD) && (
+                operation === AuthOperationsEnum.FORGOT_PASSWORD ||
+                operation === AuthOperationsEnum.RESEND_VERIFICATION) && (
                 <Box sx={{ mb: 2, mt: 1, display: 'flex', justifyContent: 'flex-end' }}>
                   <Button
                     variant="text"
                     size="small"
                     onClick={() => handleOperationChange(AuthOperationsEnum.LOGIN)}
-                    disabled={isLoading}
+                    disabled={isLoading || isSocialLoading}
                     sx={{ textTransform: 'none' }}>
                     Back to login
                   </Button>
@@ -449,14 +590,45 @@ export default function AuthForm({ initialOperation = AuthOperationsEnum.LOGIN }
                 type="submit"
                 fullWidth
                 variant="contained"
-                disabled={!formMethods.formState.isValid || isLoading || isRedirecting}
+                // Avoid reading `formState.isValid` on initial mount because that
+                // causes the zod resolver to run immediately and throw when defaults
+                // are invalid. Only consider `isValid` after the user has interacted
+                // with the form (`isDirty`). This keeps the submit button disabled
+                // until the user makes changes without triggering validation on mount.
+                disabled={
+                  (formMethods.formState.isDirty ? !formMethods.formState.isValid : true) ||
+                  isLoading ||
+                  isSocialLoading ||
+                  isRedirecting ||
+                  (operation === AuthOperationsEnum.RESEND_VERIFICATION && resendCooldown > 0)
+                }
                 sx={{ mt: 2, mb: 2 }}>
                 {isLoading || isRedirecting ? (
                   <CircularProgress size={24} color="inherit" />
+                ) : operation === AuthOperationsEnum.RESEND_VERIFICATION && resendCooldown > 0 ? (
+                  `Resend in ${resendCooldown}s`
                 ) : (
                   uiText.buttons[operation]
                 )}
               </Button>
+
+              {operation === AuthOperationsEnum.SIGN_UP && (
+                <Typography
+                  variant="caption"
+                  align="center"
+                  color="text.secondary"
+                  sx={{ display: 'block', mt: 1, lineHeight: 1.5 }}>
+                  By creating an account, you agree to our{' '}
+                  <Link href="/terms" underline="hover" color="text.secondary" sx={{ fontWeight: 500 }}>
+                    Terms of Service
+                  </Link>{' '}
+                  and{' '}
+                  <Link href="/privacy" underline="hover" color="text.secondary" sx={{ fontWeight: 500 }}>
+                    Privacy Policy
+                  </Link>
+                  .
+                </Typography>
+              )}
             </Stack>
           </form>
           {(operation === AuthOperationsEnum.LOGIN || operation === AuthOperationsEnum.SIGN_UP) && (
@@ -466,7 +638,6 @@ export default function AuthForm({ initialOperation = AuthOperationsEnum.LOGIN }
                 maxWidth: '400px',
                 p: 2,
                 mt: 2,
-                // padding: '16px',
               }}>
               <Stack sx={{ width: '100%' }}>
                 <Typography
@@ -478,7 +649,11 @@ export default function AuthForm({ initialOperation = AuthOperationsEnum.LOGIN }
                   sx={{ fontWeight: 600 }}>
                   OR
                 </Typography>
-                <LoginButtons disabled={isLoading} />
+                <LoginButtons
+                  disabled={isLoading || isRedirecting}
+                  onError={setError}
+                  onLoadingChange={setIsSocialLoading}
+                />
               </Stack>
             </Paper>
           )}

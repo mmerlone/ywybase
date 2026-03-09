@@ -1,8 +1,9 @@
 import { TextField, Grid } from '@mui/material'
 import { Controller, useFormContext } from 'react-hook-form'
 
-import { FormSection, FormFieldSkeleton } from '@/components/forms'
-import { ProfileFormValues } from '@/lib/validators'
+import { FormSection } from '@/components/forms/FormSection'
+import { FormFieldSkeleton } from '@/components/forms/FormFieldSkeleton'
+import { type ProfileFormValues } from '@/lib/validators/profile'
 
 interface ProfessionalInfoProps {
   errors: Partial<Record<string, { message?: string }>>
@@ -28,10 +29,10 @@ export function ProfessionalInfo({ errors, disabled = false, isLoading = false }
                   fullWidth
                   label="Company"
                   variant="outlined"
-                  error={!!errors.company}
+                  error={Boolean(errors.company)}
                   helperText={errors.company?.message}
                   disabled={disabled}
-                  value={(field.value ?? '') as string}
+                  value={field.value ?? ''}
                 />
               )}
             />
@@ -50,10 +51,10 @@ export function ProfessionalInfo({ errors, disabled = false, isLoading = false }
                   fullWidth
                   label="Job Title"
                   variant="outlined"
-                  error={!!errors.job_title}
+                  error={Boolean(errors.job_title)}
                   helperText={errors.job_title?.message}
                   disabled={disabled}
-                  value={(field.value ?? '') as string}
+                  value={field.value ?? ''}
                 />
               )}
             />

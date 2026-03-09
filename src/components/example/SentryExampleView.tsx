@@ -21,7 +21,8 @@ import {
 import * as Sentry from '@sentry/nextjs'
 import { useState, useEffect } from 'react'
 
-import { useAuthContext } from '@/components/providers'
+import { useCurrentUser } from '@/components/providers/AuthProvider'
+import { logger } from '@/lib/logger/client'
 
 class SentryExampleFrontendError extends Error {
   constructor(message: string | undefined) {
@@ -42,7 +43,7 @@ function SentryLogo(): JSX.Element {
 }
 
 export function SentryExampleView(): JSX.Element {
-  const { authUser } = useAuthContext()
+  const { user: authUser } = useCurrentUser()
   const [hasSentError, setHasSentError] = useState(false)
   const [isConnected, setIsConnected] = useState(true)
   const [lastErrorTime, setLastErrorTime] = useState<number>(0)
@@ -59,7 +60,9 @@ export function SentryExampleView(): JSX.Element {
       const result = await Sentry.diagnoseSdkConnectivity()
       setIsConnected(result !== 'sentry-unreachable')
     }
-    checkConnectivity()
+    checkConnectivity().catch(() => {
+      logger.warn({ operation: 'checkConnectivity', module: 'sentry-example' }, 'Failed to check connectivity')
+    })
   }, [])
 
   useEffect(() => {
@@ -106,7 +109,7 @@ export function SentryExampleView(): JSX.Element {
       throw new SentryExampleFrontendError('This error is raised on the frontend of the example page.')
     } catch (error) {
       // Error will be caught by Sentry
-      console.error('Test error thrown:', error)
+      logger.error({ error }, 'Test error thrown')
     }
   }
 

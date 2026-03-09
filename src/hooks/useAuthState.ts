@@ -1,14 +1,13 @@
 'use client'
 
 import type { AuthUser, Session } from '@supabase/supabase-js'
-import { serialize } from 'cookie'
 import { useEffect, useState } from 'react'
 
 import { authService } from '@/lib/actions/auth/client'
-import { signOut as signOutAction } from '@/lib/actions/auth/server'
-import { handleClientError as handleError, AuthErrorTypeEnum } from '@/lib/error'
+import { handleError as handleError } from '@/lib/error/handlers/client.handler'
+import { AuthErrorTypeEnum } from '@/types/error.types'
 import { logger } from '@/lib/logger/client'
-import type { SerializableError } from '@/types'
+import type { SerializableError } from '@/types/auth.types'
 
 /**
  * Authentication state management hook.
@@ -22,6 +21,9 @@ import type { SerializableError } from '@/types'
  * - Verify session validity
  * - Handle refresh token errors
  * - Manage loading and error states
+ *
+ * @internal This hook is used internally by `useAuth` in `src/hooks/useAuth.ts`.
+ * For authentication in components, use `useAuthContext` from `@/components/providers`.
  *
  * @returns Authentication state containing:
  * - `authUser`: Current authenticated user or null
@@ -67,44 +69,35 @@ export const useAuthState = (): {
   useEffect(() => {
     let isMounted = true
 
+    const scheduleIdle = (fn: () => void): void => {
+      if (typeof window === 'undefined') return
+
+      const w = window as Window & {
+        requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number
+        cancelIdleCallback?: (id: number) => void
+      }
+
+      if (typeof w.requestIdleCallback === 'function') {
+        w.requestIdleCallback(fn, { timeout: 1500 })
+      } else {
+        window.setTimeout(fn, 0)
+      }
+    }
+
     const checkSession = async (): Promise<void> => {
       try {
         setIsLoading(true)
         // Client-side: getSession() is used first for fast UI updates from local storage
         // This is safe on the client side for UI state management
-        const session = await authService.getSession()
+        const hasSession = await authService.getSession()
 
         if (!isMounted) return
 
-        if (session?.user) {
-          // Verify user authenticity by contacting auth server
-          // This ensures the session data is legitimate
-          const authUser = await authService.getUser()
+        if (isMounted && hasSession !== null && hasSession !== undefined) {
+          setSession(hasSession)
+          setAuthUser(hasSession?.user ?? null)
 
-          if (!authUser) {
-            logger.warn({ userId: session.user?.id }, 'User not found in database, signing out')
-            const result = await signOutAction()
-            if (!result.success) {
-              logger.warn({ message: result.error }, 'Sign out action failed during user-not-found cleanup')
-            }
-            if (isMounted) {
-              setSession(null)
-              setAuthUser(null)
-            }
-            document.cookie = serialize('signout-reason', 'user-not-found', {
-              path: '/',
-              maxAge: 5,
-              sameSite: 'strict',
-            })
-            return
-          }
-        }
-
-        if (isMounted && session !== null && session !== undefined) {
-          setSession(session)
-          setAuthUser(session?.user ?? null)
-
-          const user = session?.user
+          const user = hasSession?.user
           logger.info(
             {
               hasSession: true,
@@ -114,18 +107,39 @@ export const useAuthState = (): {
             'Session check completed'
           )
         }
-      } catch (error) {
+
+        // Defer user verification so initial hydration isn't competing with a network call.
+        // This is UI-only: server-side operations must still verify using getUser() on the server.
+        if (hasSession?.user) {
+          scheduleIdle(() => {
+            const verify = async (): Promise<void> => {
+              try {
+                // Note: authService.getUser() already handles invalid JWT by signing out
+                // The auth state listener will update UI accordingly
+                await authService.getUser()
+                if (!isMounted) return
+              } catch (err) {
+                logger.debug({ err }, 'Auth user verification failed')
+              }
+            }
+
+            verify().catch((err) => {
+              logger.error({ err }, 'Auth user verification failed')
+            })
+          })
+        }
+      } catch (err) {
         // Enhanced error handling for refresh token scenarios
         const isRefreshTokenError =
-          error instanceof Error &&
-          (error.message.includes('refresh_token') ||
-            error.message.includes('Refresh Token') ||
-            error.message.includes('Invalid Refresh Token'))
+          err instanceof Error &&
+          (err.message.includes('refresh_token') ||
+            err.message.includes('Refresh Token') ||
+            err.message.includes('Invalid Refresh Token'))
 
         if (isRefreshTokenError) {
           logger.warn(
             {
-              error: error instanceof Error ? error.stack : error,
+              error: err instanceof Error ? err.stack : err,
               authErrorType: AuthErrorTypeEnum.REFRESH_TOKEN,
               timestamp: new Date().toISOString(),
             },
@@ -139,7 +153,7 @@ export const useAuthState = (): {
             setError(null) // Don't show error for refresh token issues
           }
         } else {
-          const appError = handleError(error, {
+          const appError = handleError(err, {
             operation: 'checkSession',
             hook: 'useAuthState',
             authErrorType: isRefreshTokenError ? AuthErrorTypeEnum.REFRESH_TOKEN : undefined,
@@ -158,22 +172,24 @@ export const useAuthState = (): {
     // Note: onAuthStateChange is safe for client-side reactive UI updates
     // The listener receives events directly from Supabase Auth when state changes
     // For server-side auth checks, always use getUser() instead
-    const unsubscribe = authService.onAuthStateChange((event: string, session: Session | null): void => {
+    const unsubscribe = authService.onAuthStateChange((event: string, sessionToUnsubscribe: Session | null): void => {
       logger.debug({ event }, 'Auth state changed')
       if (isMounted) {
-        setSession(session)
-        setAuthUser(session?.user ?? null)
+        setSession(sessionToUnsubscribe)
+        setAuthUser(sessionToUnsubscribe?.user ?? null)
         setIsLoading(false)
       }
     })
 
-    checkSession()
+    checkSession().catch(() => {
+      // Already logged
+    })
 
     return (): void => {
       isMounted = false
       unsubscribe()
     }
-  }, []) // Remove session dependency to prevent infinite loop
+  }, []) // No dependencies needed - auth state changes handled by listener
 
   return {
     authUser,

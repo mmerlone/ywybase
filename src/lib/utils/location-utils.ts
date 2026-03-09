@@ -1,4 +1,4 @@
-import { ICountry, IState, ICity, Country, State, City } from 'country-state-city'
+import { type ICountry, type IState, type ICity, Country, State, City } from 'country-state-city'
 import { buildIsomorphicLogger } from '@/lib/logger/isomorphic'
 
 import { detectCountry } from '@/lib/actions/location'
@@ -52,7 +52,7 @@ export const getStates = (countryCode: string): IState[] => {
 export const getCities = (countryCode: string, stateCode?: string): ICity[] => {
   return stateCode !== null && stateCode !== undefined
     ? City.getCitiesOfState(countryCode, stateCode)
-    : City.getCitiesOfCountry(countryCode) || []
+    : (City.getCitiesOfCountry(countryCode) ?? [])
 }
 
 /**
@@ -99,7 +99,7 @@ export function getCityByCode(cityName: string, stateCode: string, countryCode: 
  */
 export async function getCountryByGeoLocation(): Promise<string | null> {
   // Use independent Server Action for detection
-  return await detectCountry()
+  return detectCountry()
 }
 
 /**
@@ -136,7 +136,7 @@ export async function detectUserCountry(): Promise<ICountry | null> {
 
       if (locale) {
         const countryCode = locale.split('-')[1]
-        if (countryCode !== null && countryCode !== undefined && countryCode.length === 2) {
+        if (countryCode?.length === 2) {
           const detectedCode = countryCode.toUpperCase()
           const countryByNavigator = getCountryByCode(detectedCode)
           if (countryByNavigator) {

@@ -7,78 +7,101 @@
 
 import { useRouter as useNextRouter } from 'next/navigation'
 import { ROUTES, type RouteKey, type RouteConfig } from '@/config/routes'
+import { logger } from '@/lib/logger/client'
 
-type RouteParams<T> = T extends `${string}:${infer P}/${infer R}`
-  ? { [K in P | keyof RouteParams<`${R}`>]: string }
-  : T extends `${string}:${infer P}`
-    ? { [K in P]: string }
-    : Record<string, never>
+type RouteParams = Record<string, string>
+
+function validateRouteParams(routePath: string, params?: Record<string, string>): void {
+  // Extract required params from route path (e.g., "/users/:id" -> ["id"])
+  const requiredParams = routePath.match(/:(\w+)/g)?.map((param) => param.slice(1)) ?? []
+
+  // No required params and no params provided - valid
+  if (requiredParams.length === 0) return
+
+  // Check if all required params are provided in params object
+  const missingParams = requiredParams.filter((param) => params === undefined || !(param in params))
+
+  if (missingParams.length > 0) {
+    throw new Error(`Missing required parameters: ${missingParams.join(', ')}`)
+  }
+}
+
+function buildUrl(routeKey: RouteKey, params?: Record<string, string>, query?: Record<string, string>): string {
+  const route = ROUTES[routeKey]
+  if (route === undefined) {
+    throw new Error(`Route "${String(routeKey)}" not found in ROUTES configuration`)
+  }
+
+  validateRouteParams(route.path, params)
+
+  let url: string = route.path
+
+  // Replace route parameters
+  if (params !== undefined) {
+    Object.entries(params).forEach(([key, value]) => {
+      url = url.replace(`:${key}`, encodeURIComponent(value))
+    })
+  }
+
+  // Add query parameters
+  if (query !== undefined && Object.keys(query).length > 0) {
+    const searchParams = new URLSearchParams()
+    Object.entries(query).forEach(([key, value]) => {
+      searchParams.append(key, value)
+    })
+    url += `?${searchParams.toString()}`
+  }
+
+  return url
+}
 
 export function useRouter(): ReturnType<typeof useNextRouter> & {
-  push: <T extends RouteKey>(
-    routeKey: T,
-    params?: RouteParams<(typeof ROUTES)[T]['path']>,
-    query?: Record<string, string>
-  ) => void
-  replace: <T extends RouteKey>(
-    routeKey: T,
-    params?: RouteParams<(typeof ROUTES)[T]['path']>,
-    query?: Record<string, string>
-  ) => void
+  push: (routeKey: RouteKey, params?: RouteParams, query?: Record<string, string>) => void
+  replace: (routeKey: RouteKey, params?: RouteParams, query?: Record<string, string>) => void
+  prefetch: (routeKey: RouteKey) => void
 } {
   const router = useNextRouter()
 
   return {
     ...router,
-    push: <T extends RouteKey>(
-      routeKey: T,
-      params?: RouteParams<(typeof ROUTES)[T]['path']>,
-      query?: Record<string, string>
-    ): void => {
-      let url: string = ROUTES[routeKey].path
-
-      // Replace route parameters
-      if (params) {
-        Object.entries(params).forEach(([key, value]) => {
-          url = url.replace(`:${key}`, encodeURIComponent(value))
-        })
+    push: (routeKey: RouteKey, params?: RouteParams, query?: Record<string, string>): void => {
+      try {
+        const url = buildUrl(routeKey, params, query)
+        return router.push(url)
+      } catch (error) {
+        logger.error({ error, operation: 'navigate', routeKey }, 'Navigation error')
+        // Fallback to Next.js default behavior
+        if (typeof routeKey === 'string') {
+          return router.push(routeKey)
+        }
+        throw error
       }
-
-      // Add query parameters
-      if (query) {
-        const searchParams = new URLSearchParams()
-        Object.entries(query).forEach(([key, value]) => {
-          searchParams.append(key, value)
-        })
-        url += `?${searchParams.toString()}`
-      }
-
-      return router.push(url)
     },
-    replace: <T extends RouteKey>(
-      routeKey: T,
-      params?: RouteParams<(typeof ROUTES)[T]['path']>,
-      query?: Record<string, string>
-    ): void => {
-      let url: string = ROUTES[routeKey].path
-
-      // Replace route parameters
-      if (params) {
-        Object.entries(params).forEach(([key, value]) => {
-          url = url.replace(`:${key}`, encodeURIComponent(value))
-        })
+    replace: (routeKey: RouteKey, params?: RouteParams, query?: Record<string, string>): void => {
+      try {
+        const url = buildUrl(routeKey, params, query)
+        return router.replace(url)
+      } catch (error) {
+        logger.error({ error, operation: 'replace', routeKey }, 'Navigation error')
+        // Fallback to Next.js default behavior
+        if (typeof routeKey === 'string') {
+          return router.replace(routeKey)
+        }
+        throw error
       }
-
-      // Add query parameters
-      if (query) {
-        const searchParams = new URLSearchParams()
-        Object.entries(query).forEach(([key, value]) => {
-          searchParams.append(key, value)
-        })
-        url += `?${searchParams.toString()}`
+    },
+    prefetch: (routeKey: RouteKey): void => {
+      try {
+        const url = buildUrl(routeKey)
+        return router.prefetch(url)
+      } catch (error) {
+        logger.error({ error, operation: 'prefetch', routeKey }, 'Navigation error')
+        // Fallback to Next.js default behavior
+        if (typeof routeKey === 'string') {
+          return router.prefetch(routeKey)
+        }
+        throw error
       }
-
-      return router.replace(url)
     },
   }
 }
@@ -100,20 +123,20 @@ export function useRouter(): ReturnType<typeof useNextRouter> & {
  */
 export function getRoutePath<T extends RouteKey>(
   routeKey: T,
-  params?: RouteParams<(typeof ROUTES)[T]['path']>,
+  params?: Record<string, string>,
   query?: Record<string, string>
 ): string {
   let url: string = ROUTES[routeKey].path
 
   // Replace route parameters
-  if (params) {
+  if (params !== undefined) {
     Object.entries(params).forEach(([key, value]) => {
-      url = url.replace(`:${key}`, encodeURIComponent(value))
+      url = url.replace(`:${key}`, encodeURIComponent(String(value)))
     })
   }
 
   // Add query parameters
-  if (query && Object.keys(query).length > 0) {
+  if (query !== undefined && Object.keys(query).length > 0) {
     const searchParams = new URLSearchParams()
     Object.entries(query).forEach(([key, value]) => {
       searchParams.append(key, value)

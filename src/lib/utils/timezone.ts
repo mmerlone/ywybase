@@ -5,10 +5,10 @@
  * Supports both client and server environments through isomorphic logger.
  */
 
-import moment from 'moment-timezone'
 import { buildIsomorphicLogger } from '@/lib/logger/isomorphic'
-
-import { Timezone } from '@/types/timezone.types'
+import { type Timezone } from '@/types/timezone.types'
+import { CANONICAL_TZ_REGIONS } from './canonicalTzRegions.generated'
+import { getUtcOffsetMinutes } from './timezoneMapping'
 
 const logger = buildIsomorphicLogger('timezone-utils')
 
@@ -32,27 +32,45 @@ const logger = buildIsomorphicLogger('timezone-utils')
  * ```
  */
 export function getTimezones(): Timezone[] {
-  const timezoneNames = moment.tz.names()
-  const now = moment()
-
-  const timezones = timezoneNames.map((name: string) => {
-    const zone = moment.tz.zone(name)
-    const timestamp = now.valueOf()
-    const offsetInMinutes = zone?.utcOffset(timestamp) ?? 0
-    const offsetInHours = offsetInMinutes / 60
-    const offsetFormatted = `UTC${offsetInHours < 0 ? '+' : '-'}${offsetInHours}`
+  // Use the generated canonical list as the single source of truth. Compute
+  // offsets via `getUtcOffsetMinutes` so we avoid bundling moment-timezone.
+  const timezones = CANONICAL_TZ_REGIONS.map((name) => {
+    const offsetMinutes = getUtcOffsetMinutes(name)
+    const offsetInHours = offsetMinutes / 60
+    const sign = offsetInHours >= 0 ? '+' : '-'
     const displayName = name.replace(/_/g, ' ')
+    const offsetLabel = `UTC${sign}${Math.abs(offsetInHours)}`
 
     return {
       value: name,
-      label: `${displayName} (${offsetFormatted})`,
+      label: `${displayName} (${offsetLabel})`,
       offset: offsetInHours,
     }
   })
 
-  return timezones.sort((a, b) => {
-    return a.value.localeCompare(b.value)
-  })
+  return timezones.sort((a, b) => a.value.localeCompare(b.value))
+}
+
+/**
+ * Format timezone offset for display
+ *
+ * @param timezone - IANA timezone identifier (e.g., "America/New_York")
+ * @returns Formatted UTC offset string (e.g., "-5:00", "+5:30")
+ *
+ * @example
+ * ```typescript
+ * formatTimezoneOffset('America/New_York') // "-5:00" (or "-4:00" during DST)
+ * formatTimezoneOffset('Asia/Kolkata')     // "+5:30"
+ * ```
+ */
+export function formatTimezoneOffset(timezone: string): string {
+  const offsetMinutes = getUtcOffsetMinutes(timezone)
+  const offsetHours = offsetMinutes / 60
+  const sign = offsetHours >= 0 ? '+' : '-'
+  const absHours = Math.abs(offsetHours)
+  const hours = Math.floor(absHours)
+  const minutes = (absHours - hours) * 60
+  return minutes > 0 ? `${sign}${hours}:${minutes.toString().padStart(2, '0')}` : `${sign}${hours}`
 }
 
 /**
@@ -75,14 +93,10 @@ export function getTimezones(): Timezone[] {
  */
 export function getCurrentTimezone(): string {
   try {
-    const guessedTz = moment.tz.guess()
-
-    if (!guessedTz) {
-      const timezone = Intl?.DateTimeFormat().resolvedOptions().timeZone
-      return timezone || 'UTC'
-    }
-
-    return guessedTz
+    // Prefer the standard Intl API for detection (works in browsers and Node).
+    const timezone = Intl?.DateTimeFormat().resolvedOptions().timeZone
+    if (timezone) return timezone
+    return 'UTC'
   } catch (err) {
     logger.warn({ err }, 'Could not determine timezone, using UTC as fallback')
     return 'UTC'

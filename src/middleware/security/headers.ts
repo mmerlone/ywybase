@@ -13,7 +13,7 @@ import type {
   SecurityMiddleware,
   ValidationResult,
 } from '@/types/security.types'
-import { NextRequest, NextResponse } from 'next/server'
+import { type NextRequest, NextResponse } from 'next/server'
 
 const logger = buildLogger('security-headers')
 
@@ -69,15 +69,15 @@ export function applySecurityHeaders<T = unknown>(
     const { generateNonce = false, customHeaders = {}, nonce: providedNonce } = options
 
     // Generate nonce if requested or reuse provided/existing nonce
-    const existingNonce = response.headers.get('X-CSP-Nonce') || undefined
+    const existingNonce = response.headers.get('X-CSP-Nonce') ?? undefined
     const nonce = providedNonce ?? existingNonce ?? (generateNonce ? generateCSPNonce() : undefined)
 
     // Get security headers from centralized config
-    const securityHeaders = SECURITY_CONFIG.getSecurityHeaders(nonce)
+    const securityHeaders = SECURITY_CONFIG.getSecurityHeaders(nonce ?? '')
 
     // Apply all security headers
     Object.entries(securityHeaders).forEach(([key, value]) => {
-      if (value) {
+      if (value !== undefined && value !== '') {
         // Only set non-empty values
         response.headers.set(key, value)
       }
@@ -89,7 +89,7 @@ export function applySecurityHeaders<T = unknown>(
     })
 
     // Store nonce in response headers for template access
-    if (nonce) {
+    if (nonce !== undefined) {
       response.headers.set('X-CSP-Nonce', nonce)
     }
 
@@ -168,7 +168,7 @@ export function applyCorsHeaders(response: NextResponse, origin?: string): NextR
     let allowedOrigin = false
 
     // Check if origin is allowed
-    if (origin && corsConfig.origins.includes(origin)) {
+    if (origin !== undefined && corsConfig.origins.includes(origin)) {
       response.headers.set('Access-Control-Allow-Origin', origin)
       allowedOrigin = true
     } else if (corsConfig.origins.includes('*')) {
@@ -214,14 +214,14 @@ export const securityHeadersMiddleware: SecurityMiddleware<SecurityHeaderMiddlew
 
     // Apply security headers to page responses
     const secureResponse = applySecurityHeaders(response, {
-      generateNonce: !options?.nonce,
+      generateNonce: options?.nonce === undefined,
       nonce: options?.nonce,
       strictCSP: SECURITY_CONFIG.isProduction,
     })
 
     // Apply CORS headers if needed
     const origin = request.headers.get('origin')
-    if (origin) {
+    if (origin !== null) {
       return applyCorsHeaders(secureResponse, origin)
     }
 
@@ -240,21 +240,21 @@ export function validateSecurityHeaders(): ValidationResult {
 
   try {
     // Test header generation
-    const headers = SECURITY_CONFIG.getSecurityHeaders()
+    const headers = SECURITY_CONFIG.getSecurityHeaders('')
 
     // Check required headers
     const requiredHeaders = ['Content-Security-Policy', 'X-Frame-Options', 'X-Content-Type-Options', 'Referrer-Policy']
 
     requiredHeaders.forEach((header) => {
-      if (!headers[header]) {
+      if (headers[header] === undefined) {
         issues.push(`Missing required header: ${header}`)
       }
     })
 
     // Validate CSP
     const csp = headers['Content-Security-Policy']
-    if (csp) {
-      if (csp.includes("'unsafe-eval'") && SECURITY_CONFIG.isProduction) {
+    if (csp !== undefined) {
+      if (csp.includes("'unsafe-eval'") && SECURITY_CONFIG.isProduction === true) {
         issues.push('CSP contains unsafe-eval in production')
       }
 
@@ -265,7 +265,7 @@ export function validateSecurityHeaders(): ValidationResult {
 
     // Validate HSTS in production
     const hsts = headers['Strict-Transport-Security']
-    if (SECURITY_CONFIG.isProduction && (!hsts || hsts === 'max-age=0')) {
+    if (SECURITY_CONFIG.isProduction === true && (hsts === undefined || hsts === 'max-age=0')) {
       issues.push('HSTS not properly configured for production')
     }
 
@@ -286,7 +286,7 @@ export function validateSecurityHeaders(): ValidationResult {
  * Get CSP nonce from response headers
  */
 export function getCSPNonce(response: NextResponse): string | undefined {
-  return response.headers.get('X-CSP-Nonce') || undefined
+  return response.headers.get('X-CSP-Nonce') ?? undefined
 }
 
 /**
@@ -310,7 +310,7 @@ export function createSecurityHeadersReport(response: NextResponse): SecurityHea
 
   securityHeaderNames.forEach((headerName) => {
     const value = response.headers.get(headerName)
-    if (value) {
+    if (value !== null) {
       headers[headerName] = value
       securityScore += 10
     } else {
@@ -320,7 +320,7 @@ export function createSecurityHeadersReport(response: NextResponse): SecurityHea
 
   // Check CSP quality
   const csp = headers['Content-Security-Policy']
-  if (csp) {
+  if (csp !== undefined) {
     if (csp.includes("'unsafe-inline'")) {
       recommendations.push('Remove unsafe-inline from CSP')
       securityScore -= 5

@@ -1,9 +1,9 @@
 import { Box } from '@mui/material'
 import type { Metadata } from 'next'
 
-import { CTASection } from '@/components/marketing/cta'
-import { FeaturesSection } from '@/components/marketing/features'
-import { HeroSection } from '@/components/marketing/hero'
+import { CTASection } from '@/components/marketing/cta/CTASection'
+import { FeaturesSection } from '@/components/marketing/features/FeaturesSection'
+import { HeroSection } from '@/components/marketing/hero/HeroSection'
 
 export const metadata: Metadata = {
   title: 'Home',

@@ -36,8 +36,7 @@ const {
  * ```
  */
 export const emailSchema = z
-  .string()
-  .email('Invalid email format')
+  .email({ error: 'Invalid email format' })
   .min(5, 'Email must be at least 5 characters')
   .max(255, 'Email cannot be longer than 255 characters')
   .toLowerCase()

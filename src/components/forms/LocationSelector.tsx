@@ -1,19 +1,12 @@
 'use client'
 
 import { Autocomplete, FormControl, FormHelperText, Grid, TextField } from '@mui/material'
-import { ICity, ICountry, IState } from 'country-state-city'
-import { useEffect, useMemo, useState } from 'react'
+import { type ICity, type ICountry, type IState } from 'country-state-city'
+import { useMemo, useState } from 'react'
 import { useFormContext } from 'react-hook-form'
 
-import { logger } from '@/lib/logger/client'
-import {
-  getCities,
-  getCountries,
-  getCountryByCode,
-  getStateByCode,
-  getStates,
-  detectUserCountry,
-} from '@/lib/utils/location-utils'
+import { useGeoLocation } from '@/hooks/useGeoLocation'
+import { getCities, getCountries, getCountryByCode, getStateByCode, getStates } from '@/lib/utils/location-utils'
 
 type LocationError = {
   message?: string
@@ -45,8 +38,8 @@ export function LocationSelector({
   required = { country: true },
   disabled = false,
 }: LocationSelectorProps): JSX.Element {
-  const { watch, setValue, formState } = useFormContext()
-  const [userDetectedCountry, setUserDetectedCountry] = useState<string | null>(null)
+  const { watch, setValue } = useFormContext()
+  const { detectedCountryCode } = useGeoLocation()
 
   // Watch form values with proper typing
   const countryValue = watch(countryName) as string | undefined
@@ -60,53 +53,27 @@ export function LocationSelector({
   // Compute derived state based on form values
   const selectedCountry = useMemo(() => {
     if (!countryValue) return null
-    return getCountryByCode(countryValue) || null
+    return getCountryByCode(countryValue) ?? null
   }, [countryValue])
 
   const countryStates = useMemo(() => {
     if (!selectedCountry) return []
-    return getStates(selectedCountry.isoCode) || []
+    return getStates(selectedCountry.isoCode) ?? []
   }, [selectedCountry])
 
   const selectedState = useMemo(() => {
     if (!selectedCountry || !stateValue) return null
-    return getStateByCode(stateValue, selectedCountry.isoCode) || null
+    return getStateByCode(stateValue, selectedCountry.isoCode) ?? null
   }, [selectedCountry, stateValue])
 
   const stateCities = useMemo(() => {
     if (!selectedCountry || !selectedState) return []
-    return getCities(selectedCountry.isoCode, selectedState.isoCode) || []
+    return getCities(selectedCountry.isoCode, selectedState.isoCode) ?? []
   }, [selectedCountry, selectedState])
 
   // Use computed values directly instead of state
   const states = countryStates
   const cities = stateCities
-
-  // Load countries on component mount
-  useEffect(() => {
-    // Only detect user's country if no country is currently selected
-    const detectCountry = async (): Promise<void> => {
-      // Wait for form to be initialized with default values
-      // Skip detection if country already exists in the form (including from profile data)
-      if (countryValue || !formState.isReady) {
-        return
-      }
-
-      try {
-        const detectedCountry = await detectUserCountry()
-        if (detectedCountry) {
-          setUserDetectedCountry(detectedCountry.isoCode)
-        }
-      } catch (err: unknown) {
-        logger.warn(
-          { err: err instanceof Error ? err : new Error(String(err)) },
-          'Failed to detect user country in LocationSelector'
-        )
-      }
-    }
-
-    detectCountry()
-  }, [countryValue, formState.defaultValues, formState.isSubmitting, countryName, formState.isReady])
 
   const handleCountryChange = (country: ICountry | null): void => {
     if (country) {
@@ -173,7 +140,7 @@ export function LocationSelector({
 
   // Handle city change
   const handleCityChange = (city: ICity | null): void => {
-    setValue(cityName, city?.name || '', {
+    setValue(cityName, city?.name ?? '', {
       shouldValidate: true,
       shouldDirty: true,
       shouldTouch: true,
@@ -183,18 +150,18 @@ export function LocationSelector({
   return (
     <Grid container spacing={2} sx={{ mb: 1 }}>
       <Grid size={{ xs: 12, sm: 8 }}>
-        <FormControl fullWidth error={!!errors?.country} margin="none">
+        <FormControl fullWidth error={Boolean(errors?.country)} margin="none">
           <Autocomplete
             options={countries}
             getOptionLabel={(option) => option.name}
             value={selectedCountry}
             onChange={(_, newValue) => handleCountryChange(newValue)}
             onOpen={() => {
-              // When dropdown is opened and no country is selected, pre-select detected country
-              if (!countryValue && userDetectedCountry) {
-                const detectedCountry = countries.find((country) => country.isoCode === userDetectedCountry)
-                if (detectedCountry) {
-                  handleCountryChange(detectedCountry)
+              // When dropdown is opened and no country is selected, apply the auto-detected country
+              if (!countryValue && detectedCountryCode) {
+                const detected = countries.find((c) => c.isoCode === detectedCountryCode)
+                if (detected) {
+                  handleCountryChange(detected)
                 }
               }
             }}
@@ -202,15 +169,15 @@ export function LocationSelector({
               <TextField
                 {...params}
                 label="Country"
-                error={!!errors?.country}
-                helperText={errors?.country?.message || ' '}
+                error={Boolean(errors?.country)}
+                helperText={errors?.country?.message ?? ' '}
                 required={required?.country}
                 placeholder="Search for a country..."
                 disabled={disabled}
               />
             )}
             isOptionEqualToValue={(option, value) => option.isoCode === value?.isoCode}
-            disabled={disabled || !countries.length}
+            disabled={disabled ?? !countries.length}
             filterOptions={(options, { inputValue }) =>
               options.filter((option) => option.name.toLowerCase().includes(inputValue.toLowerCase()))
             }
@@ -221,7 +188,7 @@ export function LocationSelector({
       </Grid>
 
       <Grid size={{ xs: 12, sm: 4 }}>
-        <FormControl fullWidth error={!!errors?.state} margin="none">
+        <FormControl fullWidth error={Boolean(errors?.state)} margin="none">
           <Autocomplete
             options={states}
             getOptionLabel={(option) => option.name}
@@ -231,8 +198,8 @@ export function LocationSelector({
               <TextField
                 {...params}
                 label="State/Province"
-                error={!!errors?.state}
-                helperText={errors?.state?.message || ' '}
+                error={Boolean(errors?.state)}
+                helperText={errors?.state?.message ?? ' '}
                 required={required?.state}
                 placeholder="Search for a state/province..."
                 disabled={disabled}
@@ -245,23 +212,22 @@ export function LocationSelector({
             }
             noOptionsText="No states/provinces found"
           />
-          {errors?.state && <FormHelperText>{errors.state.message}</FormHelperText>}
         </FormControl>
       </Grid>
 
       <Grid size={{ xs: 12 }}>
-        <FormControl fullWidth error={!!errors?.city} margin="none">
+        <FormControl fullWidth error={Boolean(errors?.city)} margin="none">
           <Autocomplete
             options={cities}
             getOptionLabel={(option) => option.name}
-            value={cities.find((city) => city.name === cityValue) || null}
+            value={cities.find((city) => city.name === cityValue) ?? null}
             onChange={(_, newValue) => handleCityChange(newValue)}
             renderInput={(params) => (
               <TextField
                 {...params}
                 label="City"
-                error={!!errors?.city}
-                helperText={errors?.city?.message || ' '}
+                error={Boolean(errors?.city)}
+                helperText={errors?.city?.message ?? ' '}
                 required={required?.city}
                 placeholder="Search for a city..."
                 disabled={disabled}

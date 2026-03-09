@@ -2,7 +2,7 @@
 
 import { Alert, Box, useTheme } from '@mui/material'
 import Link from 'next/link'
-import { ReactNode } from 'react'
+import { type ReactNode } from 'react'
 
 import { CookieBanner } from '@/components/cookie/CookieBanner'
 import { GlobalErrorBoundary } from '@/components/error/GlobalErrorBoundary'
@@ -17,11 +17,13 @@ import { ThemeProvider } from '@/components/providers/ThemeProvider'
 import { SnackbarProvider } from '@/contexts/SnackbarContext'
 import { SITE_CONFIG } from '@/config/site'
 import type { SupabaseEnvStatus } from '@/config/supabase-public'
+import type { FlashMessage } from '@/lib/utils/flash-messages.client'
 
 interface LayoutClientProps {
   children: ReactNode
   supabaseStatus: SupabaseEnvStatus
   isDev: boolean
+  initialFlash?: FlashMessage | null
 }
 
 function MainContent({
@@ -61,7 +63,7 @@ function MainContent({
   )
 }
 
-export function LayoutClient({ children, supabaseStatus, isDev }: LayoutClientProps): JSX.Element {
+export function LayoutClient({ children, supabaseStatus, isDev, initialFlash }: LayoutClientProps): JSX.Element {
   const supabaseEnabled = supabaseStatus.isConfigured
 
   const appShell = (
@@ -69,7 +71,7 @@ export function LayoutClient({ children, supabaseStatus, isDev }: LayoutClientPr
       <ThemeProvider>
         <SnackbarProvider>
           <NavigationProgress />
-          <FlashMessageHandler />
+          <FlashMessageHandler initialFlash={initialFlash} />
           <Box id="layout-client-container" sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
             <Header supabaseEnabled={supabaseEnabled} />
             <MainContent supabaseEnabled={supabaseEnabled} isDev={isDev}>

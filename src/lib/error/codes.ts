@@ -20,6 +20,7 @@
 
 import {
   ErrorDomainEnum,
+  type ErrorDomain,
   AuthErrorCodeEnum,
   ValidationErrorCodeEnum,
   DatabaseErrorCodeEnum,
@@ -34,7 +35,7 @@ import {
  */
 export interface ErrorCodeStructure {
   /** Error domain (AUTH, VALIDATION, DATABASE, etc.) */
-  domain: ErrorDomainEnum
+  domain: ErrorDomain
   /** Error type (same as domain for legacy compatibility) */
   type: string
   /** Specific error description */
@@ -60,6 +61,7 @@ export const AUTH_ERROR_MESSAGES: ErrorMessageMap = {
   [`${ErrorDomainEnum.AUTH}/${AuthErrorCodeEnum.WEAK_PASSWORD}`]: 'Password does not meet security requirements',
   [`${ErrorDomainEnum.AUTH}/${AuthErrorCodeEnum.EMAIL_ALREADY_IN_USE}`]: 'This email is already in use',
   [`${ErrorDomainEnum.AUTH}/${AuthErrorCodeEnum.INVALID_TOKEN}`]: 'Invalid or expired authentication token',
+  [`${ErrorDomainEnum.AUTH}/${AuthErrorCodeEnum.PROVIDER_DISABLED}`]: 'This login method is currently disabled',
   [`${ErrorDomainEnum.AUTH}/${AuthErrorCodeEnum.UNKNOWN_SUPABASE_ERROR}`]: 'Authentication service error',
 }
 
@@ -104,6 +106,8 @@ export const NETWORK_ERROR_MESSAGES: ErrorMessageMap = {
 export const SERVER_ERROR_MESSAGES: ErrorMessageMap = {
   [`${ErrorDomainEnum.SERVER}/${ServerErrorCodeEnum.UNKNOWN_ERROR}`]: 'An unexpected error occurred',
   [`${ErrorDomainEnum.SERVER}/${ServerErrorCodeEnum.INTERNAL_ERROR}`]: 'Internal server error',
+  [`${ErrorDomainEnum.SERVER}/${ServerErrorCodeEnum.DYNAMIC_SERVER_USAGE}`]:
+    'This operation requires dynamic rendering and cannot be performed during static generation',
 }
 
 /**
@@ -162,7 +166,7 @@ export class ErrorCodeBuilder {
    * console.log(code) // "DATABASE/NOT_FOUND"
    * ```
    */
-  static create(domain: ErrorDomainEnum, type: string): string {
+  static create(domain: ErrorDomain, type: string): string {
     return `${domain}/${type}`
   }
 
@@ -188,12 +192,12 @@ export class ErrorCodeBuilder {
     const [domain, description] = parts
 
     // Validate domain
-    if (!Object.values(ErrorDomainEnum).includes(domain as ErrorDomainEnum)) {
+    if (!Object.values(ErrorDomainEnum).includes(domain as ErrorDomain)) {
       return null
     }
 
     return {
-      domain: domain as ErrorDomainEnum,
+      domain: domain as ErrorDomain,
       type: domain ?? '',
       description: description ?? '',
     }
@@ -234,7 +238,7 @@ export class ErrorCodeBuilder {
    * console.log(isDb) // false
    * ```
    */
-  static isDomain(errorCode: string, domain: ErrorDomainEnum): boolean {
+  static isDomain(errorCode: string, domain: ErrorDomain): boolean {
     return errorCode.startsWith(`${domain}/`)
   }
 }
@@ -274,6 +278,7 @@ export const ErrorCodes = {
     emailAlreadyInUse: (): string =>
       ErrorCodeBuilder.create(ErrorDomainEnum.AUTH, AuthErrorCodeEnum.EMAIL_ALREADY_IN_USE),
     invalidToken: (): string => ErrorCodeBuilder.create(ErrorDomainEnum.AUTH, AuthErrorCodeEnum.INVALID_TOKEN),
+    providerDisabled: (): string => ErrorCodeBuilder.create(ErrorDomainEnum.AUTH, AuthErrorCodeEnum.PROVIDER_DISABLED),
     unknownError: (): string => ErrorCodeBuilder.create(ErrorDomainEnum.AUTH, AuthErrorCodeEnum.UNKNOWN_SUPABASE_ERROR),
   },
   validation: {
@@ -309,6 +314,8 @@ export const ErrorCodes = {
   server: {
     unknownError: (): string => ErrorCodeBuilder.create(ErrorDomainEnum.SERVER, ServerErrorCodeEnum.UNKNOWN_ERROR),
     internalError: (): string => ErrorCodeBuilder.create(ErrorDomainEnum.SERVER, ServerErrorCodeEnum.INTERNAL_ERROR),
+    dynamicServerUsage: (): string =>
+      ErrorCodeBuilder.create(ErrorDomainEnum.SERVER, ServerErrorCodeEnum.DYNAMIC_SERVER_USAGE),
   },
   config: {
     missingEnvVar: (): string =>

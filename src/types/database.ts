@@ -5,10 +5,10 @@
  * Provides type-safe wrappers around Supabase generated types with application-specific extensions.
  */
 
-import { PostgrestError } from '@supabase/supabase-js'
+import { type PostgrestError } from '@supabase/supabase-js'
 
-import { PrivacySettings, GenderPreference, NotificationPreferences, SocialLinks } from './profile.types'
-import { Database } from './supabase'
+import { type Database } from './supabase'
+import type { ProfileAutoSync } from './profile.types'
 
 /**
  * Raw database profile row type from Supabase.
@@ -18,71 +18,30 @@ export type DbProfile = Database['public']['Tables']['profiles']['Row']
 
 /**
  * Type for inserting new profiles into the database.
- * Excludes auto-generated fields (id, created_at, updated_at).
+ * Excludes auto-generated and auth-synced fields.
  */
-export type DbProfileInsert = Omit<
-  Database['public']['Tables']['profiles']['Insert'],
-  'created_at' | 'updated_at' | 'id'
->
+export type DbProfileInsert = Omit<Database['public']['Tables']['profiles']['Insert'], ProfileAutoSync>
 
 /**
  * Type for updating existing profiles in the database.
- * Excludes immutable fields (id, created_at, updated_at).
+ * Excludes immutable and auth-synced fields.
  */
-export type DbProfileUpdate = Omit<
-  Database['public']['Tables']['profiles']['Update'],
-  'created_at' | 'updated_at' | 'id'
->
-
-/**
- * Application-level profile type with parsed JSON fields.
- * Extends the database profile type with properly typed JSON columns.
- *
- * @remarks
- * This type replaces the raw JSON fields from the database with their
- * corresponding TypeScript types for better type safety throughout the application.
- *
- * @example
- * ```typescript
- * const profile: Profile = {
- *   id: '123',
- *   email: 'user@example.com',
- *   full_name: 'John Doe',
- *   privacy_settings: { necessary: true, analytics: true, marketing: false, functional: true },
- *   gender: 'male',
- *   notification_preferences: 'email',
- *   social_links: [{ id: '1', url: 'https://twitter.com/user', title: 'Twitter' }]
- * };
- * ```
- */
-export type Profile = Omit<DbProfile, 'privacy_settings' | 'gender' | 'notification_preferences' | 'social_links'> & {
-  /** User's privacy and consent settings */
-  privacy_settings?: PrivacySettings | null
-  /** User's gender preference */
-  gender?: GenderPreference | null
-  /** Preferred notification channels */
-  notification_preferences?: NotificationPreferences | null
-  /** Collection of social media links */
-  social_links?: SocialLinks
-}
-
-/**
- * Type for updating profile data.
- * All fields are optional and excludes immutable fields.
- */
-export type ProfileUpdate = Partial<Omit<Profile, 'id' | 'created_at' | 'updated_at'>>
-
-/**
- * Type for inserting new profile data.
- * Excludes auto-generated fields (id, created_at, updated_at).
- */
-export type ProfileInsert = Omit<Profile, 'id' | 'created_at' | 'updated_at'>
+export type DbProfileUpdate = Omit<Database['public']['Tables']['profiles']['Update'], ProfileAutoSync>
 
 /**
  * Re-export of the Supabase generated database type.
  * Provides access to all table schemas and their types.
  */
 export type { Database }
+
+/**
+ * Sort direction options (shared across all queries)
+ */
+export const SortOrderEnum = {
+  ASC: 'asc',
+  DESC: 'desc',
+} as const
+export type SortOrder = (typeof SortOrderEnum)[keyof typeof SortOrderEnum]
 
 /**
  * Extracts the resolved type from a Promise.
@@ -127,7 +86,7 @@ export interface PaginatedResult<T> {
   /** Array of items for the current page */
   data: T[]
   /** Total number of items across all pages (null if count not requested) */
-  count: number | null
+  count: number
   /** Current page number (1-indexed) */
   page: number
   /** Number of items per page */

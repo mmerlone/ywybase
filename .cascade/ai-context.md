@@ -2,7 +2,7 @@
 
 ## Package Management
 
-⚠️ **IMPORTANT**: This project uses pnpm as the package manager. Never use npm or yarn for any package management tasks.
+⚠️ **IMPORTANT**: This project uses pnpm as package manager. Never use npm or yarn for any package management tasks.
 
 ### Always use pnpm commands:
 
@@ -22,8 +22,8 @@ Follow structure defined in `docs/structure.md` at all times. Before making any 
 
 ## Key Rules
 
-1. **Never** create new files in the wrong location
-2. **Always** use the App Router (`/app`) for all routes
+1. **Never** create new files in wrong location
+2. **Always** use App Router (`/app`) for all routes
 3. **Never** mix Pages Router (`/pages`) with App Router
 4. **Always** validate input with Zod
 5. **Always** generate and use TypeScript types and interfaces
@@ -32,7 +32,7 @@ Follow structure defined in `docs/structure.md` at all times. Before making any 
 
 ### API Routes
 
-- Use `route.ts` in the appropriate `/app/api` subdirectory
+- Use `route.ts` in appropriate `/app/api` subdirectory
 - Always validate request/response types
 - Use proper HTTP methods and status codes
 
@@ -52,40 +52,40 @@ Follow structure defined in `docs/structure.md` at all times. Before making any 
 
 ### Core Framework
 
-- **Next.js**: v15.5.6
-- **React**: v18.3.1
+- **Next.js**: v15.5.x
+- **React**: v18.3.x
 - **TypeScript**: v5 (implied by @types/react v18)
 
 ### UI Libraries
 
-- **MUI (Material-UI)**: v7.3.4
-- **@mui/icons-material**: v7.3.4
-- **@mui/material-nextjs**: v7.3.3
-- **@mui/x-date-pickers**: v8.14.0
-- **Emotion**: v11.14.0
-- **Tailwind CSS**: v4.1.14
+- **MUI (Material-UI)**: v7.3.x
+- **@mui/icons-material**: v7.3.x
+- **@mui/material-nextjs**: v7.3.x
+- **@mui/x-date-pickers**: v8.14.x
+- **Emotion**: v11.14.x
+- **Tailwind CSS**: v4.1.x
 
 ### Data Fetching & State Management
 
-- **@tanstack/react-query**: v5.90.11
-- **@tanstack/react-query-devtools**: v5.91.1
+- **@tanstack/react-query**: v5.90.x
+- **@tanstack/react-query-devtools**: v5.91.x
 
 ### Backend & Database
 
-- **@supabase/ssr**: v0.7.0
+- **@supabase/ssr**: v0.7.x
 - **@supabase/supabase-js**: latest
 
 ### Form Handling
 
-- **react-hook-form**: v7.45.4
-- **@hookform/resolvers**: v3.3.2
-- **zod**: v3.25.67
+- **react-hook-form**: v7.45.x
+- **@hookform/resolvers**: v3.3.x
+- **zod**: v3.25.x
 
 ### Other Key Dependencies
 
-- **pino**: v10.0.0 (logging)
+- **pino**: v10.0.x (logging)
 - **@sentry/nextjs**: v10 (error tracking)
-- **i18next**: v25.6.0 (internationalization)
+- **i18next**: v25.6.x (internationalization)
 
 ### Common Patterns
 
@@ -100,7 +100,7 @@ Follow structure defined in `docs/structure.md` at all times. Before making any 
 
 ### Version
 
-- Using **MUI v7.3.4**
+- Using **MUI v7.3.x**
 
 ## Before You Start Coding
 
@@ -120,25 +120,25 @@ Follow structure defined in `docs/structure.md` at all times. Before making any 
 
 1. Check `docs/structure.md`
 2. Reference Next.js 15 documentation
-3. Follow existing patterns in the codebase
+3. Follow existing patterns in codebase
 4. Ask for clarification if needed
 
 These examples should be used as guidance when configuring Sentry functionality within a project.
 
 # Exception Catching
 
-Use `Sentry.captureException(error)` to capture an exception and log the error in Sentry.
+Use `Sentry.captureException(error)` to capture an exception and log error in Sentry.
 Use this in try catch blocks or areas where exceptions are expected
 
 # Tracing Examples
 
 Spans should be created for meaningful actions within applications like button clicks, API calls, and function calls
-Use the `Sentry.startSpan` function to create a span
+Use `Sentry.startSpan` function to create a span
 Child spans can exist within a parent span
 
 ## Custom Span instrumentation in component actions
 
-The `name` and `op` properties should be meaningful for the activities in the call.
+The `name` and `op` properties should be meaningful for activities in the call.
 Attach attributes based on relevant information and metrics from the request
 
 ```javascript
@@ -170,7 +170,7 @@ function TestComponent() {
 
 ## Custom span instrumentation in API calls
 
-The `name` and `op` properties should be meaningful for the activities in the call.
+The `name` and `op` properties should be meaningful for activities in the call.
 Attach attributes based on relevant information and metrics from the request
 
 ```javascript
@@ -197,7 +197,7 @@ async function fetchUserData(userId) {
 
 - **Always** include explicit return types for all functions and methods
 - Use TypeScript types and interfaces for all function parameters and return values
-- Follow the project's ESLint and TypeScript configuration
+- Follow project's ESLint and TypeScript configuration
 
 ### Function Definitions
 
@@ -227,3 +227,7 @@ const getUser = (id: string): User => {
   return { id, name: 'John' }
 }
 ```
+
+---
+
+**Note**: For complete development guidelines and project patterns, see **[AGENTS.md](../AGENTS.md)** as the source of truth.

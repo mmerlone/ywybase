@@ -12,6 +12,7 @@
 
 import { SECURITY_CONFIG } from '@/config/security'
 import { buildLogger } from '@/lib/logger/client'
+import { safeJsonParse } from '@/lib/utils/json'
 import type {
   RateLimitStore,
   RateLimitEntry,
@@ -20,10 +21,24 @@ import type {
   RateLimitStats,
   ValidationResult,
 } from '@/types/security.types'
-import { NextRequest, NextResponse } from 'next/server'
+import { type NextRequest, NextResponse } from 'next/server'
 import { Redis } from '@upstash/redis'
 
 const logger = buildLogger('security-rate-limit')
+
+/**
+ * Type guard for RateLimitEntry
+ */
+function isRateLimitEntry(obj: unknown): obj is RateLimitEntry {
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    'count' in obj &&
+    typeof (obj as Record<string, unknown>).count === 'number' &&
+    'resetTime' in obj &&
+    typeof (obj as Record<string, unknown>).resetTime === 'number'
+  )
+}
 
 /**
  * In-memory rate limit store (for development/single instance)
@@ -129,8 +144,13 @@ class UpstashRedisRateLimitStore implements RateLimitStore {
   async get(key: string): Promise<RateLimitEntry | null> {
     try {
       const data = await this.redis.get<string>(key)
-      if (!data) return null
-      const entry: RateLimitEntry = typeof data === 'string' ? JSON.parse(data) : data
+      if (data === null) return null
+      const parsed = typeof data === 'string' ? safeJsonParse<RateLimitEntry>(data, isRateLimitEntry) : data
+      if (!isRateLimitEntry(parsed)) {
+        logger.warn({ key, data }, 'Invalid rate limit entry format in Redis')
+        return null
+      }
+      const entry = parsed
       if (Date.now() > entry.resetTime) {
         await this.redis.del(key)
         return null
@@ -184,15 +204,15 @@ class UpstashRedisRateLimitStore implements RateLimitStore {
  */
 async function initializeRateLimitStore(): Promise<RateLimitStore> {
   // Check for Upstash Redis
-  if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+  if (process.env.UPSTASH_REDIS_REST_URL !== undefined && process.env.UPSTASH_REDIS_REST_TOKEN !== undefined) {
     try {
       const redis = Redis.fromEnv()
-      logger.info({}, 'Using Upstash Redis for rate limiting')
+      logger.info({ store: 'upstash-redis' }, 'Using Upstash Redis for rate limiting')
       return new UpstashRedisRateLimitStore(redis)
     } catch (err) {
       logger.warn(
-        { err },
-        'Upstash Redis environment variables found but @upstash/redis package not installed or misconfigured'
+        { err: err instanceof Error ? err : new Error(String(err)), store: 'upstash-redis' },
+        'Failed to initialize Upstash Redis, falling back to in-memory rate limiting'
       )
     }
   }
@@ -200,11 +220,11 @@ async function initializeRateLimitStore(): Promise<RateLimitStore> {
   // Fallback to memory store
   if (process.env.NODE_ENV === 'production') {
     logger.warn(
-      {},
+      { store: 'memory', environment: 'production' },
       'Using in-memory rate limiting in production. This is not recommended for multi-instance deployments. Consider using Upstash Redis.'
     )
   } else {
-    logger.info({}, 'Using in-memory rate limiting for development')
+    logger.info({ store: 'memory', environment: process.env.NODE_ENV }, 'Using in-memory rate limiting for development')
   }
 
   return new MemoryRateLimitStore()
@@ -224,12 +244,10 @@ async function getRateLimitStore(): Promise<RateLimitStore> {
     return rateLimitStore
   }
 
-  if (!initPromise) {
-    initPromise = initializeRateLimitStore().then((store) => {
-      rateLimitStore = store
-      return store
-    })
-  }
+  initPromise ??= initializeRateLimitStore().then((store) => {
+    rateLimitStore = store
+    return store
+  })
 
   return initPromise
 }
@@ -240,7 +258,7 @@ async function getRateLimitStore(): Promise<RateLimitStore> {
 export function setRateLimitStore(store: RateLimitStore): void {
   rateLimitStore = store
   initPromise = null // Clear any pending initialization
-  logger.info({}, 'Custom rate limit store configured')
+  logger.info({ store: store.constructor.name }, 'Custom rate limit store configured')
 }
 
 /**
@@ -257,9 +275,9 @@ function generateRateLimitKey(
 
   // Use IP address as default key
   const ip =
-    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-    request.headers.get('x-real-ip') ||
-    request.headers.get('x-vercel-forwarded-for') ||
+    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
+    request.headers.get('x-real-ip') ??
+    request.headers.get('x-vercel-forwarded-for') ??
     'unknown'
 
   return `${prefix}:${ip}`
@@ -319,7 +337,7 @@ export async function applyRateLimit(
 ): Promise<RateLimitResult> {
   try {
     // Check if request should be skipped
-    if (config.skip && config.skip(request)) {
+    if (config.skip?.(request) === true) {
       return {
         success: true,
         limit: config.max,
@@ -352,8 +370,8 @@ export async function applyRateLimit(
           count: entry.count,
           limit: config.max,
           resetTime: entry.resetTime,
-          ip: request.headers.get('x-forwarded-for') || 'unknown',
-          userAgent: request.headers.get('user-agent') || 'unknown',
+          ip: request.headers.get('x-forwarded-for') ?? 'unknown',
+          userAgent: request.headers.get('user-agent') ?? 'unknown',
           path: request.nextUrl.pathname,
         },
         'Rate limit exceeded'
@@ -399,7 +417,7 @@ export function addRateLimitHeaders(
     response.headers.set('X-RateLimit-Reset', Math.ceil(result.resetTime / 1000).toString())
   }
 
-  if (result.retryAfter) {
+  if (result.retryAfter !== undefined) {
     response.headers.set('Retry-After', result.retryAfter.toString())
   }
 
@@ -464,13 +482,12 @@ export function createRateLimiter(
   type: keyof typeof SECURITY_CONFIG.rateLimit,
   customConfig?: Partial<RateLimiterConfig>
 ) {
-  const baseConfig = SECURITY_CONFIG.rateLimit[type]
-  const config: RateLimiterConfig = {
-    ...baseConfig,
-    ...customConfig,
-  }
-
   return async (request: NextRequest, response?: NextResponse): Promise<NextResponse> => {
+    const config: RateLimiterConfig = {
+      ...SECURITY_CONFIG.rateLimit[type],
+      ...customConfig,
+    }
+
     const result = await applyRateLimit(request, config, `rate-limit-${type}`)
 
     if (!result.success) {
@@ -478,7 +495,7 @@ export function createRateLimiter(
     }
 
     // Add rate limit headers to successful response
-    const finalResponse = response || NextResponse.next()
+    const finalResponse = response ?? NextResponse.next()
     return addRateLimitHeaders(finalResponse, result, config)
   }
 }
@@ -672,9 +689,9 @@ export function validateRateLimitConfig(): ValidationResult {
 
     // Check production rate limiting setup
     if (process.env.NODE_ENV === 'production') {
-      const hasVercelKV = !!(process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN)
+      const hasVercelKV = process.env.KV_REST_API_URL !== undefined && process.env.KV_REST_API_TOKEN !== undefined
 
-      if (!hasVercelKV) {
+      if (hasVercelKV === false) {
         issues.push(
           'Production deployment detected but no persistent rate limit store configured. ' +
             'Consider setting up Vercel KV (KV_REST_API_URL, KV_REST_API_TOKEN) ' +

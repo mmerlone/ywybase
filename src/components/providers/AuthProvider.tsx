@@ -1,8 +1,8 @@
 /**
  * @fileoverview Authentication provider component and context hook.
  *
- * This module provides a React context wrapper for the useAuth hook, making
- * authentication state and methods available throughout the component tree.
+ * This module provides a React context wrapper for the internal useAuth hook,
+ * making authentication state and methods available throughout the component tree.
  * It integrates with the centralized authentication system.
  *
  * @module components/providers/AuthProvider
@@ -11,8 +11,8 @@
 'use client'
 
 import { createContext, useContext, type ReactNode } from 'react'
-
 import { useAuth } from '@/hooks/useAuth'
+import { useAuthRedirects } from '@/hooks/useAuthRedirects'
 import type { AuthContextType } from '@/types/auth.types'
 
 /**
@@ -61,6 +61,7 @@ interface AuthProviderProps {
  */
 export function AuthProvider({ children }: AuthProviderProps): JSX.Element {
   const auth = useAuth()
+  useAuthRedirects()
 
   return <AuthContext.Provider value={auth}>{children}</AuthContext.Provider>
 }
@@ -68,11 +69,11 @@ export function AuthProvider({ children }: AuthProviderProps): JSX.Element {
 /**
  * Hook to access authentication context.
  *
- * Provides access to authentication state and methods from anywhere within
- * the AuthProvider component tree. This is the recommended way to access
- * authentication functionality in child components.
+ * Provides access to full authentication state and methods from anywhere within
+ * the AuthProvider component tree. Use this when you need to perform auth operations
+ * like sign in, sign out, or access error utilities.
  *
- * @returns {AuthContextType} Authentication context containing:
+ * @returns {AuthContextType} Full authentication context containing:
  * - User and session state
  * - Authentication methods (login, signup, logout, etc.)
  * - Error handling utilities
@@ -82,25 +83,8 @@ export function AuthProvider({ children }: AuthProviderProps): JSX.Element {
  *
  * @example
  * ```tsx
- * function UserProfile() {
- *   const { authUser, signOut, isLoading } = useAuthContext();
- *
- *   if (isLoading) return <div>Loading...</div>;
- *   if (!authUser) return <div>Please login</div>;
- *
- *   return (
- *     <div>
- *       <h1>{authUser.email}</h1>
- *       <button onClick={signOut}>Sign Out</button>
- *     </div>
- *   );
- * }
- * ```
- *
- * @example
- * ```tsx
- * function LoginButton() {
- *   const { signIn, error } = useAuthContext();
+ * function LoginForm() {
+ *   const { signIn, isLoading, error } = useAuthContext();
  *
  *   const handleLogin = async () => {
  *     const result = await signIn('user@example.com', 'password');
@@ -109,7 +93,7 @@ export function AuthProvider({ children }: AuthProviderProps): JSX.Element {
  *     }
  *   };
  *
- *   return <button onClick={handleLogin}>Login</button>;
+ *   return <button onClick={handleLogin} disabled={isLoading}>Login</button>;
  * }
  * ```
  */
@@ -120,3 +104,6 @@ export function useAuthContext(): AuthContextType {
   }
   return context
 }
+
+// Re-export useCurrentUser from its canonical location in src/hooks/
+export { useCurrentUser } from '@/hooks/useCurrentUser'

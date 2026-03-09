@@ -1,6 +1,6 @@
 import { Box, Chip, Container, Grid, Paper, Typography } from '@mui/material'
 import type { Metadata } from 'next'
-import { Ywy } from '@/components/marketing/ywy'
+import { Ywy } from '@/components/marketing/ywy/Ywy'
 
 export const metadata: Metadata = {
   title: 'About Us',

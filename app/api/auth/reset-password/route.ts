@@ -1,4 +1,4 @@
-import { type NextRequest, NextResponse } from 'next/server'
+import { type NextRequest, type NextResponse } from 'next/server'
 
 import { withApiErrorHandler } from '@/lib/error/server'
 import { withRateLimit } from '@/middleware/security/rate-limit'

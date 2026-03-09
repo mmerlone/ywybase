@@ -6,14 +6,12 @@
 
 ## Architecture Overview
 
-**Clean Layered Architecture**: `Components → Services → Database`
+**Clean Layered Architecture**: `Components → Hooks → Server Actions → Database`
 
-- Services use **explicit dependency injection** (pass Supabase client directly)
-- No factories or magic patterns - direct instantiation
+- Server Actions are the primary data mutation pattern
 - Clear server/client boundaries (Server Components default, "use client" only when needed)
-- Service layer in `src/lib/supabase/services/` inherits from `BaseService` with built-in error handling
 
-**Tech Stack**: Next.js 15 App Router, React 18 Server Components, TypeScript strict mode, MUI v7 + Tailwind CSS, Supabase (auth/DB), React Query v5, Pino logging, Sentry error tracking.
+**Tech Stack**: Next.js 15.5.x App Router, React 18 Server Components, TypeScript strict mode, MUI v7 + Tailwind CSS, Supabase (auth/DB), React Query v5, Pino logging, Sentry error tracking.
 
 ## File Naming & Structure
 
@@ -54,7 +52,6 @@ pnpm run format      # Prettier formatting
 
 **Use centralized error system** (`src/lib/error/`):
 
-- Services: Use `this.handleError(error, 'operation-name', { context })` from `BaseService`
 - Server Actions: Wrap with `withServerActionErrorHandling(async () => {...}, { operation: 'name' })`
 - Client: Use `handleClientError(error, { operation: 'name' })`
 - **Never catch just to log** - global handler does this automatically
@@ -78,7 +75,7 @@ logger.info('User logged in', { userId: 123 })
 
 ### Authentication Flow
 
-- Server Components/API Routes: Use `await createClient()` from `@/lib/supabase/server`
+- Server Components/Server Actions/API Routes: Use `await createClient()` from `@/lib/supabase/server`
 - Client Components: Use `createClient()` from `@/lib/supabase/client`
 - Middleware: Use middleware-specific client from `@/lib/supabase/middleware`
 - **Never mix client types** - each context has its own factory
@@ -87,7 +84,6 @@ logger.info('User logged in', { userId: 123 })
 
 - **TypeScript types**: Always use generated types from `src/types/supabase.ts`
 - **Timestamps**: Database manages `created_at`/`updated_at` automatically - never set manually
-- **Service pattern**: Extend `BaseService` for database operations with automatic error handling
 
 ### React Query Integration
 
@@ -108,7 +104,7 @@ logger.info('User logged in', { userId: 123 })
 - MUI v7 with Pigment CSS for components
 - Tailwind CSS for utility classes and layout
 - `sx` prop for one-off MUI styles
-- Use `cn()` utility (from `src/lib/utils/cn.ts`) for className merging
+- Use `cn()` utility (from `src/lib/utils.ts`) for className merging
 
 ## API Routes Pattern
 
@@ -156,7 +152,6 @@ export const GET = withRateLimit(
 
 ## Key Files & Integration Points
 
-- **Service Layer**: `src/lib/supabase/services/` - All services extend `BaseService` with DI pattern
 - **Error System**: `src/lib/error/` - Centralized error handling with domain-specific codes
 - **Validation**: `src/lib/validators/` - Zod schemas for all inputs
 - **Middleware**: `src/middleware/` - Auth, session, request logging, security headers
@@ -236,12 +231,11 @@ pnpm run format       # Format with Prettier
 ## Unique Conventions
 
 1. **JSDoc Required**: All exported functions, interfaces, and types must have comprehensive JSDoc comments
-2. **Explicit Service Clients**: Services require Supabase client as constructor parameter (no global instances)
-3. **Error Context**: Every error handler call must include operation name and relevant context
-4. **Flash Messages**: Use cookie-based system for post-redirect notifications (not URL params)
-5. **Multi-Theme Support**: Dynamic theme switching via `src/themes/` registry pattern
-6. **Validation at Edge**: Zod validation in Server Actions and API routes before database operations
-7. **Structured Logging**: All log entries include context object as first parameter with operation metadata
+2. **Error Context**: Every error handler call must include operation name and relevant context
+3. **Flash Messages**: Use cookie-based system for post-redirect notifications (not URL params)
+4. **Multi-Theme Support**: Dynamic theme switching via `src/themes/` registry pattern
+5. **Validation at Edge**: Zod validation in Server Actions and API routes before database operations
+6. **Structured Logging**: All log entries include context object as first parameter with operation metadata
 
 ## Required Post-Task Process
 
