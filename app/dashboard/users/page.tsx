@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { type ReactElement } from 'react'
 import { HydrationBoundary, QueryClient, dehydrate } from '@tanstack/react-query'
 import { Box, Typography } from '@mui/material'
 
@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   description: 'View and manage user accounts, roles, and status.',
 }
 
-export default async function UsersManagementPage(): Promise<JSX.Element> {
+export default async function UsersManagementPage(): Promise<ReactElement> {
   const page = 1
   const pageSize = PAGINATION_CONFIG.adminProfiles.defaultPageSize
   const status = undefined

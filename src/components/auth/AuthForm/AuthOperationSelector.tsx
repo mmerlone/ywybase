@@ -1,3 +1,5 @@
+import type React from 'react'
+import type { ReactElement } from 'react'
 import LabelledToggle from '@/components/layout/LabelledToggle'
 import { AuthOperationsEnum, type AuthOperations } from '@/types/auth.types'
 import type { LabelledToggleOption } from '@/types/components.types'
@@ -17,7 +19,7 @@ export function AuthOperationSelector({
   currentOperation,
   onOperationChange,
   disabled = false,
-}: AuthOperationSelectorProps): JSX.Element {
+}: AuthOperationSelectorProps): ReactElement {
   // Define the operations that users can switch between
   const operations: ReadonlyArray<LabelledToggleOption<AuthOperations>> = [
     { value: AuthOperationsEnum.LOGIN, label: 'Login' },

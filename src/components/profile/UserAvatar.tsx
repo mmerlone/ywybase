@@ -1,4 +1,6 @@
 'use client'
+import type React from 'react'
+import type { ReactElement } from 'react'
 
 import { Avatar } from '@mui/material'
 
@@ -100,7 +102,7 @@ function getInitials(displayName?: string, email?: string): string {
  * />
  * ```
  */
-export function UserAvatar({ avatarUrl, email, displayName, size = 'medium' }: UserAvatarProps): JSX.Element {
+export function UserAvatar({ avatarUrl, email, displayName, size = 'medium' }: UserAvatarProps): ReactElement {
   const avatarUrls = useOptimizedAvatar(avatarUrl ?? null)
   const sizeConfig = AVATAR_SIZE_CONFIG[size]
   const initials = getInitials(displayName, email)

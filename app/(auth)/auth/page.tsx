@@ -1,3 +1,5 @@
+import type React from 'react'
+import type { ReactElement } from 'react'
 import { Box, Container, Typography } from '@mui/material'
 import type { Metadata } from 'next'
 
@@ -14,7 +16,7 @@ interface PageProps {
   searchParams: Promise<{ op?: string }>
 }
 
-export default async function AuthPage({ searchParams }: PageProps): Promise<JSX.Element> {
+export default async function AuthPage({ searchParams }: PageProps): Promise<ReactElement> {
   // Get the operation from search params (this is automatically handled by Next.js)
   const { op } = await searchParams
   const normalized = op?.toLowerCase() ?? null

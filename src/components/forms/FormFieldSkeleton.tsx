@@ -1,3 +1,5 @@
+import type React from 'react'
+import type { ReactElement } from 'react'
 import { Box, Skeleton } from '@mui/material'
 
 interface FormFieldSkeletonProps {
@@ -5,7 +7,7 @@ interface FormFieldSkeletonProps {
   height?: number
 }
 
-export function FormFieldSkeleton({ fullWidth = true, height = 56 }: FormFieldSkeletonProps): JSX.Element {
+export function FormFieldSkeleton({ fullWidth = true, height = 56 }: FormFieldSkeletonProps): ReactElement {
   return (
     <Box sx={{ width: fullWidth ? '100%' : 'auto' }}>
       <Skeleton variant="rectangular" height={height} sx={{ borderRadius: 1 }} />

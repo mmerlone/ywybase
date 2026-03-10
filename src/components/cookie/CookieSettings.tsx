@@ -2,13 +2,13 @@
 
 import { Cookie as CookieIcon, Refresh as RefreshIcon } from '@mui/icons-material'
 import { Box, Button, Divider, FormControlLabel, FormGroup, Paper, Skeleton, Switch, Typography } from '@mui/material'
-import React, { Suspense, useRef, useState } from 'react'
+import React, { Suspense, useRef, useState, type ReactElement } from 'react'
 
 import { useSnackbar } from '@/contexts/SnackbarContext'
 import { useCookieConsent } from '@/hooks/useCookieConsent'
 import { type CookiePreferences } from '@/types/cookie.types'
 
-function CookieSettingsContent(): JSX.Element {
+function CookieSettingsContent(): ReactElement {
   const { hasConsent, preferences, acceptSelected, decline, isLoading } = useCookieConsent()
   const [isDirty, setIsDirty] = useState(false)
   const { showSuccess, showError } = useSnackbar()
@@ -198,7 +198,7 @@ function CookieSettingsContent(): JSX.Element {
   )
 }
 
-export function CookieSettings(): JSX.Element {
+export function CookieSettings(): ReactElement {
   return (
     <Paper sx={{ p: 4 }}>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>

@@ -12,7 +12,7 @@
 
 import { CssBaseline } from '@mui/material'
 import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles'
-import { type ReactNode } from 'react'
+import React, { type ReactNode, type ReactElement } from 'react'
 
 import theme from '@/theme'
 
@@ -34,7 +34,7 @@ interface ThemeProviderProps {
  *
  * @param {ThemeProviderProps} props - Component props
  * @param {ReactNode} props.children - Child components to wrap
- * @returns {JSX.Element} Theme provider with CssBaseline
+ * @returns {ReactElement} Theme provider with CssBaseline
  *
  * @example
  * ```tsx
@@ -62,7 +62,7 @@ interface ThemeProviderProps {
  * - Normalizes typography
  * - Provides theme-aware background colors
  */
-export function ThemeProvider({ children }: ThemeProviderProps): JSX.Element {
+export function ThemeProvider({ children }: ThemeProviderProps): ReactElement {
   return (
     <MuiThemeProvider theme={theme} modeStorageKey="mui-mode" forceThemeRerender>
       <CssBaseline />

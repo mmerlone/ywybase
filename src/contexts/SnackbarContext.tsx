@@ -10,7 +10,7 @@
  */
 
 import { Alert, type AlertColor, Snackbar } from '@mui/material'
-import { createContext, useCallback, useContext, useState } from 'react'
+import React, { createContext, useCallback, useContext, useState, type ReactElement } from 'react'
 
 /**
  * Context type for snackbar notification functions.
@@ -47,7 +47,7 @@ const SnackbarContext = createContext<SnackbarContextType | undefined>(undefined
  *
  * @param {Object} props - Component props
  * @param {React.ReactNode} props.children - Child components to wrap
- * @returns {JSX.Element} Provider component with snackbar overlay
+ * @returns {ReactElement} Provider component with snackbar overlay
  *
  * @example
  * ```tsx
@@ -69,7 +69,7 @@ const SnackbarContext = createContext<SnackbarContextType | undefined>(undefined
  * - Filled variant for better visibility
  * - Four severity helpers (error, success, warning, info)
  */
-export function SnackbarProvider({ children }: { children: React.ReactNode }): JSX.Element {
+export function SnackbarProvider({ children }: { children: React.ReactNode }): ReactElement {
   const [open, setOpen] = useState(false)
   const [message, setMessage] = useState('')
   const [severity, setSeverity] = useState<AlertColor>('info')

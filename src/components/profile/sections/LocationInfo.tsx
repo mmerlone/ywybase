@@ -1,5 +1,5 @@
 import { Autocomplete, Grid, TextField, Box } from '@mui/material'
-import { useEffect, useState } from 'react'
+import React, { useEffect, useState, type ReactElement } from 'react'
 import { Controller, useFormContext } from 'react-hook-form'
 
 import { FormSection } from '@/components/forms/FormSection'
@@ -16,7 +16,7 @@ interface LocationInfoProps {
   isLoading?: boolean
 }
 
-export function LocationInfo({ disabled = false, isLoading: isFormLoading = false }: LocationInfoProps): JSX.Element {
+export function LocationInfo({ disabled = false, isLoading: isFormLoading = false }: LocationInfoProps): ReactElement {
   const {
     control,
     formState: { errors },
@@ -86,7 +86,7 @@ export function LocationInfo({ disabled = false, isLoading: isFormLoading = fals
             <Controller
               name="timezone"
               control={control}
-              render={({ field }): JSX.Element => {
+              render={({ field }): ReactElement => {
                 const selectedOption = field.value ? (timezones.find((tz) => tz.value === field.value) ?? null) : null
 
                 return (

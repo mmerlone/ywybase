@@ -1,3 +1,5 @@
+import type React from 'react'
+import type { ReactElement } from 'react'
 import type { Metadata } from 'next'
 import { SentryExampleView } from '@/components/example/SentryExampleView'
 import { getSentryEnvStatus } from '@/config/sentry-public'
@@ -9,7 +11,7 @@ export const metadata: Metadata = {
   description: 'Demonstration of Sentry error tracking integration',
 }
 
-export default function Page(): JSX.Element {
+export default function Page(): ReactElement {
   const sentryStatus = getSentryEnvStatus()
   if (!sentryStatus.isConfigured) {
     return (

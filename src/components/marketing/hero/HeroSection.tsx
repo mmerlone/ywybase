@@ -1,9 +1,11 @@
+import type React from 'react'
+import type { ReactElement } from 'react'
 import { Box, Button, Container, Typography } from '@mui/material'
 import type {} from '@mui/material/themeCssVarsAugmentation'
 import Link from 'next/link'
 import { SITE_CONFIG } from '@/config/site'
 
-export function HeroSection(): JSX.Element {
+export function HeroSection(): ReactElement {
   const siteName = SITE_CONFIG.name
   const siteDescription = SITE_CONFIG.description
   return (

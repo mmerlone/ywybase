@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo } from 'react'
+import React, { useMemo, type ReactElement } from 'react'
 import type { ReactNode, ChangeEvent } from 'react'
 import {
   Table,
@@ -59,7 +59,7 @@ export function DataTable<T>({
   emptyMessage = 'No data found',
   pageSizeOptions = DEFAULT_PAGE_SIZE_OPTIONS,
   getRowId,
-}: DataTableProps<T>): JSX.Element {
+}: DataTableProps<T>): ReactElement {
   const handleChangePage = (_: unknown, newPage: number): void => {
     onPageChange(newPage + 1) // MUI uses 0-based, our API uses 1-based
   }
@@ -95,10 +95,10 @@ export function DataTable<T>({
           <TableBody>
             {loading ? (
               Array.from(new Array(5)).map(
-                (_, index): JSX.Element => (
+                (_, index): ReactElement => (
                   <TableRow key={index}>
                     {columns.map(
-                      (column): JSX.Element => (
+                      (column): ReactElement => (
                         <TableCell key={column.id as string}>
                           <Skeleton variant="text" />
                         </TableCell>
@@ -108,11 +108,11 @@ export function DataTable<T>({
                 )
               )
             ) : rows.length > 0 ? (
-              rows.map((row, index): JSX.Element => {
+              rows.map((row, index): ReactElement => {
                 const rowId = getRowId ? getRowId(row) : ((row as { id?: string | number }).id ?? index)
                 return (
                   <TableRow hover tabIndex={-1} key={rowId}>
-                    {columns.map((column): JSX.Element => {
+                    {columns.map((column): ReactElement => {
                       const columnId = column.id as string
                       const rowData = row as Record<string, unknown>
                       const value = rowData[columnId]

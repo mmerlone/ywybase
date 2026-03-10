@@ -1,4 +1,6 @@
 'use client'
+import type React from 'react'
+import type { ReactElement } from 'react'
 
 import { AppBar, Box, Button, Skeleton, Toolbar, Typography } from '@mui/material'
 import dynamic from 'next/dynamic'
@@ -25,7 +27,7 @@ interface HeaderProps {
   supabaseEnabled?: boolean
 }
 
-export function Header({ supabaseEnabled = true }: HeaderProps): JSX.Element {
+export function Header({ supabaseEnabled = true }: HeaderProps): ReactElement {
   const siteName = SITE_CONFIG.name
   const isFixed = SITE_CONFIG.layout.fixedHeader
   const { authUser } = useAuthContext()

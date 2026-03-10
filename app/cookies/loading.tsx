@@ -1,8 +1,10 @@
 'use client'
+import type React from 'react'
+import type { ReactElement } from 'react'
 
 import { Container, Box, Paper, Skeleton, Divider } from '@mui/material'
 
-export default function CookiesLoading(): JSX.Element {
+export default function CookiesLoading(): ReactElement {
   return (
     <Container maxWidth="md">
       <Box sx={{ py: 4 }}>

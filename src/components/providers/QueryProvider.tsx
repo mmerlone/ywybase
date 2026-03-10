@@ -12,7 +12,7 @@
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
-import { useState } from 'react'
+import React, { useState, type ReactElement } from 'react'
 
 /**
  * Error object with HTTP status code.
@@ -50,7 +50,7 @@ function isErrorWithStatus(error: unknown): error is ErrorWithStatus {
  *
  * @param {Object} props - Component props
  * @param {React.ReactNode} props.children - Child components to wrap
- * @returns {JSX.Element} QueryClientProvider with DevTools
+ * @returns {ReactElement} QueryClientProvider with DevTools
  *
  * @example
  * ```tsx
@@ -76,7 +76,7 @@ function isErrorWithStatus(error: unknown): error is ErrorWithStatus {
  * - 5xx errors (500-599): Retry up to 3 times (server errors may be transient)
  * - Network errors: Retry up to 3 times
  */
-export function QueryProvider({ children }: { children: React.ReactNode }): JSX.Element {
+export function QueryProvider({ children }: { children: React.ReactNode }): ReactElement {
   const [queryClient] = useState(
     () =>
       new QueryClient({

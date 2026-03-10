@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, type ReactElement } from 'react'
 import { TextField, InputAdornment, IconButton } from '@mui/material'
 import { Search as SearchIcon, Clear as ClearIcon } from '@mui/icons-material'
 
@@ -16,7 +16,7 @@ export function SearchInput({
   value,
   onChange,
   debounceTime = 500,
-}: SearchInputProps): JSX.Element {
+}: SearchInputProps): ReactElement {
   const [localValue, setLocalValue] = useState(value)
 
   useEffect((): void => {

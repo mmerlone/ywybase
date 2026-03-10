@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { type ReactElement } from 'react'
 import { Alert, Box, Button, Divider, Grid, IconButton, Paper, Stack, Typography } from '@mui/material'
 import { ArrowBack as BackIcon } from '@mui/icons-material'
 import { useRouter } from 'next/navigation'
@@ -28,7 +28,7 @@ export default function UserPageClient({
   fetchProfileAction,
   blockUserAction,
   deleteUserAction,
-}: UserPageClientProps): JSX.Element {
+}: UserPageClientProps): ReactElement {
   const router = useRouter()
   const { profile, isLoading, error } = useProfileDetails(profileId, {
     fetchProfile: fetchProfileAction,

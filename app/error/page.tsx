@@ -10,7 +10,7 @@ import {
 import { Alert, Box, Container, Typography, Button, Paper } from '@mui/material'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
-import { Suspense } from 'react'
+import React, { Suspense, type ReactElement } from 'react'
 import { SITE_CONFIG } from '@/config/site'
 import { type ErrorPageCode, ErrorPageCodeEnum } from '@/types/error.types'
 
@@ -27,7 +27,7 @@ export interface ErrorDetails {
  * Reusable Error Page Component
  * Handles different error codes passed via query parameters
  */
-function ErrorPageContent(): JSX.Element {
+function ErrorPageContent(): ReactElement {
   const searchParams = useSearchParams()
   const codeParam = searchParams.get('code')
   const code =
@@ -188,7 +188,7 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_xxxxx`}
   )
 }
 
-export default function ErrorPage(): JSX.Element {
+export default function ErrorPage(): ReactElement {
   return (
     <Suspense
       fallback={

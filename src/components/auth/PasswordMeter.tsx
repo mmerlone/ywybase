@@ -2,7 +2,7 @@
 
 import { CheckCircle, Error } from '@mui/icons-material'
 import { Box, List, ListItem, ListItemIcon, Typography } from '@mui/material'
-import { useEffect, useMemo } from 'react'
+import React, { useEffect, useMemo, type ReactElement } from 'react'
 
 import { SITE_CONFIG } from '@/config/site'
 
@@ -47,7 +47,11 @@ interface PasswordMeterProps {
   onValidationChange?: (isValid: boolean) => void
 }
 
-export function PasswordMeter({ password = '', confirmPassword, onValidationChange }: PasswordMeterProps): JSX.Element {
+export function PasswordMeter({
+  password = '',
+  confirmPassword,
+  onValidationChange,
+}: PasswordMeterProps): ReactElement {
   const effectiveRequirements: PasswordRequirement[] = useMemo(() => {
     const base = [...requirements]
     if (typeof confirmPassword === 'string') {

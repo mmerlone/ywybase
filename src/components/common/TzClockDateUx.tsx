@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, type ReactElement } from 'react'
 import { Box, Stack, Typography } from '@mui/material'
 import { logger as clientLogger } from '@/lib/logger/client'
 
@@ -160,7 +160,7 @@ function computeOffsetLabel(tz?: string): string {
  *
  * Uses native Intl APIs — zero external dependencies (no moment-timezone).
  */
-export function TzClockDateUx({ timezone, showDate = false }: TzClockDateUxProps): JSX.Element {
+export function TzClockDateUx({ timezone, showDate = false }: TzClockDateUxProps): ReactElement {
   const [clock, setClock] = useState<ClockState>({
     timePre: '',
     seconds: '',

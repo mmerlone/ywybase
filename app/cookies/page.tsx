@@ -1,3 +1,5 @@
+import type React from 'react'
+import type { ReactElement } from 'react'
 import { Container, Typography, Box } from '@mui/material'
 import type { Metadata } from 'next'
 
@@ -8,7 +10,7 @@ export const metadata: Metadata = {
   description: 'Manage how we use cookies to improve your experience',
 }
 
-export default function CookiesPage(): JSX.Element {
+export default function CookiesPage(): ReactElement {
   return (
     <Container maxWidth="md">
       <Box sx={{ py: 4 }}>

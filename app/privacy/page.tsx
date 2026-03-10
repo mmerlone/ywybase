@@ -1,3 +1,5 @@
+import type React from 'react'
+import type { ReactElement } from 'react'
 import { Container, Typography, Box, Paper } from '@mui/material'
 import type { Metadata } from 'next'
 
@@ -6,7 +8,7 @@ export const metadata: Metadata = {
   description: 'Learn how we collect, use, and protect your personal information',
 }
 
-export default function PrivacyPage(): JSX.Element {
+export default function PrivacyPage(): ReactElement {
   return (
     <Container maxWidth="md">
       <Box sx={{ py: 4 }}>

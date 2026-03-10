@@ -4,7 +4,7 @@ import { Alert, Box, Button, CircularProgress, Link, Paper, Stack, Typography } 
 import { MarkEmailRead as EmailIcon } from '@mui/icons-material'
 import { motion } from 'motion/react'
 import { useSearchParams } from 'next/navigation'
-import { useCallback, useEffect, useMemo, useState, startTransition, useRef } from 'react'
+import React, { useCallback, useEffect, useMemo, useState, startTransition, useRef, type ReactElement } from 'react'
 import { FormProvider } from 'react-hook-form'
 
 import { PasswordMeter } from '../PasswordMeter'
@@ -56,7 +56,7 @@ interface AuthFormProps {
  * Multiple useEffect Hooks: Could be optimized with custom hooks
  */
 
-export default function AuthForm({ initialOperation = AuthOperationsEnum.LOGIN }: AuthFormProps): JSX.Element {
+export default function AuthForm({ initialOperation = AuthOperationsEnum.LOGIN }: AuthFormProps): ReactElement {
   const [error, setError] = useState<SerializableError | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)

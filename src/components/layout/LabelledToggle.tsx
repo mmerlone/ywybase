@@ -1,8 +1,7 @@
 'use client'
 
 import { Box, FormControl, FormHelperText, FormLabel, Radio, RadioGroup, FormControlLabel } from '@mui/material'
-import * as React from 'react'
-import { forwardRef, useId, useMemo, useState } from 'react'
+import React, { forwardRef, useId, useMemo, useState, type ReactElement } from 'react'
 
 import { logger } from '@/lib/logger/client'
 import { cn } from '@/lib/utils'
@@ -44,7 +43,7 @@ function LabelledToggleInner<T extends string | number>(
     reduceMotion = false,
   }: LabelledToggleProps<T>,
   ref: React.ForwardedRef<HTMLDivElement>
-): JSX.Element {
+): ReactElement {
   const instanceId = useId()
   const groupId = id ?? instanceId
   const generatedId = useId()

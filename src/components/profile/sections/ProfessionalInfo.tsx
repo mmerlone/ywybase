@@ -1,3 +1,5 @@
+import type React from 'react'
+import type { ReactElement } from 'react'
 import { TextField, Grid } from '@mui/material'
 import { Controller, useFormContext } from 'react-hook-form'
 
@@ -11,7 +13,7 @@ interface ProfessionalInfoProps {
   isLoading?: boolean
 }
 
-export function ProfessionalInfo({ errors, disabled = false, isLoading = false }: ProfessionalInfoProps): JSX.Element {
+export function ProfessionalInfo({ errors, disabled = false, isLoading = false }: ProfessionalInfoProps): ReactElement {
   const { control } = useFormContext<ProfileFormValues>()
   return (
     <FormSection title="Professional Information">

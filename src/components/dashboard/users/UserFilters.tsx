@@ -1,4 +1,6 @@
 'use client'
+import type React from 'react'
+import type { ReactElement } from 'react'
 
 import { Box, FormControl, InputLabel, Select, MenuItem, Paper, Stack, Button } from '@mui/material'
 import { RestartAlt as ResetIcon } from '@mui/icons-material'
@@ -44,7 +46,7 @@ export function UserFilters({
   role,
   onRoleChange,
   onReset,
-}: UserFiltersProps): JSX.Element {
+}: UserFiltersProps): ReactElement {
   return (
     <Paper sx={{ p: 2, mb: 3, borderRadius: 2, boxShadow: 0, border: '1px solid', borderColor: 'divider' }}>
       <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} alignItems="center">

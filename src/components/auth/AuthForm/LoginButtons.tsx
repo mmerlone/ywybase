@@ -2,7 +2,7 @@
 
 import { GitHub, Google } from '@mui/icons-material'
 import { Button, CircularProgress, Stack } from '@mui/material'
-import { useState } from 'react'
+import React, { useState, type ReactElement } from 'react'
 
 import { useAuthContext } from '@/components/providers/AuthProvider'
 import { logger } from '@/lib/logger/client'
@@ -15,7 +15,7 @@ interface LoginButtonsProps {
   onLoadingChange?: (loading: boolean) => void
 }
 
-export function LoginButtons({ disabled = false, onError, onLoadingChange }: LoginButtonsProps): JSX.Element {
+export function LoginButtons({ disabled = false, onError, onLoadingChange }: LoginButtonsProps): ReactElement {
   const { signInWithProvider, isLoading } = useAuthContext()
   const providerValues = [AuthProvidersEnum.GOOGLE, AuthProvidersEnum.GITHUB] as const
   type AvailableProvider = (typeof providerValues)[number]
@@ -81,7 +81,7 @@ export function LoginButtons({ disabled = false, onError, onLoadingChange }: Log
   const getProviderConfig = (
     provider: AvailableProvider
   ): {
-    icon: JSX.Element
+    icon: ReactElement
     text: string
     loadingText: string
     variant: 'contained' | 'outlined'
@@ -91,7 +91,7 @@ export function LoginButtons({ disabled = false, onError, onLoadingChange }: Log
     const configs: Record<
       AvailableProvider,
       {
-        icon: JSX.Element
+        icon: ReactElement
         text: string
         loadingText: string
         variant: 'contained' | 'outlined'
@@ -135,7 +135,7 @@ export function LoginButtons({ disabled = false, onError, onLoadingChange }: Log
         justifyContent: 'center',
         alignItems: 'center',
       }}>
-      {providerValues.map((provider): JSX.Element => {
+      {providerValues.map((provider): ReactElement => {
         const config = getProviderConfig(provider)
         const isProviderDisabled = disabledProviders.has(provider)
         return (

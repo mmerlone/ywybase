@@ -33,9 +33,6 @@ import type { AuthProvider } from './auth.types'
 import type { ThemePreference } from './theme.types'
 import { type UserRole } from './admin.types'
 
-// Re-export database types for backward compatibility
-export type { DbProfile } from './database'
-
 /**
  * Provider information structure.
  * Represents an authentication provider with its identifier and display name.

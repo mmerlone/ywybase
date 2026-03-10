@@ -1,3 +1,5 @@
+import type React from 'react'
+import type { ReactElement } from 'react'
 import { Typography } from '@mui/material'
 
 import { uiText } from './config/uiText'
@@ -13,7 +15,7 @@ interface AuthFormHeaderProps {
   operation: AuthOperations
 }
 
-export function AuthFormHeader({ operation }: AuthFormHeaderProps): JSX.Element {
+export function AuthFormHeader({ operation }: AuthFormHeaderProps): ReactElement {
   const title = uiText.titles[operation]
 
   return (

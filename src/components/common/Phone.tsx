@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { type ReactElement } from 'react'
 import { Box, Link, Tooltip, Typography, useTheme } from '@mui/material'
 import { Phone as PhoneIcon } from '@mui/icons-material'
 import { allCountries, type Country } from 'country-telephone-data'
@@ -79,7 +79,7 @@ export function Phone({
   tooltipText,
   validate = false,
   obfuscate = false,
-}: PhoneProps): JSX.Element {
+}: PhoneProps): ReactElement {
   const theme = useTheme()
 
   // Parse phone number to extract country info and format

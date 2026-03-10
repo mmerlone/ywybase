@@ -12,7 +12,7 @@ import MenuItem from '@mui/material/MenuItem'
 import Select from '@mui/material/Select'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
-import { useCallback, useState } from 'react'
+import React, { useCallback, useState, type ReactElement } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 
 import { socialLinkFormSchema, type SocialLinkFormData } from '@/lib/validators/profile'
@@ -67,7 +67,7 @@ export interface SocialLinkFormProps {
  * - Smooth height transition animation
  *
  * @param props - Component props
- * @returns JSX.Element - The social link form component
+ * @returns ReactElement - The social link form component
  */
 export function SocialLinkForm({
   mode,
@@ -80,7 +80,7 @@ export function SocialLinkForm({
   isSubmitting,
   usedPlatforms,
   isStale = false,
-}: SocialLinkFormProps): JSX.Element {
+}: SocialLinkFormProps): ReactElement {
   const {
     control,
     handleSubmit,

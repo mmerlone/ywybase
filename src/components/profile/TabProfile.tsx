@@ -1,4 +1,6 @@
 'use client'
+import type React from 'react'
+import type { ReactElement } from 'react'
 
 import { Box } from '@mui/material'
 import { type FieldErrors } from 'react-hook-form'
@@ -16,7 +18,7 @@ interface TabProfileProps {
   disabled: boolean
 }
 
-export function TabProfile({ errors, disabled }: TabProfileProps): JSX.Element {
+export function TabProfile({ errors, disabled }: TabProfileProps): ReactElement {
   return (
     <Box>
       <AccountDetails errors={errors} disabled={disabled} />

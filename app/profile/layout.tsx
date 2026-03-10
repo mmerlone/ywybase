@@ -1,3 +1,5 @@
+import type React from 'react'
+import type { ReactElement } from 'react'
 import type { ReactNode } from 'react'
 import { QueryClient, dehydrate, HydrationBoundary } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/server'
@@ -5,7 +7,7 @@ import { getCachedProfile } from '@/lib/actions/profile'
 import { QUERY_KEYS } from '@/config/query'
 import { redirect } from 'next/navigation'
 
-export default async function ProfileLayout({ children }: { children: ReactNode }): Promise<JSX.Element> {
+export default async function ProfileLayout({ children }: { children: ReactNode }): Promise<ReactElement> {
   const supabase = await createClient()
   const {
     data: { user },

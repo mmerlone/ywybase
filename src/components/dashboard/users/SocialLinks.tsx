@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { type ReactElement } from 'react'
 import { Box, Grid, Typography } from '@mui/material'
 
 import { SocialLinkCard } from '@/components/profile/SocialLinkCard'
@@ -19,7 +19,12 @@ export interface SocialLinksProps {
 /**
  * Dashboard-only social links section for user profiles.
  */
-export function SocialLinks({ socialLinks, userAvatarUrl, userEmail, userDisplayName }: SocialLinksProps): JSX.Element {
+export function SocialLinks({
+  socialLinks,
+  userAvatarUrl,
+  userEmail,
+  userDisplayName,
+}: SocialLinksProps): ReactElement {
   return (
     <Box>
       <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>

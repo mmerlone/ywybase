@@ -1,3 +1,5 @@
+import type React from 'react'
+import type { ReactElement } from 'react'
 import { Box, Chip, Container, Grid, Paper, Typography } from '@mui/material'
 import type { Metadata } from 'next'
 import { Ywy } from '@/components/marketing/ywy/Ywy'
@@ -7,7 +9,7 @@ export const metadata: Metadata = {
   description: 'YwyBase - A modern Next.js boilerplate application',
 }
 
-export default function AboutPage(): JSX.Element {
+export default function AboutPage(): ReactElement {
   return (
     <Container maxWidth="lg">
       <Box sx={{ py: 4 }}>

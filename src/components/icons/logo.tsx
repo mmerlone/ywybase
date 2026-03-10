@@ -1,4 +1,6 @@
-export function LogoIcon({ size = 32, ...props }): JSX.Element {
+import type React from 'react'
+import type { ReactElement } from 'react'
+export function LogoIcon({ size = 32, ...props }): ReactElement {
   return (
     <svg
       version="1.1"

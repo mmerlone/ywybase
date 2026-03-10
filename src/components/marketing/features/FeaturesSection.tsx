@@ -1,3 +1,5 @@
+import type React from 'react'
+import type { ReactElement } from 'react'
 import { Article, Code, FlashOn, Memory, Palette, Security, Star, Storage, VerifiedUser } from '@mui/icons-material'
 import { Container, Grid, Typography } from '@mui/material'
 
@@ -123,7 +125,7 @@ const getGridSize = (span?: number): number => {
   }
 }
 
-export function FeaturesSection(): JSX.Element {
+export function FeaturesSection(): ReactElement {
   return (
     <Container maxWidth="lg" sx={{ py: 10 }}>
       <Typography

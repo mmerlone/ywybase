@@ -1,4 +1,6 @@
 'use client'
+import type React from 'react'
+import type { ReactElement } from 'react'
 
 import {
   AccessTime as PendingIcon,
@@ -20,7 +22,7 @@ interface UserStatusBadgeProps {
   variant?: UserBadgeVariant
 }
 
-function getStatusInfo(status: Profile['status']): { color: ChipProps['color']; icon: JSX.Element; label: string } {
+function getStatusInfo(status: Profile['status']): { color: ChipProps['color']; icon: ReactElement; label: string } {
   switch (status) {
     case UserStatusEnum.ACTIVE:
       return { color: 'success', icon: <ActiveIcon sx={{ fontSize: 16 }} />, label: 'Active' }
@@ -35,7 +37,7 @@ function getStatusInfo(status: Profile['status']): { color: ChipProps['color']; 
   }
 }
 
-export function UserStatusBadge({ status, variant = 'default' }: UserStatusBadgeProps): JSX.Element {
+export function UserStatusBadge({ status, variant = 'default' }: UserStatusBadgeProps): ReactElement {
   const info = getStatusInfo(status)
 
   if (variant === 'inverse') {

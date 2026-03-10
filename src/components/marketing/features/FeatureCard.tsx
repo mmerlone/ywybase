@@ -1,3 +1,5 @@
+import type React from 'react'
+import type { ReactElement } from 'react'
 import { Star } from '@mui/icons-material'
 import { Box, Card, CardContent, Typography } from '@mui/material'
 
@@ -9,7 +11,7 @@ export type Feature = {
   isHighlighted?: boolean
 }
 
-export function FeatureCard({ feature }: { feature: Feature }): JSX.Element {
+export function FeatureCard({ feature }: { feature: Feature }): ReactElement {
   return (
     <Card
       sx={{

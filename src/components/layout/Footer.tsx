@@ -1,7 +1,9 @@
+import type React from 'react'
+import type { ReactElement } from 'react'
 import { Box, Container, Grid, Link, Typography } from '@mui/material'
 import { SITE_CONFIG } from '@/config/site'
 
-export function Footer(): JSX.Element {
+export function Footer(): ReactElement {
   const siteName = SITE_CONFIG.name
   const siteDescription = SITE_CONFIG.description
   const isSmallFooter = SITE_CONFIG.layout.smallFooter

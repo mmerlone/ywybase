@@ -1,4 +1,6 @@
 'use client'
+import type React from 'react'
+import type { ReactElement } from 'react'
 
 import { Chip, type SxProps, type Theme } from '@mui/material'
 import { Google, GitHub, Email, Cloud } from '@mui/icons-material'
@@ -8,8 +10,8 @@ interface ProviderBadgeProps {
   provider: string
 }
 
-export function ProviderBadge({ provider }: ProviderBadgeProps): JSX.Element {
-  const getProviderConfig = (providerName: string): { icon: JSX.Element; label: string; sx: SxProps<Theme> } => {
+export function ProviderBadge({ provider }: ProviderBadgeProps): ReactElement {
+  const getProviderConfig = (providerName: string): { icon: ReactElement; label: string; sx: SxProps<Theme> } => {
     const p = providerName.toLowerCase()
     switch (p) {
       case 'google':

@@ -2,7 +2,7 @@ import InitColorSchemeScript from '@mui/material/InitColorSchemeScript'
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter'
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
-import { type ReactNode } from 'react'
+import React, { type ReactNode, type ReactElement } from 'react'
 import { headers } from 'next/headers'
 
 import { LayoutClient } from './LayoutClient'
@@ -22,7 +22,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return getSiteMetadata()
 }
 
-export default async function RootLayout({ children }: { children: ReactNode }): Promise<JSX.Element> {
+export default async function RootLayout({ children }: { children: ReactNode }): Promise<ReactElement> {
   // Get the CSP nonce from headers set by middleware
   const headersList = await headers()
   const nonce = headersList.get('x-nonce') ?? undefined

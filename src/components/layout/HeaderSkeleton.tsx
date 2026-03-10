@@ -1,8 +1,10 @@
+import type React from 'react'
+import type { ReactElement } from 'react'
 import { AppBar, Box, Skeleton, Toolbar } from '@mui/material'
 
 import { SITE_CONFIG } from '@/config/site'
 
-export function HeaderSkeleton(): JSX.Element {
+export function HeaderSkeleton(): ReactElement {
   return (
     <AppBar position={SITE_CONFIG.layout.fixedHeader ? 'sticky' : 'static'} elevation={2}>
       <Toolbar>

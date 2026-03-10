@@ -1,3 +1,5 @@
+import type React from 'react'
+import type { ReactElement } from 'react'
 import { Grid, TextField } from '@mui/material'
 import { Controller, useFormContext } from 'react-hook-form'
 
@@ -11,7 +13,7 @@ interface AccountDetailsProps {
   isLoading?: boolean
 }
 
-export function AccountDetails({ errors, disabled = false, isLoading = false }: AccountDetailsProps): JSX.Element {
+export function AccountDetails({ errors, disabled = false, isLoading = false }: AccountDetailsProps): ReactElement {
   const { control } = useFormContext<ProfileFormValues>()
   return (
     <FormSection title="Account Details">

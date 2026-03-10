@@ -1,13 +1,13 @@
 'use client'
 
-import React from 'react'
+import React, { type ReactElement } from 'react'
 import { Box } from '@mui/material'
 
 interface DashboardLayoutClientProps {
   children: React.ReactNode
 }
 
-export function DashboardLayoutClient({ children }: DashboardLayoutClientProps): JSX.Element {
+export function DashboardLayoutClient({ children }: DashboardLayoutClientProps): ReactElement {
   return (
     <Box
       sx={{

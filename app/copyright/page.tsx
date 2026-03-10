@@ -1,3 +1,5 @@
+import type React from 'react'
+import type { ReactElement } from 'react'
 import { Container, Typography, Box, Paper } from '@mui/material'
 import type { Metadata } from 'next'
 
@@ -8,7 +10,7 @@ export const metadata: Metadata = {
   description: 'Copyright and intellectual property information for this application',
 }
 
-export default function CopyrightPage(): JSX.Element {
+export default function CopyrightPage(): ReactElement {
   return (
     <Container maxWidth="md">
       <Box sx={{ py: 4 }}>

@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import React, { useState, type ReactElement } from 'react'
 import {
   Alert,
   Button,
@@ -35,7 +35,7 @@ export function AdminActionsUser({
   profile,
   blockUserAction,
   deleteUserAction,
-}: AdminActionsUserProps): JSX.Element {
+}: AdminActionsUserProps): ReactElement {
   const router = useRouter()
   const { showSuccess, showError } = useSnackbar()
   const { blockUser: executeBlockUser, isPending: isBlocking } = useBlockUser({ blockUserAction })

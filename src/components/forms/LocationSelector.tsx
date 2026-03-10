@@ -2,7 +2,7 @@
 
 import { Autocomplete, FormControl, FormHelperText, Grid, TextField } from '@mui/material'
 import { type ICity, type ICountry, type IState } from 'country-state-city'
-import { useMemo, useState } from 'react'
+import React, { useMemo, useState, type ReactElement } from 'react'
 import { useFormContext } from 'react-hook-form'
 
 import { useGeoLocation } from '@/hooks/useGeoLocation'
@@ -37,7 +37,7 @@ export function LocationSelector({
   errors,
   required = { country: true },
   disabled = false,
-}: LocationSelectorProps): JSX.Element {
+}: LocationSelectorProps): ReactElement {
   const { watch, setValue } = useFormContext()
   const { detectedCountryCode } = useGeoLocation()
 

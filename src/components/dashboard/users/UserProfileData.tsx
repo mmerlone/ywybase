@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { type ReactElement } from 'react'
 import { Box, Chip, Divider, Grid, Paper, Stack, Tooltip, Typography } from '@mui/material'
 import {
   Cake as BirthdayIcon,
@@ -27,7 +27,7 @@ interface UserProfileDataProps {
 /**
  * Reusable component for Privacy & Communication sub-sections
  */
-function PrivacySubSection({ items }: { items: Array<{ label: string; value: boolean | undefined }> }): JSX.Element {
+function PrivacySubSection({ items }: { items: Array<{ label: string; value: boolean | undefined }> }): ReactElement {
   return (
     <Box component="ul" sx={{ m: 0, pl: 3, listStyle: 'disc' }}>
       {items.map((item) => (
@@ -68,7 +68,7 @@ function getZodiacInfo(birthDate: string): { symbol: string; name: string } {
   return { symbol: '♓', name: 'Pisces' }
 }
 
-export function UserProfileData({ profile }: UserProfileDataProps): JSX.Element {
+export function UserProfileData({ profile }: UserProfileDataProps): ReactElement {
   const communicationPreferences = profile.privacy_settings?.communication_preferences
   const dataSharingPreferences = profile.privacy_settings?.data_sharing
   const socialLinks: SocialLink[] = profile.social_links ?? []

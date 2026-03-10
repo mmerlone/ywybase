@@ -1,3 +1,5 @@
+import type React from 'react'
+import type { ReactElement } from 'react'
 import { Container, Typography, Box } from '@mui/material'
 import { redirect } from 'next/navigation'
 import type { Metadata } from 'next'
@@ -78,7 +80,7 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 }
 
-export default async function ProfilePage(): Promise<JSX.Element> {
+export default async function ProfilePage(): Promise<ReactElement> {
   const supabase = await createClient()
   const {
     data: { user },

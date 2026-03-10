@@ -2,7 +2,7 @@
 
 import { Box, Button, CircularProgress, Grid, Paper, Tab, Tabs } from '@mui/material'
 import { useCurrentUser } from '@/components/providers/AuthProvider'
-import { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState, type ReactElement } from 'react'
 import { FormProvider, useForm } from 'react-hook-form'
 import { ProfileSkeleton } from './ProfileSkeleton'
 
@@ -56,7 +56,7 @@ interface ProfileFormProps {
   profile: Profile | null
 }
 
-export function ProfileForm({ profile: initialProfile }: ProfileFormProps): JSX.Element {
+export function ProfileForm({ profile: initialProfile }: ProfileFormProps): ReactElement {
   const { showError, showSuccess } = useSnackbar()
   const { user: authUser } = useCurrentUser()
   const { profile, updateProfile, isLoading } = useProfile(authUser?.id, initialProfile)

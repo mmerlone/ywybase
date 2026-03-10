@@ -1,4 +1,6 @@
 'use client'
+import type React from 'react'
+import type { ReactElement } from 'react'
 
 import { DarkMode, LightMode, SettingsBrightness } from '@mui/icons-material'
 import { Skeleton, ToggleButton, ToggleButtonGroup } from '@mui/material'
@@ -11,7 +13,7 @@ import { buildLogger } from '@/lib/logger/client'
 
 const logger = buildLogger('ThemeToggle')
 
-export function ThemeToggle(): JSX.Element {
+export function ThemeToggle(): ReactElement {
   const { mode, setMode } = useColorScheme()
   const { authUser } = useAuthContext()
   const { updateThemePreference } = useProfile(authUser?.id)

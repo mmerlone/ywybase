@@ -20,7 +20,7 @@ import {
 } from '@mui/material'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import React, { useState, type ReactElement } from 'react'
 
 import { useAuthContext, useCurrentUser } from '@/components/providers/AuthProvider'
 import { useProfile } from '@/hooks/useProfile'
@@ -31,7 +31,7 @@ import { SignOutReasonEnum } from '@/types/auth.types'
  * User menu component that displays different UI based on authentication state
  * Shows login/sign up buttons when not authenticated, and user avatar with menu when authenticated
  */
-export function UserMenu(): JSX.Element {
+export function UserMenu(): ReactElement {
   const { user: authUser, isLoading: authLoading } = useCurrentUser()
   const { signOut } = useAuthContext()
   const { profile, isLoading: isProfileLoading } = useProfile(authUser?.id)

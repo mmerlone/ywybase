@@ -1,4 +1,6 @@
 'use client'
+import type React from 'react'
+import type { ReactElement } from 'react'
 
 import { Box, Skeleton, Grid, Paper, Stack } from '@mui/material'
 
@@ -8,7 +10,7 @@ const STAT_CARDS_COUNT = 4
 /** Number of activity item skeletons to display in the loading state */
 const ACTIVITY_ITEMS_COUNT = 4
 
-export default function DashboardLoading(): JSX.Element {
+export default function DashboardLoading(): ReactElement {
   return (
     <Box role="status" aria-busy="true" aria-live="polite">
       <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
