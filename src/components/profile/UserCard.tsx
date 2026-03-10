@@ -1,4 +1,6 @@
 'use client'
+import type React from 'react'
+import type { ReactElement } from 'react'
 import { Box, Card, Stack, Typography, Divider, Link } from '@mui/material'
 
 import { ProviderBadge } from '@/components/auth/ProviderBadge'
@@ -47,7 +49,7 @@ export function UserCard({
   avatarForm,
   userId,
   avatarSize = 'sm',
-}: UserCardProps): JSX.Element {
+}: UserCardProps): ReactElement {
   const avatarConfig = AVATAR_SIZE_MAP[avatarSize]
   const canEditAvatar = Boolean(avatarForm && userId)
 

@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { type ReactElement } from 'react'
 import { Grid, Typography, Box, Button, Stack, Paper } from '@mui/material'
 import { People, TrendingUp, NewReleases, CheckCircle } from '@mui/icons-material'
 import NextLink from 'next/link'
@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   description: "Overview of your application's performance and users.",
 }
 
-export default async function DashboardPage(): Promise<JSX.Element> {
+export default async function DashboardPage(): Promise<ReactElement> {
   const stats = await queryAdminDashboardStats()
 
   return (

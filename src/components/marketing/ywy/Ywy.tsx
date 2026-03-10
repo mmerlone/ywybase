@@ -1,6 +1,8 @@
+import type React from 'react'
+import type { ReactElement } from 'react'
 import { Paper, Typography, Container, Box, Grid } from '@mui/material'
 
-export function Ywy(): JSX.Element {
+export function Ywy(): ReactElement {
   return (
     <Container maxWidth="lg" sx={{ py: 8 }}>
       <Grid container spacing={6} alignItems="center">

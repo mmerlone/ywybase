@@ -19,7 +19,7 @@ import {
   Link,
 } from '@mui/material'
 import * as Sentry from '@sentry/nextjs'
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect, type ReactElement } from 'react'
 
 import { useCurrentUser } from '@/components/providers/AuthProvider'
 import { logger } from '@/lib/logger/client'
@@ -31,7 +31,7 @@ class SentryExampleFrontendError extends Error {
   }
 }
 
-function SentryLogo(): JSX.Element {
+function SentryLogo(): ReactElement {
   return (
     <SvgIcon sx={{ fontSize: 40 }}>
       <path
@@ -42,7 +42,7 @@ function SentryLogo(): JSX.Element {
   )
 }
 
-export function SentryExampleView(): JSX.Element {
+export function SentryExampleView(): ReactElement {
   const { user: authUser } = useCurrentUser()
   const [hasSentError, setHasSentError] = useState(false)
   const [isConnected, setIsConnected] = useState(true)

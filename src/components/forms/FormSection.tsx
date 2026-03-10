@@ -1,5 +1,5 @@
 import { Box, type BoxProps, Typography, type SxProps, type Theme } from '@mui/material'
-import { type ReactNode } from 'react'
+import React, { type ReactNode, type ReactElement } from 'react'
 import { mergeSx } from 'merge-sx'
 
 interface FormSectionProps extends Omit<BoxProps, 'title' | 'sx'> {
@@ -16,7 +16,7 @@ export function FormSection({
   id,
   sx = [],
   ...props
-}: FormSectionProps): JSX.Element {
+}: FormSectionProps): ReactElement {
   return (
     <Box
       component="section"

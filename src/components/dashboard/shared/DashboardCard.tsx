@@ -1,7 +1,7 @@
 'use client'
 
-import React from 'react'
-import { Card, CardContent, Typography, Box, Skeleton, Paper } from '@mui/material'
+import React, { type ReactElement } from 'react'
+import { Card, CardContent, Typography, Box, Skeleton, Paper, type SxProps, type Theme } from '@mui/material'
 
 interface DashboardCardProps {
   title: string
@@ -16,7 +16,7 @@ interface DashboardCardProps {
   }
 }
 
-export function DashboardCard({ title, value, icon, loading, subtitle, trend }: DashboardCardProps): JSX.Element {
+export function DashboardCard({ title, value, icon, loading, subtitle, trend }: DashboardCardProps): ReactElement {
   if (loading) {
     return (
       <Card sx={{ height: '100%' }}>
@@ -65,8 +65,8 @@ export function DashboardCard({ title, value, icon, loading, subtitle, trend }: 
               justifyContent: 'center',
             }}>
             {/* Ensure icon inherits contrast color and is large enough for visibility */}
-            {React.isValidElement(icon)
-              ? React.cloneElement(icon as React.ReactElement, { sx: { fontSize: 28, color: 'inherit' } })
+            {React.isValidElement<{ sx?: SxProps<Theme> }>(icon)
+              ? React.cloneElement(icon, { sx: { fontSize: 28, color: 'inherit' } })
               : icon}
           </Paper>
         </Box>

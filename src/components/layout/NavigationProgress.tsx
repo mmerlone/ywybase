@@ -1,6 +1,6 @@
 'use client'
 
-import { useTransition } from 'react'
+import React, { useTransition, type ReactElement } from 'react'
 import { LinearProgress, Box } from '@mui/material'
 
 /**
@@ -14,7 +14,7 @@ import { LinearProgress, Box } from '@mui/material'
  * For more comprehensive navigation tracking, consider using a library
  * like nprogress.
  */
-export function NavigationProgress(): JSX.Element | null {
+export function NavigationProgress(): ReactElement | null {
   const [isPending] = useTransition()
 
   if (!isPending) return null

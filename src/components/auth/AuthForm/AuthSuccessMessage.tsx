@@ -1,3 +1,5 @@
+import type React from 'react'
+import type { ReactElement } from 'react'
 import { Box, Button, Typography } from '@mui/material'
 
 import { uiText } from './config/uiText'
@@ -14,7 +16,7 @@ interface AuthSuccessMessageProps {
   onBackToLogin: () => void
 }
 
-export function AuthSuccessMessage({ operation, onBackToLogin }: AuthSuccessMessageProps): JSX.Element | null {
+export function AuthSuccessMessage({ operation, onBackToLogin }: AuthSuccessMessageProps): ReactElement | null {
   // For now, we only handle email sent state
   // This can be extended for other success states
   if (operation !== AuthOperationsEnum.FORGOT_PASSWORD) {

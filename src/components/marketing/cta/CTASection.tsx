@@ -1,10 +1,12 @@
+import type React from 'react'
+import type { ReactElement } from 'react'
 import { Box, Button, Container, Stack, Typography } from '@mui/material'
 import GitHubIcon from '@mui/icons-material/GitHub'
 import Link from 'next/link'
 
 import { SITE_CONFIG } from '@/config/site'
 
-export function CTASection(): JSX.Element {
+export function CTASection(): ReactElement {
   const siteName = SITE_CONFIG.name
   const githubUrl = SITE_CONFIG.github
 

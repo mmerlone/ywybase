@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useState, type ReactElement } from 'react'
 
 import { useAdminProfiles } from '@/hooks/useAdminUsers'
 import type { PaginatedProfilesResult, ProfilesQueryOptions, UserRoleFilter } from '@/types/admin.types'
@@ -33,7 +33,7 @@ export default function UsersManagementClient({
   initialRole = 'all',
   pageSizeOptions,
   fetchProfilesAction,
-}: Props): JSX.Element {
+}: Props): ReactElement {
   const [page, setPage] = useState(initialPage)
   const [pageSize, setPageSize] = useState(initialPageSize)
   const [search, setSearch] = useState(initialSearch)

@@ -1,6 +1,8 @@
+import type React from 'react'
+import type { ReactElement } from 'react'
 import { Box, Container, Grid, Paper, Skeleton } from '@mui/material'
 
-export default function ProfileLoading(): JSX.Element {
+export default function ProfileLoading(): ReactElement {
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       {/* Page subtitle (no h4 title in actual page) */}

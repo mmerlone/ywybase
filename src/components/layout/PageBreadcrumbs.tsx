@@ -1,11 +1,13 @@
 'use client'
+import type React from 'react'
+import type { ReactElement } from 'react'
 
 import { Breadcrumbs, Link, Typography, Box, Container } from '@mui/material'
 import NavigateNextIcon from '@mui/icons-material/NavigateNext'
 
 import { useBreadcrumbs } from '@/hooks/useBreadcrumbs'
 
-export function PageBreadcrumbs(): JSX.Element | null {
+export function PageBreadcrumbs(): ReactElement | null {
   const breadcrumbs = useBreadcrumbs()
 
   // Don't render if no breadcrumbs (e.g., on home page)

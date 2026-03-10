@@ -4,7 +4,7 @@ import { Box, Checkbox, FormControlLabel, Link, TextField, Typography, IconButto
 import { Visibility, VisibilityOff } from '@mui/icons-material'
 import { AnimatePresence, LayoutGroup, motion } from 'motion/react'
 import { useFormContext } from 'react-hook-form'
-import { useState } from 'react'
+import React, { useState, type ReactElement } from 'react'
 
 import { uiText } from './config/uiText'
 import { AuthOperationsEnum, type AuthOperations } from '@/types/auth.types'
@@ -14,7 +14,7 @@ type AuthFormFieldsProps = {
   isLoading?: boolean
 }
 
-export function AuthFormFields({ operation, isLoading = false }: AuthFormFieldsProps): JSX.Element {
+export function AuthFormFields({ operation, isLoading = false }: AuthFormFieldsProps): ReactElement {
   const {
     register,
     formState: { errors },
@@ -26,7 +26,7 @@ export function AuthFormFields({ operation, isLoading = false }: AuthFormFieldsP
   const [acceptTermsPrefix = '', afterTermsRaw = ''] = fields.acceptTerms.split(links.termsOfService)
   const [betweenTermsAndPrivacy = '', acceptTermsSuffix = ''] = afterTermsRaw.split(links.privacyPolicy)
 
-  const renderEmailField = (): JSX.Element => (
+  const renderEmailField = (): ReactElement => (
     <motion.div
       layout
       key="email-field"
@@ -48,7 +48,7 @@ export function AuthFormFields({ operation, isLoading = false }: AuthFormFieldsP
     </motion.div>
   )
 
-  const renderPasswordField = (name: string, label: string): JSX.Element => {
+  const renderPasswordField = (name: string, label: string): ReactElement => {
     const visible = Boolean(showPassword[name])
     return (
       <motion.div
@@ -88,7 +88,7 @@ export function AuthFormFields({ operation, isLoading = false }: AuthFormFieldsP
     )
   }
 
-  const renderNameField = (): JSX.Element => (
+  const renderNameField = (): ReactElement => (
     <motion.div
       layout
       key="name-field"
@@ -108,7 +108,7 @@ export function AuthFormFields({ operation, isLoading = false }: AuthFormFieldsP
     </motion.div>
   )
 
-  const renderTermsCheckbox = (): JSX.Element => (
+  const renderTermsCheckbox = (): ReactElement => (
     <motion.div
       layout
       key="terms-checkbox"

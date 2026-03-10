@@ -1,6 +1,8 @@
+import type React from 'react'
+import type { ReactElement } from 'react'
 import { Box, Container, Paper, Skeleton } from '@mui/material'
 
-export default function CopyrightLoading(): JSX.Element {
+export default function CopyrightLoading(): ReactElement {
   return (
     <Container maxWidth="md">
       <Box sx={{ py: 4 }}>

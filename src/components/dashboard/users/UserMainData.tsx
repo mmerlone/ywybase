@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { type ReactElement } from 'react'
 import { Box, Paper, Stack, Typography, Divider } from '@mui/material'
 import { ProviderBadge } from '@/components/auth/ProviderBadge'
 import { UserRoleBadge } from '@/components/common/UserRoleBadge'
@@ -15,7 +15,7 @@ interface UserMainDataProps {
   formatBoolean: (value?: boolean | null) => string
 }
 
-export function UserMainData({ profile, formatDate, formatBoolean }: UserMainDataProps): JSX.Element {
+export function UserMainData({ profile, formatDate, formatBoolean }: UserMainDataProps): ReactElement {
   const metadataItems: Array<{ label: string; value: string }> = [
     { label: 'Last Sign In', value: formatDate(profile.last_sign_in_at) },
     { label: 'Last Updated', value: formatDate(profile.updated_at) },

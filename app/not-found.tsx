@@ -1,10 +1,12 @@
 'use client'
+import type React from 'react'
+import type { ReactElement } from 'react'
 
 import { SearchOff as NotFoundIcon, Home as HomeIcon, ArrowBack as BackIcon } from '@mui/icons-material'
 import { Box, Container, Typography, Button, Paper } from '@mui/material'
 import Link from 'next/link'
 
-export default function NotFound(): JSX.Element {
+export default function NotFound(): ReactElement {
   return (
     <Box
       sx={{

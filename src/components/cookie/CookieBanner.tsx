@@ -20,12 +20,12 @@ import {
   Typography,
 } from '@mui/material'
 import Link from 'next/link'
-import { type ChangeEvent, useCallback, useState } from 'react'
+import React, { type ChangeEvent, useCallback, useState, type ReactElement } from 'react'
 
 import { useCookieConsent } from '@/hooks/useCookieConsent'
 import { type CookiePreferences } from '@/types/cookie.types'
 
-export function CookieBanner(): JSX.Element | null {
+export function CookieBanner(): ReactElement | null {
   const [showDetails, setShowDetails] = useState(false)
   const { acceptAll, acceptSelected, decline, isBannerOpen, preferences: currentPreferences } = useCookieConsent()
 

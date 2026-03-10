@@ -1,4 +1,6 @@
 'use client'
+import type React from 'react'
+import type { ReactElement } from 'react'
 
 import {
   AdminPanelSettings as AdminIcon,
@@ -20,7 +22,7 @@ interface UserRoleBadgeProps {
   variant?: UserBadgeVariant
 }
 
-function getRoleInfo(role: Profile['role']): { color: ChipProps['color']; icon: JSX.Element; label: string } {
+function getRoleInfo(role: Profile['role']): { color: ChipProps['color']; icon: ReactElement; label: string } {
   switch (role) {
     case UserRoleEnum.ROOT:
       return { color: 'error', icon: <RootIcon sx={{ fontSize: 16 }} />, label: 'Root' }
@@ -34,7 +36,7 @@ function getRoleInfo(role: Profile['role']): { color: ChipProps['color']; icon: 
   }
 }
 
-export function UserRoleBadge({ role, variant = 'default' }: UserRoleBadgeProps): JSX.Element {
+export function UserRoleBadge({ role, variant = 'default' }: UserRoleBadgeProps): ReactElement {
   const info = getRoleInfo(role)
 
   if (variant === 'inverse') {

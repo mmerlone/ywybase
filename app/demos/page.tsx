@@ -1,10 +1,10 @@
 'use client'
 
-import React from 'react'
+import React, { type ReactElement } from 'react'
 import { Box, Typography, Card, CardContent, CardActions, Button, Stack } from '@mui/material'
 import Link from 'next/link'
 
-export default function DemosPage(): JSX.Element {
+export default function DemosPage(): ReactElement {
   return (
     <Box sx={{ p: 3, maxWidth: 800, mx: 'auto' }}>
       <Typography variant="h4" gutterBottom>

@@ -20,7 +20,7 @@ import DownloadIcon from '@mui/icons-material/Download'
 import DeleteIcon from '@mui/icons-material/Delete'
 import { Visibility, VisibilityOff } from '@mui/icons-material'
 import { FormProvider, useForm } from 'react-hook-form'
-import { useState } from 'react'
+import React, { useState, type ReactElement } from 'react'
 
 import { AuthFormFields } from '../auth/AuthForm/AuthFormFields'
 import { PasswordMeter } from '@/components/auth/PasswordMeter'
@@ -43,7 +43,7 @@ import { useProfile } from '@/hooks/useProfile'
 
 type PasswordFormInput = AddPasswordFormInput & { password: string; confirmPassword: string }
 
-export function TabAccount(): JSX.Element {
+export function TabAccount(): ReactElement {
   const { user: authUser } = useCurrentUser()
   const { signOut, refreshSession } = useAuthContext()
   const { showError, showSuccess } = useSnackbar()

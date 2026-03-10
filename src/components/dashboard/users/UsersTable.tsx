@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useMemo } from 'react'
+import React, { useMemo, type ReactElement } from 'react'
 import { Box, Typography, IconButton, Tooltip } from '@mui/material'
 import { Visibility as ViewIcon, Email as EmailIcon } from '@mui/icons-material'
 import NextLink from 'next/link'
@@ -32,14 +32,14 @@ export function UsersTable({
   onPageSizeChange,
   loading,
   pageSizeOptions = PAGINATION_CONFIG.adminProfiles.allowedPageSizes,
-}: UsersTableProps): JSX.Element {
+}: UsersTableProps): ReactElement {
   const columns = useMemo(
     () => [
       {
         id: 'display_name',
         label: 'User',
         minWidth: 200,
-        format: (_: unknown, row: Profile): JSX.Element => (
+        format: (_: unknown, row: Profile): ReactElement => (
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <Box sx={{ mr: 1.5 }}>
               <UserAvatar
@@ -64,19 +64,19 @@ export function UsersTable({
         id: 'role',
         label: 'Role',
         minWidth: 120,
-        format: (_: unknown, row: Profile): JSX.Element => <UserRoleBadge role={row.role} />,
+        format: (_: unknown, row: Profile): ReactElement => <UserRoleBadge role={row.role} />,
       },
       {
         id: 'status',
         label: 'Status',
         minWidth: 100,
-        format: (_: unknown, row: Profile): JSX.Element => <UserStatusBadge status={row.status} />,
+        format: (_: unknown, row: Profile): ReactElement => <UserStatusBadge status={row.status} />,
       },
       {
         id: 'last_sign_in_at',
         label: 'Last Seen',
         minWidth: 150,
-        format: (_: unknown, row: Profile): JSX.Element => {
+        format: (_: unknown, row: Profile): ReactElement => {
           const dateStr = row.last_sign_in_at
           let formattedDate = 'Never'
           if (dateStr) {
@@ -97,7 +97,7 @@ export function UsersTable({
         label: 'Actions',
         minWidth: 80,
         align: 'right' as const,
-        format: (_: unknown, row: Profile): JSX.Element => (
+        format: (_: unknown, row: Profile): ReactElement => (
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 0.5 }}>
             <Tooltip title="View Details">
               <IconButton size="small" component={NextLink} href={`/dashboard/users/${row.id}`}>

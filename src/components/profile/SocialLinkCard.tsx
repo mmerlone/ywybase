@@ -3,7 +3,7 @@ import EditIcon from '@mui/icons-material/Edit'
 import DeleteIcon from '@mui/icons-material/Delete'
 import OpenInNewIcon from '@mui/icons-material/OpenInNew'
 import LinkIcon from '@mui/icons-material/Link'
-import { useState } from 'react'
+import React, { useState, type ReactElement } from 'react'
 import { type SocialLink, type SocialProvider, SocialProvidersEnum } from '@/types/profile.types'
 import { SocialPlatformIcon } from '@/components/icons/SocialPlatformIcon'
 import { UserAvatar } from '@/components/profile/UserAvatar'
@@ -41,7 +41,7 @@ export function SocialLinkCard({
   userAvatarUrl,
   userEmail,
   userDisplayName,
-}: SocialLinkCardProps): JSX.Element {
+}: SocialLinkCardProps): ReactElement {
   const [hovered, setHovered] = useState(false)
   const { metadata, platform, url, title } = link
 

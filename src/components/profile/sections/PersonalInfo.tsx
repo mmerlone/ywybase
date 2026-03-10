@@ -1,3 +1,4 @@
+import type { ReactElement } from 'react'
 import { Grid, MenuItem, TextField } from '@mui/material'
 import { AdapterMoment } from '@mui/x-date-pickers/AdapterMoment'
 import { DatePicker } from '@mui/x-date-pickers/DatePicker'
@@ -16,7 +17,7 @@ interface PersonalInfoProps {
 }
 
 // Simple personal info form section with safe casts for controlled fields
-export function PersonalInfo({ errors, disabled = false, isLoading = false }: PersonalInfoProps): JSX.Element {
+export function PersonalInfo({ errors, disabled = false, isLoading = false }: PersonalInfoProps): ReactElement {
   const { control } = useFormContext<ProfileFormValues>()
 
   return (

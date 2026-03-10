@@ -1,3 +1,5 @@
+import type React from 'react'
+import type { ReactElement } from 'react'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 
@@ -17,7 +19,7 @@ type PageProps = {
   }>
 }
 
-export default async function UserDetailsPage({ params }: PageProps): Promise<JSX.Element> {
+export default async function UserDetailsPage({ params }: PageProps): Promise<ReactElement> {
   const { profileId } = await params
 
   if (!profileId) {

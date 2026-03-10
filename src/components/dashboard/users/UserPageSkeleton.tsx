@@ -1,6 +1,8 @@
+import type React from 'react'
+import type { ReactElement } from 'react'
 import { Box, Grid, Paper, Skeleton, Stack, Divider } from '@mui/material'
 
-export function UserPageSkeleton(): JSX.Element {
+export function UserPageSkeleton(): ReactElement {
   return (
     <Box>
       <Paper sx={{ p: { xs: 3, md: 5 }, borderRadius: 3 }}>

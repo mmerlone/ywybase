@@ -1,3 +1,5 @@
+import type React from 'react'
+import type { ReactElement } from 'react'
 import { Box } from '@mui/material'
 import type { Metadata } from 'next'
 
@@ -10,7 +12,7 @@ export const metadata: Metadata = {
   description: 'A comprehensive YwyBase for modern web applications with Next.js, TypeScript, and Material UI',
 }
 
-export default function HomePage(): JSX.Element {
+export default function HomePage(): ReactElement {
   return (
     <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <Box component="section">

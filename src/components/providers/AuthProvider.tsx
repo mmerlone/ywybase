@@ -10,7 +10,7 @@
 
 'use client'
 
-import { createContext, useContext, type ReactNode } from 'react'
+import React, { createContext, useContext, type ReactNode, type ReactElement } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { useAuthRedirects } from '@/hooks/useAuthRedirects'
 import type { AuthContextType } from '@/types/auth.types'
@@ -39,7 +39,7 @@ interface AuthProviderProps {
  *
  * @param {AuthProviderProps} props - Component props
  * @param {ReactNode} props.children - Child components to wrap
- * @returns {JSX.Element} Provider component with auth context
+ * @returns {ReactElement} Provider component with auth context
  *
  * @example
  * ```tsx
@@ -59,7 +59,7 @@ interface AuthProviderProps {
  * - Manages session state and user data
  * - Integrates with error handling system
  */
-export function AuthProvider({ children }: AuthProviderProps): JSX.Element {
+export function AuthProvider({ children }: AuthProviderProps): ReactElement {
   const auth = useAuth()
   useAuthRedirects()
 

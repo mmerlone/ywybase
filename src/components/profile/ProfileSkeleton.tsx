@@ -1,10 +1,12 @@
+import type React from 'react'
+import type { ReactElement } from 'react'
 import { Box, Grid, Paper, Skeleton, Stack } from '@mui/material'
 
 /**
  * Unified skeleton for the entire profile page.
  * Matches the layout structure of ProfileForm (4/8 column split).
  */
-export function ProfileSkeleton(): JSX.Element {
+export function ProfileSkeleton(): ReactElement {
   return (
     <Box sx={{ mt: 1, width: '100%' }}>
       <Grid container spacing={3}>

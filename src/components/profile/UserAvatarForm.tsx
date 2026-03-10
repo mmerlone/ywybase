@@ -11,7 +11,7 @@ import {
   IconButton,
   Tooltip,
 } from '@mui/material'
-import { useCallback, useRef, useState } from 'react'
+import React, { useCallback, useRef, useState, type ReactElement } from 'react'
 
 import { UserAvatar, AVATAR_SIZE_CONFIG } from '@/components/profile/UserAvatar'
 import { useProfile } from '@/hooks/useProfile'
@@ -82,7 +82,7 @@ export function UserAvatarForm({
   displayName,
   size = 'medium',
   userId,
-}: UserAvatarFormProps): JSX.Element {
+}: UserAvatarFormProps): ReactElement {
   // Hooks must be called unconditionally (React rules of hooks)
   // We use the userId to determine if profile operations are available
   const profileOps = useProfile(userId)

@@ -1,6 +1,8 @@
+import type React from 'react'
+import type { ReactElement } from 'react'
 import { Box, Container, Skeleton } from '@mui/material'
 
-export default function ErrorLoading(): JSX.Element {
+export default function ErrorLoading(): ReactElement {
   return (
     <Container maxWidth="sm">
       <Box

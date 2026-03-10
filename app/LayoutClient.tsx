@@ -2,7 +2,7 @@
 
 import { Alert, Box, useTheme } from '@mui/material'
 import Link from 'next/link'
-import { type ReactNode } from 'react'
+import React, { type ReactNode, type ReactElement } from 'react'
 
 import { CookieBanner } from '@/components/cookie/CookieBanner'
 import { GlobalErrorBoundary } from '@/components/error/GlobalErrorBoundary'
@@ -34,7 +34,7 @@ function MainContent({
   children: ReactNode
   supabaseEnabled: boolean
   isDev: boolean
-}): JSX.Element {
+}): ReactElement {
   const theme = useTheme()
   return (
     <Box
@@ -63,7 +63,7 @@ function MainContent({
   )
 }
 
-export function LayoutClient({ children, supabaseStatus, isDev, initialFlash }: LayoutClientProps): JSX.Element {
+export function LayoutClient({ children, supabaseStatus, isDev, initialFlash }: LayoutClientProps): ReactElement {
   const supabaseEnabled = supabaseStatus.isConfigured
 
   const appShell = (

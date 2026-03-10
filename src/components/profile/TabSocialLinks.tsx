@@ -4,7 +4,7 @@ import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Grid from '@mui/material/Grid'
 import Typography from '@mui/material/Typography'
-import { useState, useCallback } from 'react'
+import React, { useState, useCallback, type ReactElement } from 'react'
 
 import { SOCIAL_LINK_CARD_HEIGHT, SocialLinkCard } from './SocialLinkCard'
 import { SocialLinkForm, type OgMeta } from './SocialLinkForm'
@@ -39,9 +39,9 @@ const METADATA_TTL_MS = 30 * 24 * 60 * 60 * 1000
  * - Generates UUID for new links using crypto.randomUUID()
  * - Comprehensive error handling with useSnackbar
  *
- * @returns JSX.Element - The social links tab component
+ * @returns ReactElement - The social links tab component
  */
-export function TabSocialLinks(): JSX.Element {
+export function TabSocialLinks(): ReactElement {
   const { showSuccess, showError } = useSnackbar()
   const { user } = useCurrentUser()
   const userId = user?.id ?? ''

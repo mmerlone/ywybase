@@ -1,6 +1,8 @@
+import type React from 'react'
+import type { ReactElement } from 'react'
 import { Box, Container, Paper, Skeleton } from '@mui/material'
 
-export default function SentryExampleLoading(): JSX.Element {
+export default function SentryExampleLoading(): ReactElement {
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       {/* Page Header */}

@@ -1,9 +1,9 @@
 'use client'
 
-import React from 'react'
+import React, { type ReactElement } from 'react'
 import { Box, Skeleton, Paper, Stack } from '@mui/material'
 
-export default function UsersLoading(): JSX.Element {
+export default function UsersLoading(): ReactElement {
   return (
     <Box role="status" aria-busy="true" aria-live="polite">
       <Box sx={{ mb: 4 }}>
@@ -24,14 +24,14 @@ export default function UsersLoading(): JSX.Element {
         <Box sx={{ p: 2, borderBottom: '1px solid', borderColor: 'divider' }}>
           <Stack direction="row" spacing={2}>
             {[1, 2, 3, 4, 5].map(
-              (i): JSX.Element => (
+              (i): ReactElement => (
                 <Skeleton key={i} variant="text" sx={{ flexGrow: 1 }} />
               )
             )}
           </Stack>
         </Box>
         {[1, 2, 3, 4, 5].map(
-          (i): JSX.Element => (
+          (i): ReactElement => (
             <Box key={i} sx={{ p: 2, borderBottom: '1px solid', borderColor: 'divider' }}>
               <Stack direction="row" spacing={2} alignItems="center">
                 <Skeleton variant="circular" width={32} height={32} />
