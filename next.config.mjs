@@ -17,7 +17,7 @@ const nextConfig = {
   // store layout causes version-mismatch resolution errors (e.g. entities@4
   // hoisted vs entities@6 needed by parse5). Node.js runtime resolves them
   // correctly through pnpm's symlinks.
-  serverExternalPackages: ['cheerio'],
+  serverExternalPackages: ['cheerio', 'isomorphic-dompurify', 'jsdom', 'dompurify'],
   async headers() {
     return [
       {
