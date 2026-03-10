@@ -6,7 +6,7 @@
  * src/config/security.ts for validation rules.
  */
 
-import DOMPurify from 'isomorphic-dompurify'
+import sanitize from 'sanitize-html'
 
 import { SECURITY_CONFIG } from '@/config/security'
 import { buildLogger } from '@/lib/logger/client'
@@ -35,17 +35,16 @@ export function sanitizeHtml(input: string, options: HtmlSanitizeOptions = {}): 
     } = options
 
     if (stripTags) {
-      return DOMPurify.sanitize(input, { ALLOWED_TAGS: [], ALLOWED_ATTR: [] })
+      return sanitize(input, { allowedTags: [], allowedAttributes: {} })
     }
 
-    const sanitized = DOMPurify.sanitize(input, {
-      ALLOWED_TAGS: allowLinks ? [...allowedTags, 'a'] : allowedTags,
-      ALLOWED_ATTR: allowedAttributes,
-      ALLOW_DATA_ATTR: false,
-      ALLOW_UNKNOWN_PROTOCOLS: false,
-      RETURN_DOM: false,
-      RETURN_DOM_FRAGMENT: false,
-      RETURN_TRUSTED_TYPE: false,
+    const tags = allowLinks ? [...allowedTags, 'a'] : allowedTags
+    const attrMap: Record<string, string[]> = allowedAttributes.length > 0 ? { '*': allowedAttributes } : {}
+    const sanitized = sanitize(input, {
+      allowedTags: tags,
+      allowedAttributes: attrMap,
+      allowedSchemes: ['http', 'https', 'mailto'],
+      allowProtocolRelative: false,
     })
 
     logger.debug(
