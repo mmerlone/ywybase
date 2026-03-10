@@ -1,4 +1,7 @@
+import type React from 'react'
+import type { ReactElement } from 'react'
 import { Grid, TextField } from '@mui/material'
+import MuiPhoneNumber from '@mmerlone/mui7-phone-number'
 import { Controller, useFormContext } from 'react-hook-form'
 
 import { FormSection } from '@/components/forms/FormSection'
@@ -11,7 +14,7 @@ interface ContactInfoProps {
   isLoading?: boolean
 }
 
-export function ContactInfo({ errors, disabled = false, isLoading = false }: ContactInfoProps): JSX.Element {
+export function ContactInfo({ errors, disabled = false, isLoading = false }: ContactInfoProps): ReactElement {
   const { control } = useFormContext<ProfileFormValues>()
   return (
     <FormSection title="Contact Information">
@@ -24,16 +27,18 @@ export function ContactInfo({ errors, disabled = false, isLoading = false }: Con
               name="phone"
               control={control}
               render={({ field }) => (
-                <TextField
-                  {...field}
+                <MuiPhoneNumber
                   fullWidth
                   label="Phone Number"
                   variant="outlined"
-                  placeholder="+1 (555) 123-4567"
+                  defaultCountry="us"
+                  disableAreaCodes={true}
                   disabled={disabled}
                   error={Boolean(errors.phone)}
                   helperText={errors.phone?.message}
                   value={field.value ?? ''}
+                  onChange={(value) => field.onChange(value)}
+                  onBlur={() => field.onBlur()}
                 />
               )}
             />
