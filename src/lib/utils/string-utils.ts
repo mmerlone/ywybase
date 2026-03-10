@@ -7,7 +7,7 @@
 
 import ipaddr from 'ipaddr.js'
 import { type Country } from 'country-telephone-data'
-import { format as formatDateFns } from 'date-fns'
+import { formatInTimeZone } from 'date-fns-tz'
 
 /**
  * Normalize a string value by trimming whitespace and handling null/undefined.
@@ -133,7 +133,8 @@ export function formatDate(date: string | null | undefined): string {
     if (isNaN(parsed.getTime())) {
       return 'Invalid date'
     }
-    return formatDateFns(parsed, 'PP p')
+    // Use a fixed timezone to keep SSR and client hydration output identical.
+    return formatInTimeZone(parsed, 'UTC', "PP p 'UTC'")
   } catch {
     return 'Invalid date'
   }
