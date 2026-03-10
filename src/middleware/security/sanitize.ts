@@ -6,8 +6,8 @@
  * src/config/security.ts for validation rules.
  */
 
-import { JSDOM } from 'jsdom'
-import createDOMPurify from 'dompurify'
+import DOMPurify from 'isomorphic-dompurify'
+
 import { SECURITY_CONFIG } from '@/config/security'
 import { buildLogger } from '@/lib/logger/client'
 import { safeJsonParse } from '@/lib/utils/json'
@@ -22,10 +22,6 @@ import type {
 
 const logger = buildLogger('security-sanitize')
 
-// Create singleton JSDOM instance for server-side sanitization
-const window = new JSDOM('').window
-const DOMPurify = createDOMPurify(window)
-
 /**
  * Sanitize HTML content to prevent XSS attacks
  */
@@ -39,11 +35,10 @@ export function sanitizeHtml(input: string, options: HtmlSanitizeOptions = {}): 
     } = options
 
     if (stripTags) {
-      // Strip all HTML tags using DOMPurify with no allowed tags
-      return DOMPurify.sanitize(input, { ALLOWED_TAGS: [], ALLOWED_ATTR: [] }) ?? ''
+      return DOMPurify.sanitize(input, { ALLOWED_TAGS: [], ALLOWED_ATTR: [] })
     }
 
-    const config = {
+    const sanitized = DOMPurify.sanitize(input, {
       ALLOWED_TAGS: allowLinks ? [...allowedTags, 'a'] : allowedTags,
       ALLOWED_ATTR: allowedAttributes,
       ALLOW_DATA_ATTR: false,
@@ -51,9 +46,7 @@ export function sanitizeHtml(input: string, options: HtmlSanitizeOptions = {}): 
       RETURN_DOM: false,
       RETURN_DOM_FRAGMENT: false,
       RETURN_TRUSTED_TYPE: false,
-    }
-
-    const sanitized = DOMPurify.sanitize(input, config) ?? ''
+    })
 
     logger.debug(
       {

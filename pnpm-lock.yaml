@@ -109,9 +109,6 @@ importers:
       isomorphic-dompurify:
         specifier: ^2.34.0
         version: 2.36.0
-      jsdom:
-        specifier: ^27.3.0
-        version: 27.4.0
       lru-cache:
         specifier: ^11.2.2
         version: 11.2.6
@@ -300,10 +297,6 @@ packages:
     resolution:
       { integrity: sha512-UrcABB+4bUrFABwbluTIBErXwvbsU/V7TZWfmbgJfbkwiBuziS9gxdODUyuiecfdGQ85jglMW6juS3+z5TsKLw== }
     engines: { node: '>=10' }
-
-  '@asamuzakjp/css-color@4.1.2':
-    resolution:
-      { integrity: sha512-NfBUvBaYgKIuq6E/RBLY1m0IohzNHAYyaJGuTK79Z23uNwmz2jl1mPsC5ZxCCxylinKhT1Amn5oNTlx1wN8cQg== }
 
   '@asamuzakjp/css-color@5.0.1':
     resolution:
@@ -3375,11 +3368,6 @@ packages:
       { integrity: sha512-ZZXXn51SnxRxAZ6fdY7mBDPmA4OZd83q/J9Gdqz3YmE9TUq+9tZl+tdOnCi7PpNygI6PEkehj9rgifv5+W8a5A== }
     engines: { node: '>=10.0.0' }
 
-  cssstyle@5.3.7:
-    resolution:
-      { integrity: sha512-7D2EPVltRrsTkhpQmksIu+LxeWAIEk6wRDMJ1qljlv+CKHJM+cJLlfhWIzNA44eAsHXSNe3+vO6DW1yCYx8SuQ== }
-    engines: { node: '>=20' }
-
   cssstyle@6.2.0:
     resolution:
       { integrity: sha512-Fm5NvhYathRnXNVndkUsCCuR63DCLVVwGOOwQw782coXFi5HhkXdu289l59HlXZBawsyNccXfWRYvLzcDCdDig== }
@@ -3392,11 +3380,6 @@ packages:
   damerau-levenshtein@1.0.8:
     resolution:
       { integrity: sha512-sdQSFB7+llfUcQHUQO3+B8ERRj0Oa4w9POWMI/puGtuf7gFywGmkaLCElnudfTiKZV+NvHqL0ifzdrI8Ro7ESA== }
-
-  data-urls@6.0.1:
-    resolution:
-      { integrity: sha512-euIQENZg6x8mj3fO6o9+fOW8MimUI4PpD/fZBhJfeioZVy9TUpM4UY7KjQNVZFlqwJ0UdzRDzkycB997HEq1BQ== }
-    engines: { node: '>=20' }
 
   data-urls@7.0.0:
     resolution:
@@ -4703,16 +4686,6 @@ packages:
     resolution:
       { integrity: sha512-qQKT4zQxXl8lLwBtHMWwaTcGfFOZviOJet3Oy/xmGk2gZH677CJM9EvtfdSkgWcATZhj/55JZ0rmy3myCT5lsA== }
     hasBin: true
-
-  jsdom@27.4.0:
-    resolution:
-      { integrity: sha512-mjzqwWRD9Y1J1KUi7W97Gja1bwOOM5Ug0EZ6UDK3xS7j7mndrkwozHtSblfomlzyB4NepioNt+B2sOSzczVgtQ== }
-    engines: { node: ^20.19.0 || ^22.12.0 || >=24.0.0 }
-    peerDependencies:
-      canvas: ^3.0.0
-    peerDependenciesMeta:
-      canvas:
-        optional: true
 
   jsdom@28.1.0:
     resolution:
@@ -6312,11 +6285,6 @@ packages:
       { integrity: sha512-sXcNcHOC51uPGF0P/D4NVtrkjSU2fNsm9iog4ZvZJsL3rjoDAzXZhkm2MWt1y+PUdggKAYVoMAIYcs78wJ51Cw== }
     engines: { node: '>=20' }
 
-  whatwg-url@15.1.0:
-    resolution:
-      { integrity: sha512-2ytDk0kiEj/yu90JOAp44PVPUkO9+jVhyf+SybKlRHSDlvOOZhdPIrr7xTH64l4WixO2cP+wQIcgujkGBPPz6g== }
-    engines: { node: '>=20' }
-
   whatwg-url@16.0.1:
     resolution:
       { integrity: sha512-1to4zXBxmXHV3IiSSEInrreIlu02vUOvrhxJJH5vcxYTBDAx51cqZiKdyTxlecdKNSjj8EcxGBxNf6Vg+945gw== }
@@ -6462,14 +6430,6 @@ snapshots:
   '@acemir/cssom@0.9.31': {}
 
   '@alloc/quick-lru@5.2.0': {}
-
-  '@asamuzakjp/css-color@4.1.2':
-    dependencies:
-      '@csstools/css-calc': 3.1.1(@csstools/css-parser-algorithms@4.0.0(@csstools/css-tokenizer@4.0.0))(@csstools/css-tokenizer@4.0.0)
-      '@csstools/css-color-parser': 4.0.2(@csstools/css-parser-algorithms@4.0.0(@csstools/css-tokenizer@4.0.0))(@csstools/css-tokenizer@4.0.0)
-      '@csstools/css-parser-algorithms': 4.0.0(@csstools/css-tokenizer@4.0.0)
-      '@csstools/css-tokenizer': 4.0.0
-      lru-cache: 11.2.6
 
   '@asamuzakjp/css-color@5.0.1':
     dependencies:
@@ -9166,13 +9126,6 @@ snapshots:
 
   cssjanus@2.3.0: {}
 
-  cssstyle@5.3.7:
-    dependencies:
-      '@asamuzakjp/css-color': 4.1.2
-      '@csstools/css-syntax-patches-for-csstree': 1.1.0
-      css-tree: 3.2.1
-      lru-cache: 11.2.6
-
   cssstyle@6.2.0:
     dependencies:
       '@asamuzakjp/css-color': 5.0.1
@@ -9183,11 +9136,6 @@ snapshots:
   csstype@3.2.3: {}
 
   damerau-levenshtein@1.0.8: {}
-
-  data-urls@6.0.1:
-    dependencies:
-      whatwg-mimetype: 5.0.0
-      whatwg-url: 15.1.0
 
   data-urls@7.0.0:
     dependencies:
@@ -10599,34 +10547,6 @@ snapshots:
     dependencies:
       argparse: 2.0.1
 
-  jsdom@27.4.0:
-    dependencies:
-      '@acemir/cssom': 0.9.31
-      '@asamuzakjp/dom-selector': 6.8.1
-      '@exodus/bytes': 1.15.0
-      cssstyle: 5.3.7
-      data-urls: 6.0.1
-      decimal.js: 10.6.0
-      html-encoding-sniffer: 6.0.0
-      http-proxy-agent: 7.0.2
-      https-proxy-agent: 7.0.6
-      is-potential-custom-element-name: 1.0.1
-      parse5: 8.0.0
-      saxes: 6.0.0
-      symbol-tree: 3.2.4
-      tough-cookie: 6.0.0
-      w3c-xmlserializer: 5.0.0
-      webidl-conversions: 8.0.1
-      whatwg-mimetype: 4.0.0
-      whatwg-url: 15.1.0
-      ws: 8.19.0
-      xml-name-validator: 5.0.0
-    transitivePeerDependencies:
-      - '@noble/hashes'
-      - bufferutil
-      - supports-color
-      - utf-8-validate
-
   jsdom@28.1.0:
     dependencies:
       '@acemir/cssom': 0.9.31
@@ -11993,11 +11913,6 @@ snapshots:
   whatwg-mimetype@4.0.0: {}
 
   whatwg-mimetype@5.0.0: {}
-
-  whatwg-url@15.1.0:
-    dependencies:
-      tr46: 6.0.0
-      webidl-conversions: 8.0.1
 
   whatwg-url@16.0.1:
     dependencies:
