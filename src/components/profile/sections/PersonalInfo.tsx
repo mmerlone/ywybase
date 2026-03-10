@@ -1,4 +1,3 @@
-import type React from 'react'
 import type { ReactElement } from 'react'
 import { Grid, MenuItem, TextField } from '@mui/material'
 import { AdapterMoment } from '@mui/x-date-pickers/AdapterMoment'
