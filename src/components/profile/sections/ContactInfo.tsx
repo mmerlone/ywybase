@@ -1,4 +1,3 @@
-import type React from 'react'
 import type { ReactElement } from 'react'
 import { Grid, TextField } from '@mui/material'
 import MuiPhoneNumber from '@mmerlone/mui7-phone-number'
