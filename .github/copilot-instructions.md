@@ -181,9 +181,9 @@ CSRF_SECRET=your_32_char_secret      # Required for production
 **Optional but Recommended**:
 
 ```bash
-# Rate Limiting (Vercel KV recommended)
-KV_REST_API_URL=your_vercel_kv_url
-KV_REST_API_TOKEN=your_kv_token
+# Upstash Redis (production rate limiting — injected by Vercel/Upstash integration)
+KV_REST_API_URL=https://your-endpoint.upstash.io
+KV_REST_API_TOKEN=your_kv_rest_api_token
 
 # Error Tracking
 SENTRY_AUTH_TOKEN=your_token
@@ -202,7 +202,7 @@ IPGEOLOCATION_API_KEY=your_key
 
 **Production Considerations**:
 
-- **Rate Limiting**: Configure Vercel KV for distributed rate limiting (in-memory only works for single instance)
+- **Rate Limiting**: Add the Upstash Redis integration from the Vercel Marketplace for distributed rate limiting (in-memory only works for single instance)
 - **CSRF Protection**: CSRF_SECRET is required in production, app will fail to start without it
 - **Sentry**: Configure for error tracking and performance monitoring
 - **Security Headers**: Automatically applied via `next.config.mjs`

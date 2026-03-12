@@ -272,21 +272,13 @@ nano .env.local  # or use your preferred editor
 
 2. **Configure Rate Limiting (Production)**
    - For production deployments with multiple instances, configure persistent storage for rate limiting.
-   - **Recommended: Upstash Redis (via Vercel Integration)**
-     1. Go to the [Upstash Integration page](https://vercel.com/integrations/upstash).
-     2. Under "Upstash for Redis" (Redis Compatible Database), click **Install**. (Do not select Vector, QStash, or Search unless you need those products.)
-     3. If you already have an Upstash account, choose **Link Existing Upstash Account** during the integration process. You can then select your existing Redis database to connect to your Vercel project. If you do not have an account, you can create one during this step.
-     4. After setup, Upstash will provide a Redis REST URL and a token. These will be automatically added to your Vercel project as environment variables, typically:
-        - `UPSTASH_REDIS_REST_URL`
-        - `UPSTASH_REDIS_REST_TOKEN`
-     5. If you need to use custom variable names, set:
-        ```env
-        REDIS_URL=your_upstash_redis_rest_url
-        REDIS_TOKEN=your_upstash_redis_rest_token
-        ```
-        Otherwise, use the defaults provided by Upstash.
-     6. Ensure your code uses the correct environment variables for Redis connection.
-     7. Upstash also offers Vector, QStash, and Search products—install only if your project requires those features.
+   - **Recommended: Vercel KV**
+     1. Go to [Vercel Dashboard -> Storage](https://vercel.com/dashboard/stores).
+     2. Create a new **KV** database and connect it to your project.
+     3. Add the generated environment variables to your Vercel project:
+        - `KV_REST_API_URL`
+        - `KV_REST_API_TOKEN`
+     4. Confirm the variables are available in the same environment where your app runs.
    - **Development**: Uses in-memory storage (no configuration needed)
 
 #### **Complete Environment Setup**
@@ -309,10 +301,9 @@ NODE_ENV=development
 IPGEOLOCATION_API_KEY=your_ipgeolocation_api_key
 CSRF_SECRET=your_csrf_secret_32_chars_minimum
 
-# Production Rate Limiting (choose one)
+# Production Rate Limiting (Vercel KV)
 # KV_REST_API_URL=your_vercel_kv_rest_api_url
 # KV_REST_API_TOKEN=your_vercel_kv_rest_api_token
-# REDIS_URL=redis://your-redis-host:6379
 ```
 
 ### **3. Customize the Application**

@@ -458,10 +458,9 @@ SENTRY_AUTH_TOKEN=your_sentry_auth_token
 # IP Geolocation
 IPGEOLOCATION_API_KEY=your_ipgeolocation_api_key
 
-# Upstash Redis/KV (production rate limiting)
-KV_REST_API_READ_ONLY_TOKEN=your_upstash_read_only_token
-KV_REST_API_TOKEN=your_upstash_api_token
-KV_REST_API_URL=https://your-upstash-instance.upstash.io
+# Upstash Redis (production rate limiting — injected by Vercel/Upstash integration)
+KV_REST_API_URL=https://your-endpoint.upstash.io
+KV_REST_API_TOKEN=your_kv_rest_api_token
 ```
 
 **⚠️ IMPORTANT**: `SUPABASE_SERVICE_ROLE_KEY` is deprecated and not used. Use `SUPABASE_SECRET_KEY` instead.

@@ -36,3 +36,4 @@ src/types/generated/
 .DS_Store
 *.pem
 /tmp
+.env*.local

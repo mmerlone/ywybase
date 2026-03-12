@@ -195,12 +195,9 @@ IPGEOLOCATION_API_KEY=your-api-key
 # Security
 CSRF_SECRET=your-csrf-secret-32-chars-minimum
 
-# Upstash Redis / KV (Recommended for Vercel deployments)
-KV_REST_API_READ_ONLY_TOKEN=your-upstash-read-only-token
-KV_REST_API_TOKEN=your-upstash-api-token
-KV_REST_API_URL=https://your-upstash-instance.upstash.io
-KV_URL=rediss://default:your_upstash_api_token@your-upstash-instance.upstash.io:6379
-REDIS_URL=rediss://default:your_upstash_api_token@your-upstash-instance.upstash.io:6379
+# Upstash Redis (production rate limiting — injected by Vercel/Upstash integration)
+KV_REST_API_URL=https://your-endpoint.upstash.io
+KV_REST_API_TOKEN=your_kv_rest_api_token
 ```
 
 ## Debugging
