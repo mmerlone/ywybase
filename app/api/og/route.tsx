@@ -6,6 +6,7 @@ import path from 'path'
 import { SITE_CONFIG } from '@/config/site'
 import { logger } from '@/lib/logger/server'
 import { withApiErrorHandler } from '@/lib/error/server'
+import { withRateLimit } from '@/middleware/security/rate-limit'
 
 /**
  * Open Graph Image Generation API Route
@@ -152,7 +153,7 @@ async function handler(request: NextRequest): Promise<NextResponse> {
   }
 }
 
-export const GET = withApiErrorHandler(handler)
+export const GET = withRateLimit('api', withApiErrorHandler(handler))
 
 /**
  * Runtime configuration
