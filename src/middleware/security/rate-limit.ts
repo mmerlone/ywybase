@@ -7,7 +7,7 @@
  *
  * Supports multiple storage backends:
  * - Memory (development/single instance)
- * - Vercel KV (Vercel deployments)
+ * - Upstash Redis (Vercel deployments via Upstash Redis integration)
  */
 
 import { SECURITY_CONFIG } from '@/config/security'
@@ -21,8 +21,8 @@ import type {
   RateLimitStats,
   ValidationResult,
 } from '@/types/security.types'
-import { type NextRequest, NextResponse } from 'next/server'
 import { Redis } from '@upstash/redis'
+import { type NextRequest, NextResponse } from 'next/server'
 
 const logger = buildLogger('security-rate-limit')
 
@@ -132,22 +132,31 @@ class MemoryRateLimitStore implements RateLimitStore {
 /**
  * Upstash Redis rate limit store (for production deployments)
  *
- * Uses atomic Redis operations for rate limiting, compatible with Upstash Redis REST API.
+ * Uses atomic Redis operations for rate limiting via the Upstash REST API.
+ * Reads KV_REST_API_URL and KV_REST_API_TOKEN, which are automatically
+ * injected by the Upstash Redis integration from the Vercel Marketplace.
+ *
+ * @see https://upstash.com/docs/redis/sdks/ts/getstarted
  */
 class UpstashRedisRateLimitStore implements RateLimitStore {
   private redis: Redis
 
-  constructor(redisClient: Redis) {
-    this.redis = redisClient
+  constructor() {
+    // Non-null assertions are safe here: the caller (initializeRateLimitStore)
+    // always checks both vars are defined before constructing this instance.
+    this.redis = new Redis({
+      url: process.env.KV_REST_API_URL!,
+      token: process.env.KV_REST_API_TOKEN!,
+    })
   }
 
   async get(key: string): Promise<RateLimitEntry | null> {
     try {
-      const data = await this.redis.get<string>(key)
+      const data = await this.redis.get<RateLimitEntry | string>(key)
       if (data === null) return null
       const parsed = typeof data === 'string' ? safeJsonParse<RateLimitEntry>(data, isRateLimitEntry) : data
       if (!isRateLimitEntry(parsed)) {
-        logger.warn({ key, data }, 'Invalid rate limit entry format in Redis')
+        logger.warn({ key, data }, 'Invalid rate limit entry format in Upstash Redis')
         return null
       }
       const entry = parsed
@@ -203,12 +212,11 @@ class UpstashRedisRateLimitStore implements RateLimitStore {
  * Initialize rate limit store based on environment
  */
 async function initializeRateLimitStore(): Promise<RateLimitStore> {
-  // Check for Upstash Redis
-  if (process.env.UPSTASH_REDIS_REST_URL !== undefined && process.env.UPSTASH_REDIS_REST_TOKEN !== undefined) {
+  // Check for Upstash Redis (KV_REST_API_* vars injected by the Vercel/Upstash integration)
+  if (process.env.KV_REST_API_URL !== undefined && process.env.KV_REST_API_TOKEN !== undefined) {
     try {
-      const redis = Redis.fromEnv()
       logger.info({ store: 'upstash-redis' }, 'Using Upstash Redis for rate limiting')
-      return new UpstashRedisRateLimitStore(redis)
+      return new UpstashRedisRateLimitStore()
     } catch (err) {
       logger.warn(
         { err: err instanceof Error ? err : new Error(String(err)), store: 'upstash-redis' },
@@ -221,7 +229,8 @@ async function initializeRateLimitStore(): Promise<RateLimitStore> {
   if (process.env.NODE_ENV === 'production') {
     logger.warn(
       { store: 'memory', environment: 'production' },
-      'Using in-memory rate limiting in production. This is not recommended for multi-instance deployments. Consider using Upstash Redis.'
+      'Using in-memory rate limiting in production. This is not recommended for multi-instance deployments. ' +
+        'Install the Upstash Redis integration from the Vercel Marketplace and run `vercel env pull` to get KV_REST_API_URL and KV_REST_API_TOKEN.'
     )
   } else {
     logger.info({ store: 'memory', environment: process.env.NODE_ENV }, 'Using in-memory rate limiting for development')
@@ -689,13 +698,13 @@ export function validateRateLimitConfig(): ValidationResult {
 
     // Check production rate limiting setup
     if (process.env.NODE_ENV === 'production') {
-      const hasVercelKV = process.env.KV_REST_API_URL !== undefined && process.env.KV_REST_API_TOKEN !== undefined
+      const hasUpstashRedis = process.env.KV_REST_API_URL !== undefined && process.env.KV_REST_API_TOKEN !== undefined
 
-      if (hasVercelKV === false) {
+      if (!hasUpstashRedis) {
         issues.push(
           'Production deployment detected but no persistent rate limit store configured. ' +
-            'Consider setting up Vercel KV (KV_REST_API_URL, KV_REST_API_TOKEN) ' +
-            'for multi-instance deployments.'
+            'Install the Upstash Redis integration from the Vercel Marketplace and run ' +
+            '`vercel env pull` to inject KV_REST_API_URL and KV_REST_API_TOKEN.'
         )
       }
     }

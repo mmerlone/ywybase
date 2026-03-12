@@ -38,10 +38,14 @@ export async function securityMiddleware(
   try {
     let response = await securityHeadersMiddleware(request, initialResponse, { nonce: options.nonce })
 
-    const rateLimitType = pathname.startsWith('/auth') || pathname.startsWith('/api/auth') ? 'auth' : 'api'
-    response = await rateLimiter(request, response, rateLimitType)
+    const shouldRateLimit = pathname.startsWith('/api') || pathname.startsWith('/auth')
+    if (shouldRateLimit) {
+      const rateLimitType = pathname.startsWith('/auth') || pathname.startsWith('/api/auth') ? 'auth' : 'api'
+      response = await rateLimiter(request, response, rateLimitType)
+    }
 
-    if (response.status === 429) {
+    if (shouldRateLimit && response.status === 429) {
+      const rateLimitType = pathname.startsWith('/auth') || pathname.startsWith('/api/auth') ? 'auth' : 'api'
       logger.warn({ pathname, ip, rateLimitType }, 'Request rate limited')
       return { response, shortCircuitResponse: response }
     }

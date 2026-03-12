@@ -11,79 +11,114 @@ The rate limiting system protects against:
 - DDoS attempts
 - Resource exhaustion
 
+## Quick Start (New Developer Setup)
+
+> **Why**: The app falls back to in-memory rate limiting without Redis, which means
+> limits are not shared across Vercel instances in production.
+
+### 1. Install the Vercel CLI
+
+```bash
+pnpm i -g vercel
+```
+
+### 2. Link the local project to Vercel
+
+Run once per machine:
+
+```bash
+vercel link
+```
+
+Follow the prompts to select your scope and project. This creates a `.vercel/`
+directory (already in `.gitignore`).
+
+### 3. Pull environment variables
+
+```bash
+vercel env pull
+```
+
+This writes (or overwrites) `.env.local` with all variables configured in the
+Vercel dashboard, including the Upstash Redis credentials.
+
+### 4. Verify the Redis vars are present
+
+After pulling, your `.env.local` should contain:
+
+```env
+KV_REST_API_URL=https://your-endpoint.upstash.io
+KV_REST_API_TOKEN=AX...
+KV_REST_API_READ_ONLY_TOKEN=Ar...
+```
+
+If they are missing, the Upstash Redis integration has not yet been installed on
+the Vercel project (see [Production Setup](#production-setup) below).
+
+---
+
 ## Storage Backends
 
 ### Development (In-Memory)
 
 **Automatic Configuration**
 
-- No setup required for local development
-- Uses `MemoryRateLimitStore` automatically
+- No setup required for local development once `vercel env pull` has been run
+- Falls back to `MemoryRateLimitStore` when `KV_REST_API_URL` is absent
 - Data is lost on server restart
 - Not suitable for production with multiple instances
 
-### Production Options
+### Production Setup
 
-#### Option 1: Vercel KV (Recommended for Vercel)
+#### Upstash Redis (Required for multi-instance deployments)
 
-**Setup Steps:**
+**One-time integration setup (project owner only):**
 
-1. **Create Vercel KV Database**
-   - Go to [Vercel Dashboard → Storage](https://vercel.com/dashboard/stores)
-   - Click "Create Database" → "KV"
-   - Choose a name and region
-   - Click "Create"
+1. Go to [Vercel Marketplace → Upstash Redis](https://vercel.com/marketplace?category=storage&search=redis)
+2. Click **Add Integration** and follow the wizard to connect to your Vercel project
+3. The integration creates an Upstash Redis database and automatically injects the
+   following environment variables into every environment (Production, Preview, Development):
 
-2. **Get Connection Details**
-   - Copy the `KV_REST_API_URL` and `KV_REST_API_TOKEN`
-   - Add to your environment variables
+   | Variable                      | Purpose                                                        |
+   | ----------------------------- | -------------------------------------------------------------- |
+   | `KV_REST_API_URL`             | REST endpoint — used by `@upstash/redis`                       |
+   | `KV_REST_API_TOKEN`           | Full-access token (read + write) — **server-side only**        |
+   | `KV_REST_API_READ_ONLY_TOKEN` | Read-only token                                                |
+   | `KV_URL`                      | `rediss://` connection string — for TCP clients, not used here |
+   | `REDIS_URL`                   | Alias for `KV_URL` — not used here                             |
 
-3. **Environment Variables**
-   ```env
-   KV_REST_API_URL=https://your-kv-database.kv.vercel-storage.com
-   KV_REST_API_TOKEN=your_kv_rest_api_token
-   ```
+4. Each team member runs `vercel env pull` once to get a local copy.
+
+**How the implementation uses these variables:**
+
+`@upstash/redis` communicates over HTTPS (REST), not TCP. This makes it compatible
+with Next.js Edge Runtime (used by middleware) and serverless functions. The SDK is
+initialized explicitly with the injected vars:
+
+```typescript
+import { Redis } from '@upstash/redis'
+
+const redis = new Redis({
+  url: process.env.KV_REST_API_URL!,
+  token: process.env.KV_REST_API_TOKEN!,
+})
+```
+
+> **Note**: `KV_URL` / `REDIS_URL` are `rediss://` TCP connection strings intended for
+> clients like `ioredis`. They cannot be used in Edge Runtime and are **not used by
+> this project**.
 
 **Benefits:**
 
 - Managed service (no maintenance)
 - Automatic scaling
 - Built-in monitoring
-- Optimized for Vercel deployments
-- **Already included** in project dependencies
+- HTTP-based — works in Edge Runtime and serverless functions
+- **Already included** in project dependencies (`@upstash/redis`)
 
-#### Option 2: Redis (Other Deployments)
-
-**Setup Steps:**
-
-1. **Install Redis Client**
-
-   ```bash
-   # Choose one:
-   pnpm add ioredis    # Recommended
-   pnpm add redis      # Alternative
-   ```
-
-   **Note**: Redis packages are optional and only loaded when needed. The application will work without them but will fall back to in-memory storage.
-
-2. **Environment Variables**
-
-   ```env
-   # Option A: Connection URL
-   REDIS_URL=redis://username:password@host:port
-
-   # Option B: Individual settings
-   REDIS_HOST=localhost
-   REDIS_PORT=6379
-   REDIS_PASSWORD=your_password
-   ```
-
-**Redis Providers:**
-
-- **Upstash**: Serverless Redis with REST API
-- **Redis Cloud**: Managed Redis service
-- **AWS ElastiCache**: AWS managed Redis
-- **Self-hosted**: Your own Redis instance
+No other Redis providers are supported. If `KV_REST_API_URL` / `KV_REST_API_TOKEN`
+are absent, the application falls back to in-memory rate limiting (suitable for
+local development and single-instance use only).
 
 ## Configuration Validation
 
@@ -224,7 +259,7 @@ Warning: Using in-memory rate limiting in production.
 This is not recommended for multi-instance deployments.
 ```
 
-**Solution**: Configure Redis or Vercel KV
+**Solution**: Install the Upstash Redis integration and run `vercel env pull` to get `KV_REST_API_URL` and `KV_REST_API_TOKEN` (see [Quick Start](#quick-start-new-developer-setup))
 
 **2. Connection Errors**
 
@@ -256,7 +291,7 @@ done
 ## Best Practices
 
 1. **Use Persistent Storage in Production**
-   - Always configure Redis or Vercel KV for production
+   - Always configure Upstash Redis for production
    - In-memory storage is only for development
 
 2. **Configure Appropriate Limits**
@@ -293,5 +328,5 @@ done
 
 ---
 
-**Last Updated**: March 6, 2026
+**Last Updated**: March 11, 2026
 **Version**: 1.0.0
