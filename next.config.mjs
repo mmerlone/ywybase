@@ -41,9 +41,9 @@ const nextConfig = {
       { module: /@opentelemetry/ },
       { module: /require-in-the-middle/ },
       { file: /@sentry\/nextjs/ },
-      // @vercel/kv (via @upstash/redis) uses Node.js APIs for performance
-      // This is safe because we use dynamic import() with fallback to memory store
-      { module: /@upstash\/redis/ },
+      // @vercel/kv uses Node.js APIs in server runtimes.
+      // This is safe because rate limiting already falls back to in-memory store.
+      { module: /@vercel\/kv/ },
     ]
 
     // Required for browser compatibility
