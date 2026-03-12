@@ -8,8 +8,7 @@
 
 ### Current codebase concerns
 
-1. Obsolete dead code: review src/lib/supabase/ and the services/ subfolder.
-2. Social metadata module: review fixes and enhancements needed (see Priority Roadmap).
+1. Social metadata module: review fixes and enhancements needed (see Priority Roadmap).
 
 ---
 
