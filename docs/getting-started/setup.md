@@ -61,9 +61,9 @@ IPGEOLOCATION_API_KEY=your_ipgeolocation_api_key
 # Security Configuration (Required in production)
 CSRF_SECRET=your_csrf_secret_32_chars_minimum
 
-# Optional: Upstash Redis/KV for rate limiting (production)
-KV_REST_API_URL=your_upstash_rest_api_url
-KV_REST_API_TOKEN=your_upstash_rest_api_token
+# Optional: Vercel KV for rate limiting (production)
+KV_REST_API_URL=your_vercel_kv_rest_api_url
+KV_REST_API_TOKEN=your_vercel_kv_rest_api_token
 ```
 
 ### 3. Database Setup

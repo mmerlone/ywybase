@@ -10,7 +10,8 @@ Server Actions in this application:
 - **Type-Safe**: Full TypeScript integration with Zod validation
 - **Error-Handled**: Centralized error handling with structured responses
 - **Logged**: Comprehensive audit logging for all operations
-- **Rate-Limited**: Built-in protection against abuse
+
+> **Note on rate limiting**: Server actions are invoked by Next.js as POST requests to the originating page URL (e.g. `/profile`), **not** to `/api/...`. The middleware-level rate limiter only covers `/api/*` and `/auth` paths, so server actions are not subject to route-level `withRateLimit` wrapping. Abuse prevention for server action surfaces should be handled at the middleware or Supabase RLS level.
 
 ## Response Format
 
@@ -435,7 +436,6 @@ All Server Actions use centralized error handling:
 
 - **Authentication Context**: Actions run with proper user authentication
 - **Input Validation**: All inputs validated with Zod schemas
-- **Rate Limiting**: Built-in protection against abuse
 - **Audit Logging**: All operations logged with context
 - **Error Sanitization**: Sensitive information never leaked in errors
 
@@ -492,5 +492,5 @@ export function ProfileEditor({ userId }: { userId: string }) {
 
 ---
 
-**Last Updated**: March 6, 2026
-**Version**: 1.0.0
+**Last Updated**: March 11, 2026
+**Version**: 1.1.0

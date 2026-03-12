@@ -1,18 +1,15 @@
 # YwyBase Development Backlog
 
-**Last Updated**: March 8, 2026
-**Version**: 2.3
+**Last Updated**: March 11, 2026
+**Version**: 2.5
 **Status**: Active Development
 
 ## WIP
 
 ### Current codebase concerns
 
-1. Rate limit should be using Vercel KV and must be reviewed.
-2. All endpoints should be rate-limited.
-3. AI documentation should be enhanced with the full API patterns.
-4. Obsolete dead code: review src/lib/supabase/ and the services/ subfolder.
-5. Social metadata module: review fixes and enhancements needed (see Priority Roadmap).
+1. Obsolete dead code: review src/lib/supabase/ and the services/ subfolder.
+2. Social metadata module: review fixes and enhancements needed (see Priority Roadmap).
 
 ---
 
@@ -82,48 +79,40 @@ the server's `fetch()` call:
 
 ### 2) Rate Limiting
 
-**Current state (implemented)**
+**Current state (hardened)**
 
-- Rate limiting utilities and configuration exist (`src/middleware/security/rate-limit.ts`, `src/config/security.ts`).
-- Auth endpoints `/api/auth/confirm` and `/api/auth/reset-password` already use rate limiting.
-- Rate limiting documentation exists (`docs/rate-limiting.md`, `docs/security.md`).
-- Main middleware (`src/middleware/index.ts`) has no rate limiting integration.
-- Security middleware exists but does not include rate limiting; API routes rely solely on individual endpoint protection.
+- Rate limiting store uses Upstash Redis via the Vercel/Upstash integration (`KV_REST_API_URL` / `KV_REST_API_TOKEN`), with explicit in-memory fallback for development and single-instance use.
+- All API endpoints are protected with `withRateLimit` at the route level.
+- Middleware (`src/middleware/security/index.ts`) applies an additional `api` or `auth` limiter to all `/api/*` and `/auth` paths for defense in depth.
+- `validateRateLimitConfig()` is called at Node.js startup via `instrumentation.ts`, surfacing warnings without crashing.
+- Rate limiting documentation (`docs/rate-limiting.md`) matches the runtime implementation.
+- AI-facing docs (`llms.txt`, `AGENTS.md`, `.github/copilot-instructions.md`) reflect the current store contract and route inventory.
 
-**Endpoint coverage** (2 of 6):
+**Endpoint coverage** (6 of 6):
 
 | Endpoint                   | Rate Limited |
 | -------------------------- | ------------ |
 | `/api/auth/confirm`        | ✅           |
 | `/api/auth/reset-password` | ✅           |
-| `/api/og`                  | ❌           |
-| `/api/og/profile`          | ❌           |
-| `/api/social-metadata`     | ❌           |
-| `/api/sentry-example-api`  | ❌           |
+| `/api/og`                  | ✅           |
+| `/api/og/profile`          | ✅           |
+| `/api/social-metadata`     | ✅           |
+| `/api/sentry-example-api`  | ✅           |
 
-**Gaps**
+**Remaining gaps**
 
-- No global rate limiting in middleware for `/api/*` routes.
-- Remaining API routes are not protected (see table above).
-- `validateRateLimitConfig()` exists but is not called at startup.
-- Rate limit store uses Upstash Redis environment variables; Vercel KV is documented but not wired in code.
-- No rate limit metrics/monitoring.
+- No rate limit metrics/monitoring collection beyond logging.
+- No adaptive rate limiting based on traffic patterns.
+- Rate limiting is IP-based only (no user-specific quotas).
 
 **Planned work**
 
-_Priority 1 — Critical_
+_Priority 1 — Important_
 
-- Add middleware-level rate limiting for all API routes (global protection).
-- Protect all remaining API endpoints with `withRateLimit` (route-level defense-in-depth).
-- Call `validateRateLimitConfig()` on startup and surface warnings.
-
-_Priority 2 — Important_
-
-- Wire Vercel KV store (primary) and document fallback behavior.
 - Add rate limit metrics collection.
 - Set up monitoring alerts for high violation rates.
 
-_Priority 3 — Enhancement_
+_Priority 2 — Enhancement_
 
 - Implement adaptive rate limiting based on traffic patterns.
 - Add admin rate limit management dashboard.
@@ -406,7 +395,7 @@ _Lower priority_ (already mostly handled via responsive `sx` props)
 - v2.1 (February 5, 2026) - Priority ordering and WIP/status updates
 - v2.2 (March 6, 2026) - Merged rate-limiting audit and useIsMobile annotations; added UI/UX section
 - v2.3 (March 6, 2026) - Added profile/auth sync monitoring backlog with database and dashboard implementation scope
-- v2.4 (March 8, 2026) - Added social metadata enhancements backlog (React Query, fixes, platform coverage)
+- v2.5 (March 11, 2026) - Rate limiting hardened (6/6 endpoints, middleware, startup validation, KV store); AI/API docs updated; WIP concerns resolved
 
 /\*\*
 

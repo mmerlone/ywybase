@@ -1,6 +1,6 @@
 # API Endpoints Reference
 
-This document provides comprehensive reference for all HTTP API endpoints available in the YwyBase application.
+This document provides reference for all HTTP API endpoints available in the YwyBase application.
 
 ## Base URL
 
@@ -8,225 +8,275 @@ This document provides comprehensive reference for all HTTP API endpoints availa
 https://your-domain.com/api
 ```
 
-## Authentication
+## Response Shapes
 
-Most API endpoints require authentication via Supabase Auth. Authentication is handled through:
+Responses vary by route type — there is no single universal envelope:
 
-- **Session Cookies**: Automatically managed by Supabase Auth
-- **JWT Tokens**: Included in Authorization header when needed
+| Route type                                     | Success response                                | Error response                                |
+| ---------------------------------------------- | ----------------------------------------------- | --------------------------------------------- |
+| Auth routes (`/api/auth/*`)                    | HTTP 302 redirect (no JSON body)                | HTTP 302 redirect to `/error` with error code |
+| OG image routes (`/api/og`, `/api/og/profile`) | Image body (`image/png`) with CDN cache headers | `{ "error": "..." }` with HTTP 500            |
+| Social metadata (`/api/social-metadata`)       | `{ title?, description?, image? }`              | `{ "error": "..." }` with HTTP 400 or 500     |
+| Sentry test (`/api/sentry-example-api`)        | Never succeeds — always throws                  | JSON 500 from `withApiErrorHandler`           |
 
-## Error Handling
+All routes are wrapped with `withApiErrorHandler` from `@/lib/error/server`, which catches unhandled exceptions and returns a structured JSON 500 response. All routes are also wrapped with `withRateLimit`, which returns a structured JSON 429 response on limit exhaustion.
 
-All API endpoints use centralized error handling with consistent response formats:
+## Rate Limiting
 
-```typescript
-// Success Response
+All endpoints use route-level rate limiting via `withRateLimit`. The active limiter profiles are defined in `src/config/security.ts`:
+
+| Endpoint                       | Limiter profile     | Production limit |
+| ------------------------------ | ------------------- | ---------------- |
+| `GET /api/auth/confirm`        | `emailVerification` | 10 req / 1 hour  |
+| `GET /api/auth/reset-password` | `emailVerification` | 10 req / 1 hour  |
+| `GET /api/og`                  | `api`               | 100 req / 15 min |
+| `GET /api/og/profile`          | `api`               | 100 req / 15 min |
+| `GET /api/social-metadata`     | `api`               | 100 req / 15 min |
+| `GET /api/sentry-example-api`  | `api`               | 100 req / 15 min |
+
+In development all limits are set to 999 (effectively disabled).
+
+The middleware also applies a middleware-level `api` or `auth` limiter to all `/api/*` and `/auth` paths before the request reaches any route handler, providing an additional layer of protection.
+
+**Rate limit response headers** (standard format, sent on every response):
+
+```http
+RateLimit-Limit: 100
+RateLimit-Remaining: 95
+RateLimit-Reset: 2026-03-11T12:00:00.000Z
+```
+
+On a 429 response the `Retry-After` header is also included:
+
+```http
+Retry-After: 300
+```
+
+**Rate limit 429 body**:
+
+```json
 {
-  "success": true,
-  "data": { /* actual data */ },
-  "message": "Operation completed successfully"
-}
-
-// Error Response
-{
-  "success": false,
-  "error": "Error description",
-  "code": "ERROR_CODE",
-  "details": { /* additional error context */ }
+  "error": {
+    "code": "RATE_LIMIT_EXCEEDED",
+    "message": "Too many requests, please try again later",
+    "limit": 100,
+    "remaining": 0,
+    "resetTime": 1741694400000,
+    "retryAfter": 300
+  }
 }
 ```
 
 ## Security Headers
 
-All API responses include comprehensive security headers:
+All responses pass through the security middleware, which adds:
 
-- `X-Content-Type-Options: nosniff`
+- `Content-Security-Policy` (nonce-based)
 - `X-Frame-Options: DENY`
-- `Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'`
+- `X-Content-Type-Options: nosniff`
+- `X-XSS-Protection: 1; mode=block`
+- `Strict-Transport-Security` (production only)
 - `Referrer-Policy: strict-origin-when-cross-origin`
 - `Cross-Origin-Opener-Policy: same-origin`
 - `Cross-Origin-Resource-Policy: same-site`
+- `Permissions-Policy`
+
+---
 
 ## Authentication Endpoints
+
+Both auth endpoints act as PKCE code-exchange handlers. They receive a one-time code from a Supabase-generated email link, exchange it for a session, and then redirect. They do not return JSON and do not require a pre-existing session.
 
 ### Email Verification
 
 **Endpoint:** `GET /api/auth/confirm`
 
-Handles email verification links from sign-up flow.
+Handles email verification links from the sign-up flow.
 
-**Parameters:**
+**Query parameters:**
 
-- `code` (string, required): The PKCE verification code from the email link
+| Name   | Type   | Required | Description                                |
+| ------ | ------ | -------- | ------------------------------------------ |
+| `code` | string | Yes      | PKCE verification code from the email link |
 
 **Response:**
 
-- **Success**: Auto-logs in user, redirects to `/profile` with success flash message
-- **Error**: Redirects to `/error` with error code
+- **Success**: HTTP 302 redirect to `/profile` with a success flash message cookie
+- **Error**: HTTP 302 redirect to `/error` with an error code in the URL
 
-**Example Request:**
+**Example:**
 
 ```
 GET /api/auth/confirm?code=pkce-verification-code-here
 ```
 
-**Security Features:**
+**Rate limiting:** `emailVerification` profile (10 req / hr)
 
-- Modern PKCE flow (Proof Key for Code Exchange)
-- Rate limiting (emailVerification)
-- Security audit logging
-
-**Error Codes:**
-
-- `verification_failed`: Invalid or expired code
-- `invalid_verification_link`: Missing code parameter
+---
 
 ### Password Reset
 
 **Endpoint:** `GET /api/auth/reset-password`
 
-Handles password reset links from forgot password flow.
+Handles password reset links from the forgot-password flow.
 
-**Parameters:**
+**Query parameters:**
 
-- `code` (string, required): The PKCE verification code from the email link
+| Name   | Type   | Required | Description                         |
+| ------ | ------ | -------- | ----------------------------------- |
+| `code` | string | Yes      | PKCE reset code from the email link |
 
 **Response:**
 
-- **Success**: Auto-logs in user, redirects to password reset form
-- **Error**: Redirects to `/error` with error code
+- **Success**: HTTP 302 redirect to `/auth?op=set-password`
+- **Error**: HTTP 302 redirect to `/error` with an error code in the URL
 
-**Example Request:**
+**Example:**
 
 ```
 GET /api/auth/reset-password?code=pkce-reset-code-here
 ```
 
-**Security Features:**
+**Rate limiting:** `emailVerification` profile (10 req / hr)
 
-- PKCE verification
-- Rate limiting (emailVerification)
-- Secure token exchange
-
-**Error Codes:**
-
-- `reset_failed`: Invalid or expired reset code
-- `invalid_reset_link`: Missing code parameter
+---
 
 ## Open Graph Image Generation
 
-Dynamic Open Graph (OG) image generation routes used for social sharing previews.
+Dynamic Open Graph image generation routes for social sharing previews. Both routes:
+
+- Run on the **Node.js runtime** (not Edge) to enable filesystem access for font loading
+- Return an image body directly — **not** a JSON response — on success
+- Are cached by CDN via the response headers set by `ImageResponse`
 
 ### Default OG Image
 
 **Endpoint:** `GET /api/og`
 
-Generates a default OG image for the application.
+Generates a generic branded OG image for the application.
 
-**Parameters:**
+**Query parameters:**
 
-- None required
+| Name          | Type   | Required | Default                             | Constraint             |
+| ------------- | ------ | -------- | ----------------------------------- | ---------------------- |
+| `title`       | string | No       | Site title from `SITE_CONFIG`       | Truncated to 100 chars |
+| `description` | string | No       | Site description from `SITE_CONFIG` | Truncated to 200 chars |
 
-**Response:**
+**Response (success):**
 
 - **Content-Type**: `image/png`
-- **Cache Headers**: Optimized for CDN caching
-- **Image Body**: PNG image data
+- **Dimensions**: 1200 × 630 px
+- **Body**: Binary image data (not JSON)
 
-**Features:**
+**Response (error):**
 
-- Uses the project font assets from `public/fonts`
-- Responds with an image body and proper cache headers
+```json
+{ "error": "Failed to generate image" }
+```
 
-**Example Request:**
+HTTP status 500.
+
+**Example:**
 
 ```
 GET /api/og
+GET /api/og?title=Custom%20Title&description=Custom%20description
 ```
+
+**Rate limiting:** `api` profile (100 req / 15 min)
+
+---
 
 ### Profile OG Image
 
 **Endpoint:** `GET /api/og/profile`
 
-Generates personalized OG image for user profiles.
+Generates a personalized OG image for a user profile page.
 
-**Parameters:**
+**Query parameters:**
 
-- `username` (string, optional): Username for profile
-- `theme` (string, optional): Theme for image styling
+| Name     | Type   | Required | Default              | Constraint                         |
+| -------- | ------ | -------- | -------------------- | ---------------------------------- |
+| `name`   | string | Yes      | —                    | Displayed as heading               |
+| `avatar` | string | No       | Initials placeholder | Must pass `isValidAvatarUrl` check |
+| `bio`    | string | No       | Hidden               | Truncated to 150 chars             |
 
-**Response:**
+**Response (success):**
 
 - **Content-Type**: `image/png`
-- **Cache Headers**: User-specific caching
-- **Image Body**: Personalized PNG image
+- **Dimensions**: 1200 × 630 px
+- **Body**: Binary image data (not JSON)
 
-**Example Request:**
+**Response (missing `name`):**
+
+```json
+{ "error": "Missing required parameter: name" }
+```
+
+HTTP status 400.
+
+**Example:**
 
 ```
-GET /api/og/profile?username=johndoe&theme=dark
+GET /api/og/profile?name=John%20Doe
+GET /api/og/profile?name=John%20Doe&avatar=https%3A%2F%2F...&bio=Full%20Stack%20Dev
 ```
+
+**Rate limiting:** `api` profile (100 req / 15 min)
+
+---
 
 ## Social Metadata Preview
 
-### Social Metadata Endpoint
+### Social Metadata
 
 **Endpoint:** `GET /api/social-metadata`
 
-Fetches Open Graph metadata for a given external social URL.
+Fetches Open Graph metadata for an external social profile URL.
 
-**Parameters:**
+> **Prefer the Server Action**: For calls originating within the application, use the `fetchSocialMetadata` Server Action in `src/lib/actions/social.ts` instead — it skips the HTTP round-trip.
 
-- `url` (string, required): URL to fetch metadata for
+**Query parameters:**
 
-**Response:**
+| Name  | Type   | Required | Description                                          |
+| ----- | ------ | -------- | ---------------------------------------------------- |
+| `url` | string | Yes      | External social profile URL to fetch OG metadata for |
 
-```typescript
-{
-  "success": true,
-  "data": {
-    "title": string,
-    "description": string,
-    "image": string,
-    "siteName": string,
-    "url": string
-  }
-}
-```
+The URL is validated with `isValidSocialUrl` against the platform config before any fetch is performed.
 
-**Example Request:**
-
-```
-GET /api/social-metadata?url=https://example.com/article
-```
-
-**Example Response:**
+**Response (success):**
 
 ```json
-{
-  "success": true,
-  "data": {
-    "title": "Article Title",
-    "description": "Article description",
-    "image": "https://example.com/image.jpg",
-    "siteName": "Example Site",
-    "url": "https://example.com/article"
-  }
-}
+{ "title": "...", "description": "...", "image": "..." }
 ```
 
-**Security Features:**
+Fields are optional — a platform may return any subset. There is no `success` wrapper.
 
-- URL validation
-- Content sanitization
-- Rate limiting
-- Timeout protection
+**Response (invalid URL):**
 
-**Error Codes:**
+```json
+{ "error": "Invalid or insecure URL" }
+```
 
-- `invalid_url`: Invalid URL format
-- `fetch_failed`: Unable to fetch URL
-- `no_metadata`: No OG metadata found
+HTTP status 400.
+
+**Response (fetch failure):**
+
+```json
+{ "error": "Failed to fetch preview - the site may be blocking automated requests" }
+```
+
+HTTP status 500. This is a soft error — the site was reachable but blocked or returned no metadata.
+
+**Example:**
+
+```
+GET /api/social-metadata?url=https%3A%2F%2Fgithub.com%2Fusername
+```
+
+**Rate limiting:** `api` profile (100 req / 15 min)
+
+---
 
 ## Development & Testing
 
@@ -234,234 +284,49 @@ GET /api/social-metadata?url=https://example.com/article
 
 **Endpoint:** `GET /api/sentry-example-api`
 
-Test endpoint for Sentry error monitoring integration.
+Test endpoint for confirming Sentry error monitoring is wired up correctly.
 
-**Parameters:**
+**Query parameters:** None. The endpoint ignores all query parameters.
 
-- `type` (string, optional): Error type to generate
-  - `error`: Standard error
-  - `exception`: Exception with context
-  - `message`: Simple message error
+**Response:** Always throws a `SentryExampleAPIError`, which is caught by `withApiErrorHandler` and forwarded to Sentry. The caller receives a JSON 500 error response.
 
-**Response:**
+**Note:** This endpoint is available in all environments (not just development). It is protected like all other API routes with the `api` rate limiter.
 
-- **Success**: Returns test data
-- **Error**: Triggers Sentry error capture
-
-**Example Request:**
+**Example:**
 
 ```
-GET /api/sentry-example-api?type=error
+GET /api/sentry-example-api
 ```
 
-**Usage:**
+**Rate limiting:** `api` profile (100 req / 15 min)
 
-```typescript
-// Test error monitoring
-fetch('/api/sentry-example-api?type=error')
-  .then((res) => res.json())
-  .then((data) => console.log(data))
-```
+---
 
-**Security:**
-
-- Only available in development environment
-- Rate limited for testing
-- Does not expose sensitive data
-
-## Rate Limiting
-
-All endpoints include rate limiting with these categories:
-
-| Category            | Limits              | Purpose                        |
-| ------------------- | ------------------- | ------------------------------ |
-| `emailVerification` | 5 requests/minute   | Email verification/reset flows |
-| `socialMetadata`    | 20 requests/minute  | Social metadata fetching       |
-| `ogGeneration`      | 100 requests/minute | OG image generation            |
-| `default`           | 100 requests/minute | General API usage              |
-
-**Rate Limit Headers:**
-
-```http
-X-RateLimit-Limit: 100
-X-RateLimit-Remaining: 95
-X-RateLimit-Reset: 1640995200
-```
-
-## Response Headers
-
-### Standard Headers
-
-All endpoints include these standard headers:
-
-```http
-Content-Type: application/json
-Cache-Control: private, no-cache
-X-Content-Type-Options: nosniff
-X-Frame-Options: DENY
-X-XSS-Protection: 1; mode=block
-Referrer-Policy: strict-origin-when-cross-origin
-```
-
-### Cache Headers
-
-Different endpoints use different caching strategies:
-
-```http
-# Static content (OG images)
-Cache-Control: public, max-age=31536000, immutable
-
-# User-specific content
-Cache-Control: private, no-cache
-
-# API responses
-Cache-Control: private, max-age=300
-```
-
-## CORS Configuration
-
-API endpoints are configured for secure cross-origin requests:
-
-```http
-Access-Control-Allow-Origin: https://yourdomain.com
-Access-Control-Allow-Methods: GET, POST, PUT, DELETE
-Access-Control-Allow-Headers: Content-Type, Authorization
-Access-Control-Max-Age: 86400
-```
-
-## Webhook Support
-
-### Webhook Security
-
-For webhook endpoints, implement these security measures:
-
-```typescript
-// Verify webhook signature
-const signature = request.headers.get('x-webhook-signature')
-const payload = await request.text()
-
-if (!verifyWebhookSignature(payload, signature)) {
-  return NextResponse.json({ success: false, error: 'Invalid signature' }, { status: 401 })
-}
-```
-
-### Webhook Processing
-
-```typescript
-export const POST = withRateLimit(
-  'webhook-processing',
-  withApiErrorHandler(async (request: NextRequest) => {
-    const signature = request.headers.get('x-webhook-signature')
-    const payload = await request.text()
-
-    // Verify signature
-    if (!verifyWebhookSignature(payload, signature)) {
-      return NextResponse.json({ success: false, error: 'Invalid signature' }, { status: 401 })
-    }
-
-    // Process webhook
-    const event = JSON.parse(payload)
-    await processWebhookEvent(event)
-
-    return NextResponse.json({ success: true })
-  })
-)
-```
-
-## API Versioning
-
-Current API version: **v1**
-
-Version is specified in the URL path:
-
-```
-/api/v1/endpoint
-```
-
-Future versions will be:
-
-```
-/api/v2/endpoint
-```
-
-Backward compatibility is maintained for at least one previous version.
-
-## Testing API Endpoints
-
-### Using curl
+## Using curl
 
 ```bash
-# Test email verification
-curl "https://your-domain.com/api/auth/confirm?code=test-code"
+# Trigger email verification (code from Supabase email)
+curl -I "https://your-domain.com/api/auth/confirm?code=test-code"
 
-# Test OG image generation
+# Fetch OG image (binary PNG response)
 curl -I "https://your-domain.com/api/og"
 
-# Test social metadata
-curl "https://your-domain.com/api/social-metadata?url=https://example.com"
-```
+# Fetch OG image with params
+curl -I "https://your-domain.com/api/og?title=My+Title"
 
-### Using JavaScript
-
-```javascript
-// Fetch social metadata
-const response = await fetch('/api/social-metadata?url=https://example.com')
-const data = await response.json()
-
-console.log(data.success ? data.data : data.error)
-```
-
-### Error Handling
-
-```javascript
-try {
-  const response = await fetch('/api/endpoint')
-  const data = await response.json()
-
-  if (!data.success) {
-    console.error('API Error:', data.error)
-    // Handle error appropriately
-  }
-} catch (error) {
-  console.error('Network Error:', error)
-}
-```
-
-## Monitoring and Observability
-
-All API endpoints include:
-
-- **Request Logging**: All requests logged with context
-- **Error Tracking**: Errors sent to Sentry with full context
-- **Performance Metrics**: Response times and success rates
-- **Rate Limit Monitoring**: Rate limit violations tracked
-
-### Request Context
-
-Each request includes this context in logs:
-
-```typescript
-{
-  "requestId": "uuid",
-  "method": "GET",
-  "path": "/api/endpoint",
-  "userAgent": "Mozilla/5.0...",
-  "ip": "client-ip",
-  "userId": "authenticated-user-id",
-  "duration": 123,
-  "status": 200
-}
+# Fetch social metadata
+curl "https://your-domain.com/api/social-metadata?url=https%3A%2F%2Fgithub.com%2Fusername"
 ```
 
 ## Related Documentation
 
 - [Server Actions Reference](./server-actions.md) - Server-side operations
 - [Authentication Flows](/docs/authentication-flows.md) - Complete auth flow documentation
-- [API Development Guide](/docs/developer-guides/api-development.md) - Development patterns
+- [API Development Guide](/docs/developer-guides/api-development.md) - Implementation patterns
+- [Rate Limiting](/docs/rate-limiting.md) - Store setup and production configuration
 - [Security Documentation](/docs/security.md) - Security best practices
-- [Error Handling](/src/lib/error/README.md) - Centralized error handling
 
 ---
 
-**Last Updated**: March 6, 2026
-**Version**: 1.0.0
+**Last Updated**: March 11, 2026
+**Version**: 2.0.0

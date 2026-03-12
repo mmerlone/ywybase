@@ -134,12 +134,12 @@ export const yourAction = withServerActionErrorHandling(
 All API routes use the same wrapper pattern:
 
 ```typescript
-import { NextRequest, NextResponse } from 'next/server'
+import { type NextRequest, NextResponse } from 'next/server'
 import { withApiErrorHandler } from '@/lib/error/server'
 import { withRateLimit } from '@/middleware/security/rate-limit'
 
 export const GET = withRateLimit(
-  'your-operation',
+  'api', // rate limit profile key — see table below
   withApiErrorHandler(async (request: NextRequest) => {
     // Your implementation here
     return NextResponse.json({ success: true, data: result })
@@ -147,13 +147,25 @@ export const GET = withRateLimit(
 )
 ```
 
+**Choosing a rate limit profile** — valid keys are defined in `src/config/security.ts`:
+
+| Key                 | Use for                                  | Production limit |
+| ------------------- | ---------------------------------------- | ---------------- |
+| `api`               | General public endpoints                 | 100 req / 15 min |
+| `emailVerification` | Email link handlers (PKCE flows)         | 10 req / hr      |
+| `passwordReset`     | Password reset initiation                | 3 req / hr       |
+| `upload`            | File upload endpoints                    | 10 req / hr      |
+| `auth`              | Reserved for middleware-level auth paths | 5 req / 15 min   |
+
+Use `'api'` for most new routes. Choose a more restrictive profile for sensitive endpoints (auth flows, file uploads).
+
 ### Request Processing
 
 Extract and validate request data:
 
 ```typescript
 export const POST = withRateLimit(
-  'your-operation',
+  'api',
   withApiErrorHandler(async (request: NextRequest) => {
     // Parse JSON body
     const body = await request.json()
@@ -180,7 +192,7 @@ Handle query parameters and path parameters:
 
 ```typescript
 export const GET = withRateLimit(
-  'your-operation',
+  'api',
   withApiErrorHandler(async (request: NextRequest) => {
     // Query parameters
     const { searchParams } = new URL(request.url)
@@ -203,7 +215,7 @@ Add appropriate headers for different response types:
 
 ```typescript
 export const GET = withRateLimit(
-  'your-operation',
+  'api',
   withApiErrorHandler(async (request: NextRequest) => {
     const data = await getData()
 
@@ -317,7 +329,7 @@ Apply rate limiting to sensitive operations:
 
 ```typescript
 export const POST = withRateLimit(
-  'sensitive-operation', // Operation name for rate limiting
+  'auth', // or 'emailVerification' / 'passwordReset' for auth flows
   withApiErrorHandler(async (request: NextRequest) => {
     // Your implementation
   })
@@ -447,7 +459,7 @@ Add appropriate caching headers:
 
 ```typescript
 export const GET = withRateLimit(
-  'get-data',
+  'api',
   withApiErrorHandler(async (request: NextRequest) => {
     const data = await getStaticData()
 
@@ -574,11 +586,11 @@ src/lib/actions/
 ```
 app/api/
 ├── auth/
-│   ├── confirm/route.ts   # Email confirmation
-│   └── reset-password/route.ts
+│   ├── confirm/route.ts        # Email confirmation (PKCE)
+│   └── reset-password/route.ts # Password reset (PKCE)
 ├── og/
-│   ├── route.ts           # Default OG image
-│   └── profile/route.ts   # Profile OG image
+│   ├── route.tsx               # Default OG image (Node.js runtime)
+│   └── profile/route.tsx       # Profile OG image (Node.js runtime)
 ├── social-metadata/route.ts
 └── sentry-example-api/route.ts
 ```
@@ -593,5 +605,4 @@ app/api/
 
 ---
 
-**Last Updated**: March 6, 2026
-**Version**: 1.0.0
+**Last Updated**: March 11, 2026
