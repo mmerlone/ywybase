@@ -121,6 +121,7 @@ export const QUERY_KEYS = {
    */
   adminProfiles: (options?: ProfilesQueryOptions) => ['admin', 'profiles', options] as const,
   adminProfile: (profileId?: string) => ['admin', 'profile', profileId] as const,
+  socialMetadata: (url?: string) => ['socialMetadata', url] as const,
 } as const
 
 // Type exports

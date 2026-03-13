@@ -234,7 +234,7 @@ GET /api/og/profile?name=John%20Doe&avatar=https%3A%2F%2F...&bio=Full%20Stack%20
 
 Fetches Open Graph metadata for an external social profile URL.
 
-> **Prefer the Server Action**: For calls originating within the application, use the `fetchSocialMetadata` Server Action in `src/lib/actions/social.ts` instead — it skips the HTTP round-trip.
+> **Prefer the `useSocialMetadata` hook**: For client components prefer the `useSocialMetadata` React Query hook (src/hooks/useSocialMetadata.ts) which wraps the `fetchSocialMetadata` Server Action and provides caching, deduplication and loading state. For server-only contexts, call the `fetchSocialMetadata` Server Action directly — it skips the HTTP round-trip.
 
 **Query parameters:**
 

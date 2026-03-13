@@ -1,6 +1,6 @@
 # YwyBase Development Backlog
 
-**Last Updated**: March 11, 2026
+**Last Updated**: March 13, 2026
 **Version**: 2.5
 **Status**: Active Development
 
@@ -20,59 +20,44 @@
 
 **Current State**
 
-- Server-side OG metadata fetching with in-memory LRU cache (1 hour TTL, 100 entries).
-- Platform-specific OG endpoints for GitHub and LinkedIn.
-- Fallback to HTML scraping for unsupported platforms.
-- Security: SSRF protection via HTTPS requirement and private network blocking.
+- Server-side OG metadata fetching with in-memory LRU cache (1 hour TTL, 100 entries) and in-flight request deduplication.
+- Platform-specific OG endpoints for GitHub and LinkedIn (platform mappings in `src/config/social.ts`).
+- `fetchSocialMetadata` Server Action (`src/lib/actions/social.ts`) and `/api/social-metadata` route implemented; components call the Server Action directly in several places (`SocialLinksSection.tsx`, `TabSocialLinks.tsx`).
+- A Cloudflare Metadata Proxy worker (`workers/metadata-worker`) is included and recommended for safe extraction of metadata from arbitrary websites; this addresses the SSRF concern for external HTML scraping.
 
 **Code Review Findings**
 
-| Issue                          | Severity | Location                | Description                                                           |
-| ------------------------------ | -------- | ----------------------- | --------------------------------------------------------------------- |
-| Concurrent request duplication | Medium   | `fetchMetadataForUrl()` | Multiple simultaneous requests for same URL trigger duplicate fetches |
-| Platform config mismatch       | Low      | `src/config/social.ts`  | Twitter/X and Instagram have no `ogUrl`, always fallback to HTML      |
-| Regex edge case                | Low      | `prepareEndpoint()`     | Username extraction may fail on URLs with query params                |
+| Issue                          | Severity | Location                           | Description                                                                                                             |
+| ------------------------------ | -------- | ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Concurrent request duplication | Resolved | `src/lib/utils/social-metadata.ts` | In-flight `IN_FLIGHT` promise map implemented to deduplicate concurrent requests                                        |
+| Platform config mismatch       | Low      | `src/config/social.ts`             | Twitter/X and Instagram have no `ogUrl` configured; still fallback to proxy/worker                                      |
+| Regex edge case                | Low      | `prepareEndpoint()`                | Username extraction now uses the URL API and `SAFE_USERNAME_RE` validation; review suggested for query-param edge cases |
 
 **Planned Work**
 
 _Priority 1 — Client-Side Caching (React Query)_
 
-- Create custom hook `useSocialMetadata()` wrapping `fetchSocialMetadata` Server Action.
-- Configure stale time to match server TTL (1 hour).
-- Implement in `SocialLinksSection.tsx` and `TabSocialLinks.tsx`.
-- Benefit: Request deduplication, stale-while-revalidate, built-in loading states.
+- `useSocialMetadata()` React Query hook implemented (`src/hooks/useSocialMetadata.ts`) and components migrated to use it.
+- Stale time configured to match server TTL (1 hour) via the hook's `staleTime`.
 
 _Priority 2 — Request Deduplication_
 
-- Add Promise-based request deduplication in `fetchMetadataForUrl()`.
-- Use `Map<string, Promise<OgMeta>>` pattern to reuse in-flight requests.
+- Deduplication implemented via `IN_FLIGHT` promise map in `src/lib/utils/social-metadata.ts` (done).
 
 _Priority 3 — Platform Coverage_
 
-- Add `ogUrl` for Twitter/X if API available.
-- Document Instagram limitations (private API, requires HTML fallback).
+- Platform coverage: GitHub and LinkedIn have `ogUrl` endpoints. Twitter/X and Instagram currently rely on proxy/worker/html extraction or provider mapping; consider adding official endpoints if available.
 
 _Priority 4 — Minor Fixes_
 
-- Improve `SAFE_USERNAME_RE` regex for edge cases with query parameters.
+- Review `SAFE_USERNAME_RE` and `prepareEndpoint()` behavior for corner cases (low priority).
 
-_Priority 5 — Route OG fetching through an external service_
+_Priority 5 — Metadata proxy / worker_
 
-Server-side direct HTML scraping of arbitrary URLs (`website` platform and any
-platform without a structured API endpoint) is currently disabled to prevent
-SSRF. DNS rebinding makes pre-fetch IP validation insufficient on its own.
+An internal Cloudflare Metadata Proxy worker (`workers/metadata-worker`) is available and recommended for safe HTML extraction; it implements SSRF protections, edge caching, and rate limiting. Evaluating third-party providers (Microlink/OpenGraph/Iframely) remains optional if you prefer a managed service over the internal worker.
 
-The clean solution is to proxy all OG fetch requests through a dedicated
-third-party service, so the taint never flows from user input directly into
-the server's `fetch()` call:
-
-- Evaluate services: [Microlink](https://microlink.io), [OpenGraph.io](https://opengraph.io), [Iframely](https://iframely.com).
-- The user-supplied URL becomes a query parameter to a hardcoded service endpoint — breaking the CodeQL taint trace and eliminating the SSRF risk entirely.
-- Abstract behind the existing `getOgMetadata()` interface so callers are unaffected.
-- Add API key management and graceful fallback when the service is unavailable.
-- Re-enable metadata previews for `website` links and bot-blocking platforms (Twitter/X, Instagram, YouTube).
-
-**Story Points**: 5
+**Story Points (remaining for Social Metadata)**: 1  
+(main remaining task: optional platform endpoint additions)
 
 ---
 

@@ -17,7 +17,7 @@ import { useCurrentUser } from '@/hooks/useCurrentUser'
 import { type SocialLink, type SocialProvider } from '@/types/profile.types'
 import { logger } from '@/lib/logger/client'
 import { getOgMetaFromAuth } from '@/lib/utils/social-og'
-import { fetchSocialMetadata } from '@/lib/actions/social'
+import { useSocialMetadata } from '@/hooks/useSocialMetadata'
 
 /**
  * TTL for metadata cache (30 days in milliseconds).
@@ -52,6 +52,8 @@ export function SocialLinksSection(): ReactElement {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [fetchingMeta, setFetchingMeta] = useState(false)
   const [metaPreview, setMetaPreview] = useState<OgMeta | null>(null)
+
+  const { fetch: fetchOg } = useSocialMetadata()
 
   const socialLinks = profile?.social_links ?? []
 
@@ -108,21 +110,8 @@ export function SocialLinksSection(): ReactElement {
 
       setFetchingMeta(true)
       try {
-        const result = await fetchSocialMetadata(url)
-        if (!result.success) {
-          const errMsg = typeof result.error === 'string' ? result.error : 'Failed to fetch metadata'
-          throw new Error(errMsg)
-        }
-
-        const data = result.data
-        if (data?.error !== undefined) {
-          logger.warn({ url, error: data.error }, 'Metadata fetch returned soft error')
-          showError(data.error)
-          setMetaPreview(null)
-          return null
-        }
-
-        if (data === undefined) return null
+        const data = await fetchOg(url)
+        if (data === null) return null
 
         setMetaPreview(data)
         logger.info({ url, metadata: data }, 'Fetched OG metadata')
@@ -137,7 +126,7 @@ export function SocialLinksSection(): ReactElement {
         setFetchingMeta(false)
       }
     },
-    [showError]
+    [showError, fetchOg]
   )
 
   /**
