@@ -164,6 +164,9 @@ importers:
         specifier: 4.3.6
         version: 4.3.6
     devDependencies:
+      '@cloudflare/workers-types':
+        specifier: ^4.20260312.1
+        version: 4.20260312.1
       '@eslint/eslintrc':
         specifier: ^3.3.1
         version: 3.3.5
@@ -505,6 +508,10 @@ packages:
   '@bcoe/v8-coverage@0.2.3':
     resolution:
       { integrity: sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw== }
+
+  '@cloudflare/workers-types@4.20260312.1':
+    resolution:
+      { integrity: sha512-ySoTKc2ZKpwHll4H6byPWkxI/vmCc86B4h+hKo077zSTmBqIcxvbFozmOcEY7dhudMMDBnCgwZ9FknRrJxyqiQ== }
 
   '@emnapi/core@1.8.1':
     resolution:
@@ -6483,6 +6490,8 @@ snapshots:
       '@babel/helper-validator-identifier': 7.28.5
 
   '@bcoe/v8-coverage@0.2.3': {}
+
+  '@cloudflare/workers-types@4.20260312.1': {}
 
   '@emnapi/core@1.8.1':
     dependencies:
