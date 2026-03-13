@@ -1,0 +1,23 @@
+name = "ywybase-metadata-proxy"
+
+main = "src/index.js"
+compatibility_date = "2026-03-01"
+
+account_id = "YOUR_CLOUDFLARE_ACCOUNT_ID"
+workers_dev = true
+
+[vars]
+# If using Upstash Redis set these (example env var names used by the worker)
+KV_REST_API_URL = "https://<rest-id>.upstash.io"
+# KV_REST_API_TOKEN should be set as a secret:
+#   wrangler secret put KV_REST_API_TOKEN
+
+[triggers]
+# optional cron triggers
+# crons = ["0 */6 * * *"]
+
+[routes]
+# Example route mappings (uncomment and adjust as needed)
+# routes = [
+#   { pattern = "example.com/metadata/*", zone_name = "example.com" }
+# ]

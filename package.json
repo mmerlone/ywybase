@@ -90,6 +90,7 @@
     "packages/*"
   ],
   "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260312.1",
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.39.1",
     "@jest/globals": "^30.2.0",

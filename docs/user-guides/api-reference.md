@@ -244,6 +244,8 @@ Fetches Open Graph metadata for an external social profile URL.
 
 The URL is validated with `isValidSocialUrl` against the platform config before any fetch is performed.
 
+Note: Server-side HTML scraping within the application is disabled for generic `website` previews to avoid SSRF risks. The repository includes a Cloudflare Metadata Proxy (`workers/metadata-worker`) for safe external metadata extraction; the worker and validators block loopback, `.local`, private IPv4 ranges, and common IPv6 literals. Prefer `fetchSocialMetadata` Server Action or the metadata worker for external previews.
+
 **Response (success):**
 
 ```json

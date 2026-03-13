@@ -475,6 +475,7 @@ Fetches Open Graph metadata for a given external social URL.
 - Validates URLs and blocks insecure/private targets
 - Uses platform-specific OG endpoints when available
 - Caches results in-memory (LRU, 1 hour)
+- For platforms without a structured API endpoint or for generic `website` previews, server-side HTML scraping in the app is intentionally disabled to avoid SSRF risks. Use the included Cloudflare Metadata Proxy (`workers/metadata-worker`) for SSRF-safe metadata extraction, or call the `fetchSocialMetadata` Server Action which defers to server-side validated endpoints. The metadata proxy and validators block loopback, `.local`, private IPv4, and common IPv6 literals (e.g., `::1`, `fc00::/7`, `fe80::/10`, `::ffff:`).
 
 ---
 

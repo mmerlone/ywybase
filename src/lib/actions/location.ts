@@ -182,7 +182,7 @@ export async function detectCountry(ipAddress?: string): Promise<string | null> 
       }
     }
 
-    const data = (await response.json()) as IpGeolocationResponse
+    const data: IpGeolocationResponse = await response.json()
     const countryCode = data.location?.country_code2
 
     if (countryCode === null || countryCode === undefined) {

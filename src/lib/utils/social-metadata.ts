@@ -257,7 +257,7 @@ async function fetchMetadataForUrl(url: string): Promise<OgMeta> {
     logger.debug({ url, contentType }, 'Response Content-Type')
 
     if (contentType.includes('application/json')) {
-      const data = (await res.json()) as Record<string, unknown>
+      const data: Record<string, unknown> = await res.json()
       const meta = parseJsonResponse(data, platform, url)
       if (meta) return meta
     } else if (contentType.includes('text/html')) {
