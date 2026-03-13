@@ -757,6 +757,7 @@ backups/
 - **CSRF Protection** - Cross-site request forgery prevention
 - **Input Validation** - Zod schema validation
 - **Security Headers** - Comprehensive header management
+- **SSRF Protections for Metadata** - When fetching external Open Graph/social metadata, the project uses a dedicated Cloudflare Metadata Proxy (`workers/metadata-worker`) and server-side guards. The worker and server utilities block loopback, `.local`, private IPv4 ranges, and common IPv6 literals (e.g., `::1`, `fc00::/7`, `fe80::/10`, `::ffff:`). Server-side HTML scraping is disabled in-app; prefer the Server Action or the metadata worker for external previews.
 
 ## 🧩 Components
 
