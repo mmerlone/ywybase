@@ -15,7 +15,7 @@ import { ColorInput } from './ColorInput'
 import { Toggle } from './Toggle'
 import { Box } from '@mui/material'
 
-type BackgroundType = 'transparent' | 'color' | 'space' | 'space-image' | 'custom'
+type BackgroundType = 'transparent' | 'color' | 'space' | 'star-field' | 'custom'
 
 type ControlPanelProps = {
   timezone: string | null
@@ -220,10 +220,10 @@ export function ControlPanel({
                     <input
                       type="radio"
                       name="bgType"
-                      checked={backgroundType === 'space-image'}
-                      onChange={() => handleBackgroundTypeSelect('space-image')}
+                      checked={backgroundType === 'star-field'}
+                      onChange={() => handleBackgroundTypeSelect('star-field')}
                     />
-                    Space Image
+                    Star field
                   </label>
                   <label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                     <input
@@ -277,7 +277,7 @@ export function ControlPanel({
                         <SpaceBackground />
                       </div>
                     )}
-                    {backgroundType === 'space-image' && (
+                    {backgroundType === 'star-field' && (
                       <div
                         style={{
                           width: '100%',

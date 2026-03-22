@@ -79,7 +79,7 @@ export default function ReactTzGlobePickerDemo(): React.ReactElement {
   const [showTZBoundaries, setShowTZBoundaries] = useState<TzBoundaryMode>(DEFAULT_SHOW_TZ_BOUNDARIES)
   const [showCountryBorders, setShowCountryBorders] = useState<boolean>(DEFAULT_SHOW_COUNTRY_BORDERS)
   const [showGeographic, setShowGeographic] = useState<boolean>(DEFAULT_SHOW_GEOGRAPHIC)
-  const [backgroundType, setBackgroundType] = useState<'transparent' | 'color' | 'space' | 'space-image' | 'custom'>(
+  const [backgroundType, setBackgroundType] = useState<'transparent' | 'color' | 'space' | 'star-field' | 'custom'>(
     'transparent'
   )
   const [backgroundValue, setBackgroundValue] = useState<string | null>(null)
@@ -100,7 +100,7 @@ export default function ReactTzGlobePickerDemo(): React.ReactElement {
     if (backgroundType === 'transparent') return null
     if (backgroundType === 'color') return backgroundValue
     if (backgroundType === 'space') return <SpaceBackground />
-    if (backgroundType === 'space-image') {
+    if (backgroundType === 'star-field') {
       return (
         <div
           style={{
@@ -140,47 +140,140 @@ export default function ReactTzGlobePickerDemo(): React.ReactElement {
       {/* Globe Demo */}
       <Box
         sx={{
+          display: 'flex',
+          flexDirection: { xs: 'column', md: 'row' },
           width: '100%',
-          display: 'grid',
-          gridTemplateColumns: { xs: '1fr', md: 'auto max-content' },
-          // display: 'flex',
-          // flexDirection: { xs: 'column', md: 'row' },
           boxSizing: 'border-box',
           gap: 2,
           p: 2,
         }}>
-        {/* Marketing Header */}
-        <Grid maxWidth="lg" sx={{ pt: 4, pb: 2 }}>
-          <Box sx={{ textAlign: 'center', mb: 4 }}>
-            <Typography variant="h3" component="h1" sx={{ fontWeight: 700, color: '#fff', mb: 2 }}>
-              react-tz-globepicker
-            </Typography>
-            <Typography variant="h6" sx={{ color: 'grey.400', mb: 3, maxWidth: 700, mx: 'auto' }}>
-              An interactive 3D globe component for selecting timezones with beautiful visualizations, markers, and
-              customizable styling.
-            </Typography>
-            <Stack direction="row" spacing={2} justifyContent="center" flexWrap="wrap" gap={1}>
-              <Chip
-                icon={<GitHubIcon />}
-                label="GitHub"
-                component={MuiLink}
-                href="https://github.com/mmerlone/react-tz-globepicker"
-                target="_blank"
-                rel="noreferrer"
-                clickable
-                sx={{ bgcolor: 'grey.800', color: '#fff', '&:hover': { bgcolor: 'grey.700' } }}
+        {/* Control Panel - Left side */}
+        <Box
+          sx={{
+            width: { xs: '100%', md: 380 },
+            flexShrink: 0,
+            maxHeight: { xs: '50vh', md: 'none' },
+            overflowY: { xs: 'auto', md: 'visible' },
+            bgcolor: '#161b22',
+            borderRadius: 1,
+          }}>
+          {shouldMountControlPanel ? (
+            <Suspense fallback={<CircularProgress />}>
+              <ControlPanel
+                timezone={timezone}
+                onTimezoneChange={setTimezone}
+                size={size}
+                onSizeChange={setSize}
+                showMarkers={showMarkers}
+                onShowMarkersChange={setShowMarkers}
+                showTooltips={showTooltips}
+                onShowTooltipsChange={setShowTooltips}
+                zoomMarkers={zoomMarkers}
+                onZoomMarkersChange={setZoomMarkers}
+                minZoom={minZoom}
+                onMinZoomChange={setMinZoom}
+                maxZoom={maxZoom}
+                onMaxZoomChange={setMaxZoom}
+                currentZoom={currentZoom}
+                onCurrentZoomChange={setCurrentZoom}
+                showTZBoundaries={showTZBoundaries}
+                onShowTZBoundariesChange={setShowTZBoundaries}
+                showCountryBorders={showCountryBorders}
+                onShowCountryBordersChange={setShowCountryBorders}
+                showGeographic={showGeographic}
+                onShowGeographicChange={setShowGeographic}
+                backgroundType={backgroundType}
+                backgroundValue={backgroundValue}
+                onBackgroundTypeChange={setBackgroundType}
+                onBackgroundValueChange={setBackgroundValue}
+                colors={colors}
+                onColorsChange={setColors}
+                onReset={handleReset}
+                timezoneOptions={IANA_TZ_DATA}
+                simulatedDate={simulatedDate}
+                onSimulatedDateChange={setSimulatedDate}
               />
-              <Chip
-                label="npm"
-                component={MuiLink}
-                href="https://www.npmjs.com/package/@mmerlone/react-tz-globepicker"
-                target="_blank"
-                rel="noreferrer"
-                clickable
-                sx={{ bgcolor: '#cb3837', color: '#fff', '&:hover': { bgcolor: '#d9443f' } }}
-              />
-            </Stack>
-          </Box>
+            </Suspense>
+          ) : null}
+        </Box>
+
+        {/* Right side: Vertical stack */}
+        <Box
+          sx={{
+            flex: '1 1 auto',
+            display: 'flex',
+            flexDirection: 'column',
+            minWidth: 0,
+          }}>
+          {/* Marketing Header */}
+          <Grid maxWidth="lg">
+            <Box sx={{ textAlign: 'center', mb: 4 }}>
+              <Typography variant="h3" component="h1" sx={{ fontWeight: 700, color: '#fff', mb: 2 }}>
+                react-tz-globepicker
+              </Typography>
+              <Typography variant="h6" sx={{ color: 'grey.400', mb: 3, maxWidth: 700, mx: 'auto' }}>
+                An interactive 3D globe component for selecting timezones with beautiful visualizations, markers, and
+                customizable styling.
+              </Typography>
+              <Stack direction="row" spacing={2} justifyContent="center" flexWrap="wrap" gap={1}>
+                <Chip
+                  icon={<GitHubIcon />}
+                  label="GitHub"
+                  component={MuiLink}
+                  href="https://github.com/mmerlone/react-tz-globepicker"
+                  target="_blank"
+                  rel="noreferrer"
+                  clickable
+                  sx={{ bgcolor: 'grey.800', color: '#fff', '&:hover': { bgcolor: 'grey.700' } }}
+                />
+                <Chip
+                  label="npm"
+                  component={MuiLink}
+                  href="https://www.npmjs.com/package/@mmerlone/react-tz-globepicker"
+                  target="_blank"
+                  rel="noreferrer"
+                  clickable
+                  sx={{ bgcolor: '#cb3837', color: '#fff', '&:hover': { bgcolor: '#d9443f' } }}
+                />
+              </Stack>
+            </Box>
+          </Grid>
+
+          {/* Globe Area */}
+          <Grid
+            maxWidth="lg"
+            sx={{
+              flex: '1 1 auto',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minHeight: 400,
+            }}>
+            <TzGlobePicker
+              timezone={timezone}
+              size={size}
+              onSelect={(tz: string | null): void => setTimezone(tz)}
+              showMarkers={showMarkers}
+              showTooltips={showTooltips}
+              zoomMarkers={zoomMarkers}
+              minZoom={minZoom}
+              maxZoom={maxZoom}
+              initialZoom={initialZoom}
+              zoom={currentZoom}
+              onZoomChange={setCurrentZoom}
+              showTZBoundaries={showTZBoundaries}
+              showCountryBorders={showCountryBorders}
+              showGeographic={showGeographic}
+              background={backgroundProp}
+              colors={colors}
+              simulatedDate={simulatedDate}
+            />
+
+            <Typography sx={{ mt: 2, color: '#fff', fontSize: '1rem', opacity: 0.8 }}>
+              Selected: <strong style={{ color: '#64b5f6' }}>{timezone ?? 'none'}</strong>
+            </Typography>
+          </Grid>
 
           {/* Features */}
           <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap sx={{ mb: 4, justifyContent: 'center' }}>
@@ -225,104 +318,7 @@ export default function ReactTzGlobePickerDemo(): React.ReactElement {
               </CardContent>
             </Card>
           </Stack>
-
-          {/* Demo Section Title */}
-          <Typography variant="h5" sx={{ color: '#fff', mb: 3, textAlign: 'center' }}>
-            Interactive Demo
-          </Typography>
-          <Typography variant="body2" sx={{ color: 'grey.500', mb: 3, textAlign: 'center' }}>
-            Use the control panel on the right to customize the globe appearance
-          </Typography>
-        </Grid>
-
-        {/* Control Panel */}
-        <Grid
-          maxWidth="lg"
-          sx={{
-            flex: '0 0 380px',
-            width: { xs: '100%', md: 380 },
-            maxHeight: { xs: '50vh', md: 'none' },
-            overflowY: { xs: 'auto', md: 'visible' },
-            bgcolor: '#161b22',
-            borderRadius: 1,
-            gridRowStart: { xs: 2, md: 1 },
-            gridRowEnd: { xs: 'span 2', md: '3' },
-          }}>
-          {shouldMountControlPanel ? (
-            <Suspense fallback={<CircularProgress />}>
-              <ControlPanel
-                timezone={timezone}
-                onTimezoneChange={setTimezone}
-                size={size}
-                onSizeChange={setSize}
-                showMarkers={showMarkers}
-                onShowMarkersChange={setShowMarkers}
-                showTooltips={showTooltips}
-                onShowTooltipsChange={setShowTooltips}
-                zoomMarkers={zoomMarkers}
-                onZoomMarkersChange={setZoomMarkers}
-                minZoom={minZoom}
-                onMinZoomChange={setMinZoom}
-                maxZoom={maxZoom}
-                onMaxZoomChange={setMaxZoom}
-                currentZoom={currentZoom}
-                onCurrentZoomChange={setCurrentZoom}
-                showTZBoundaries={showTZBoundaries}
-                onShowTZBoundariesChange={setShowTZBoundaries}
-                showCountryBorders={showCountryBorders}
-                onShowCountryBordersChange={setShowCountryBorders}
-                showGeographic={showGeographic}
-                onShowGeographicChange={setShowGeographic}
-                backgroundType={backgroundType}
-                backgroundValue={backgroundValue}
-                onBackgroundTypeChange={setBackgroundType}
-                onBackgroundValueChange={setBackgroundValue}
-                colors={colors}
-                onColorsChange={setColors}
-                onReset={handleReset}
-                timezoneOptions={IANA_TZ_DATA}
-                simulatedDate={simulatedDate}
-                onSimulatedDateChange={setSimulatedDate}
-              />
-            </Suspense>
-          ) : null}
-        </Grid>
-
-        {/* Globe Area */}
-        <Grid
-          maxWidth="lg"
-          sx={{
-            flex: '1 1 auto',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            minHeight: 400,
-          }}>
-          <TzGlobePicker
-            timezone={timezone}
-            size={size}
-            onSelect={(tz: string | null): void => setTimezone(tz)}
-            showMarkers={showMarkers}
-            showTooltips={showTooltips}
-            zoomMarkers={zoomMarkers}
-            minZoom={minZoom}
-            maxZoom={maxZoom}
-            initialZoom={initialZoom}
-            zoom={currentZoom}
-            onZoomChange={setCurrentZoom}
-            showTZBoundaries={showTZBoundaries}
-            showCountryBorders={showCountryBorders}
-            showGeographic={showGeographic}
-            background={backgroundProp}
-            colors={colors}
-            simulatedDate={simulatedDate}
-          />
-
-          <Typography sx={{ mt: 2, color: '#fff', fontSize: '1rem', opacity: 0.8 }}>
-            Selected: <strong style={{ color: '#64b5f6' }}>{timezone ?? 'none'}</strong>
-          </Typography>
-        </Grid>
+        </Box>
       </Box>
     </Box>
   )
