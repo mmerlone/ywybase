@@ -39,7 +39,7 @@
     "@fontsource/roboto": "^5.2.9",
     "@hookform/resolvers": "^3.3.2",
     "@mmerlone/mui7-phone-number": "^2.0.0",
-    "@mmerlone/react-tz-globepicker": "file:../react-tz-globepicker",
+    "@mmerlone/react-tz-globepicker": "^0.1.4",
     "@mui/icons-material": "^7.3.4",
     "@mui/material": "^7.3.4",
     "@mui/material-nextjs": "^7.3.3",
