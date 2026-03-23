@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { colord } from 'colord'
 
 type ColorResult = {
@@ -43,6 +43,20 @@ function rgbaToString({ r, g, b, a }: { r: number; g: number; b: number; a: numb
 export function ColorInput({ label, value, onChange, disabled = false }: ColorInputProps): React.ReactElement {
   const [open, setOpen] = useState(false)
   const [ChromePicker, setChromePicker] = useState<ChromePickerComponent | null>(null)
+
+  // Escape key handler to close picker
+  useEffect(() => {
+    if (!open) return
+    const handleKeyDown = (e: KeyboardEvent): void => {
+      if (e.key === 'Escape') {
+        setOpen(false)
+      }
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return (): void => {
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [open])
 
   const rgba = useMemo(() => parseColorToRgba(value), [value])
 
@@ -104,7 +118,19 @@ export function ColorInput({ label, value, onChange, disabled = false }: ColorIn
 
       {open && ChromePicker && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 9999 }}>
-          <div style={{ position: 'absolute', inset: 0 }} onClick={() => setOpen(false)} />
+          <div
+            style={{ position: 'absolute', inset: 0 }}
+            onClick={() => setOpen(false)}
+            role="button"
+            aria-label="Close color picker"
+            tabIndex={-1}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                setOpen(false)
+              }
+            }}
+          />
           <div style={{ position: 'absolute', right: 12, top: 48 }}>
             <ChromePicker
               color={rgba}

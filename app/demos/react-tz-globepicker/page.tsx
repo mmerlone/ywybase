@@ -80,7 +80,7 @@ export default function ReactTzGlobePickerDemo(): React.ReactElement {
   const [showCountryBorders, setShowCountryBorders] = useState<boolean>(DEFAULT_SHOW_COUNTRY_BORDERS)
   const [showGeographic, setShowGeographic] = useState<boolean>(DEFAULT_SHOW_GEOGRAPHIC)
   const [backgroundType, setBackgroundType] = useState<'transparent' | 'color' | 'space' | 'star-field' | 'custom'>(
-    'transparent'
+    'star-field'
   )
   const [backgroundValue, setBackgroundValue] = useState<string | null>(null)
   const [colors, setColors] = useState<GlobePalette>(CUSTOM_COLORS)
@@ -117,6 +117,8 @@ export default function ReactTzGlobePickerDemo(): React.ReactElement {
     return null
   }, [backgroundType, backgroundValue])
 
+  const DEFAULT_BACKGROUND_TYPE = 'star-field'
+
   // Reset handler
   const handleReset = (): void => {
     setTimezone(DEFAULT_TIMEZONE)
@@ -130,9 +132,11 @@ export default function ReactTzGlobePickerDemo(): React.ReactElement {
     setCurrentZoom(DEFAULT_INITIAL_ZOOM)
     setShowTZBoundaries(DEFAULT_SHOW_TZ_BOUNDARIES)
     setShowCountryBorders(DEFAULT_SHOW_COUNTRY_BORDERS)
-    setBackgroundType('transparent')
+    setBackgroundType(DEFAULT_BACKGROUND_TYPE)
     setBackgroundValue(null)
+    setShowGeographic(DEFAULT_SHOW_GEOGRAPHIC)
     setColors(CUSTOM_COLORS)
+    setSimulatedDate(undefined)
   }
 
   return (
@@ -276,7 +280,13 @@ export default function ReactTzGlobePickerDemo(): React.ReactElement {
           </Grid>
 
           {/* Features */}
-          <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap sx={{ mb: 4, justifyContent: 'center' }}>
+          <Stack
+            maxWidth="lg"
+            direction="row"
+            spacing={2}
+            flexWrap="wrap"
+            useFlexGap
+            sx={{ mb: 4, justifyContent: 'center' }}>
             <Card sx={{ maxWidth: 250, bgcolor: '#161b22', color: '#fff' }}>
               <CardContent>
                 <Typography variant="h6" sx={{ color: '#58a6ff' }}>
