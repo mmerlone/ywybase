@@ -19,6 +19,23 @@ export default function DemosPage(): ReactElement {
         <Card>
           <CardContent>
             <Typography variant="h6" gutterBottom>
+              react-tz-globepicker
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Interactive 3D globe component for selecting timezones with beautiful visualizations, markers, and
+              customizable styling.
+            </Typography>
+          </CardContent>
+          <CardActions>
+            <Button component={Link} href="/demos/react-tz-globepicker" variant="contained">
+              Open Demo
+            </Button>
+          </CardActions>
+        </Card>
+
+        <Card>
+          <CardContent>
+            <Typography variant="h6" gutterBottom>
               Sentry Error Testing
             </Typography>
             <Typography variant="body2" color="text.secondary">
