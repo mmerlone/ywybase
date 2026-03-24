@@ -150,6 +150,7 @@ Follow `docs/structure.md` as canonical reference:
 - **Default**: Server Components (no `"use client"`)
 - **Client Components**: Only when needed (interactivity, hooks, browser APIs)
 - **Explicit `"use client"`**: Always at the top of the file when required
+- **MUI is SSR compatible**: Do NOT add `"use client"` just because using MUI components - they work fine as Server Components
 
 ### Component Structure
 
