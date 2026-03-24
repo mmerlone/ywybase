@@ -19,6 +19,23 @@ export default function DemosPage(): ReactElement {
         <Card>
           <CardContent>
             <Typography variant="h6" gutterBottom>
+              mui7-phone-input
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Interactive phone number input demos for the MUI 7 compatible country picker, formatting, validation, and
+              localization behaviors.
+            </Typography>
+          </CardContent>
+          <CardActions>
+            <Button component={Link} href="/demos/mui7-phone-input" variant="contained">
+              Open Demo
+            </Button>
+          </CardActions>
+        </Card>
+
+        <Card>
+          <CardContent>
+            <Typography variant="h6" gutterBottom>
               react-tz-globepicker
             </Typography>
             <Typography variant="body2" color="text.secondary">
