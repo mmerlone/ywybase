@@ -20,9 +20,70 @@ export default function AboutPage(): ReactElement {
           YwyBase: Solid ground to build and grow.
         </Typography>
 
-        <Box component="section">
-          <Ywy />
-        </Box>
+        {/* Ywy Brand Story Section - Featured */}
+        <Paper
+          elevation={0}
+          sx={{
+            mb: 6,
+            p: { xs: 3, md: 6 },
+            borderRadius: 4,
+            background: 'linear-gradient(135deg, rgba(25,118,210,0.05) 0%, rgba(83,109,254,0.08) 100%)',
+            border: '1px solid',
+            borderColor: 'divider',
+          }}>
+          <Box component="section">
+            <Ywy />
+          </Box>
+        </Paper>
+
+        {/* Value Proposition Section */}
+        <Paper sx={{ p: 4, mb: 4, borderRadius: 3 }}>
+          <Typography variant="h4" component="h2" gutterBottom align="center" sx={{ mb: 4 }}>
+            Why Choose YwyBase
+          </Typography>
+          <Typography
+            variant="body1"
+            sx={{ mb: 3, textAlign: 'center', maxWidth: 800, mx: 'auto' }}
+            color="text.secondary">
+            Stop rebuilding the same foundations. YwyBase gives you an opinionated starting point so you can begin
+            shaping product value instead of rebuilding auth, forms, and architecture for the tenth time.
+          </Typography>
+          <Grid container spacing={3} sx={{ mt: 2 }}>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+              <Box sx={{ textAlign: 'center', p: 3 }}>
+                <Typography variant="h5" component="h3" gutterBottom color="primary.main">
+                  🚀 Ship Faster
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  From authentication to database schema, everything is pre-configured. Focus on your unique business
+                  logic from day one.
+                </Typography>
+              </Box>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+              <Box sx={{ textAlign: 'center', p: 3 }}>
+                <Typography variant="h5" component="h3" gutterBottom color="primary.main">
+                  🛡️ Built Secure
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Enterprise-grade security out of the box: rate limiting, CSRF protection, security headers, and error
+                  tracking.
+                </Typography>
+              </Box>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+              <Box sx={{ textAlign: 'center', p: 3 }}>
+                <Typography variant="h5" component="h3" gutterBottom color="primary.main">
+                  🎯 Production Ready
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Type-safe from database to UI, comprehensive testing patterns, and structured logging for easy
+                  debugging.
+                </Typography>
+              </Box>
+            </Grid>
+          </Grid>
+        </Paper>
 
         <Grid container spacing={4}>
           <Grid size={{ xs: 12, md: 8 }}>
@@ -92,7 +153,7 @@ export default function AboutPage(): ReactElement {
                   </Typography>
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                     <Chip label="Next.js 15" size="small" variant="outlined" color="success" />
-                    <Chip label="React 18" size="small" variant="outlined" color="success" />
+                    <Chip label="React 19" size="small" variant="outlined" color="success" />
                     <Chip label="TypeScript" size="small" variant="outlined" color="success" />
                     <Chip label="Material UI" size="small" variant="outlined" color="success" />
                     <Chip label="Tailwind CSS" size="small" variant="outlined" color="success" />
@@ -214,10 +275,22 @@ export default function AboutPage(): ReactElement {
             <Grid size={{ xs: 12, sm: 6, md: 4 }}>
               <Box sx={{ textAlign: 'center', p: 2 }}>
                 <Typography variant="h6" component="h3" gutterBottom>
-                  Google Analytics
+                  Resend
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Web analytics service helping us understand user behavior and improve the application experience.
+                  Email delivery platform powering transactional emails with excellent deliverability and
+                  developer-friendly API.
+                </Typography>
+              </Box>
+            </Grid>
+
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+              <Box sx={{ textAlign: 'center', p: 2 }}>
+                <Typography variant="h6" component="h3" gutterBottom>
+                  Upstash
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Serverless Redis database providing rate limiting and caching for production-grade performance.
                 </Typography>
               </Box>
             </Grid>

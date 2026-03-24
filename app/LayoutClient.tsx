@@ -41,6 +41,7 @@ function MainContent({
       component="main"
       sx={{
         flex: 1,
+        pt: 'var(--header-height)',
         pb: 3,
         transition: theme.transitions.create('padding', {
           easing: theme.transitions.easing.sharp,
@@ -65,6 +66,9 @@ function MainContent({
 
 export function LayoutClient({ children, supabaseStatus, isDev, initialFlash }: LayoutClientProps): ReactElement {
   const supabaseEnabled = supabaseStatus.isConfigured
+  const theme = useTheme()
+  const isFixed = SITE_CONFIG.layout.fixedHeader
+  const headerHeight = isFixed ? theme.mixins.toolbar.minHeight : 0
 
   const appShell = (
     <GlobalErrorBoundary>
@@ -72,7 +76,14 @@ export function LayoutClient({ children, supabaseStatus, isDev, initialFlash }: 
         <SnackbarProvider>
           <NavigationProgress />
           <FlashMessageHandler initialFlash={initialFlash} />
-          <Box id="layout-client-container" sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+          <Box
+            id="layout-client-container"
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              minHeight: '100vh',
+              '--header-height': `${headerHeight}px`,
+            }}>
             <Header supabaseEnabled={supabaseEnabled} />
             <MainContent supabaseEnabled={supabaseEnabled} isDev={isDev}>
               {children}
