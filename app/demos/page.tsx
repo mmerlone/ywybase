@@ -1,8 +1,33 @@
-'use client'
+import type { ReactElement } from 'react'
+import type { Metadata } from 'next'
+import { Box, Typography, Stack } from '@mui/material'
+import { DemoCard, type Demo } from '@/components/marketing/demos/DemoCard'
 
-import React, { type ReactElement } from 'react'
-import { Box, Typography, Card, CardContent, CardActions, Button, Stack } from '@mui/material'
-import Link from 'next/link'
+export const metadata: Metadata = {
+  title: 'Component Demos',
+  description: 'Interactive demos and testing pages for various components and features.',
+}
+
+const DEMOS: Demo[] = [
+  {
+    title: 'mui7-phone-number',
+    description:
+      'Interactive phone number input demos for the MUI 7 compatible country picker, formatting, validation, and localization behaviors.',
+    href: '/demos/mui7-phone-number',
+  },
+  {
+    title: 'react-tz-globepicker',
+    description:
+      'Interactive 3D globe component for selecting timezones with beautiful visualizations, markers, and customizable styling.',
+    href: '/demos/react-tz-globepicker',
+  },
+  {
+    title: 'Sentry Error Testing',
+    description:
+      'Test error reporting and monitoring by triggering various types of errors to verify Sentry integration.',
+    href: '/demos/sentry',
+  },
+]
 
 export default function DemosPage(): ReactElement {
   return (
@@ -16,57 +41,9 @@ export default function DemosPage(): ReactElement {
       </Typography>
 
       <Stack spacing={3}>
-        <Card>
-          <CardContent>
-            <Typography variant="h6" gutterBottom>
-              mui7-phone-input
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Interactive phone number input demos for the MUI 7 compatible country picker, formatting, validation, and
-              localization behaviors.
-            </Typography>
-          </CardContent>
-          <CardActions>
-            <Button component={Link} href="/demos/mui7-phone-input" variant="contained">
-              Open Demo
-            </Button>
-          </CardActions>
-        </Card>
-
-        <Card>
-          <CardContent>
-            <Typography variant="h6" gutterBottom>
-              react-tz-globepicker
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Interactive 3D globe component for selecting timezones with beautiful visualizations, markers, and
-              customizable styling.
-            </Typography>
-          </CardContent>
-          <CardActions>
-            <Button component={Link} href="/demos/react-tz-globepicker" variant="contained">
-              Open Demo
-            </Button>
-          </CardActions>
-        </Card>
-
-        <Card>
-          <CardContent>
-            <Typography variant="h6" gutterBottom>
-              Sentry Error Testing
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Test error reporting and monitoring by triggering various types of errors to verify Sentry integration.
-            </Typography>
-          </CardContent>
-          <CardActions>
-            <Button component={Link} href="/demos/sentry" variant="contained">
-              Open Demo
-            </Button>
-          </CardActions>
-        </Card>
-
-        {/* Add more demo cards here as needed */}
+        {DEMOS.map((demo) => (
+          <DemoCard key={demo.href} demo={demo} />
+        ))}
       </Stack>
     </Box>
   )

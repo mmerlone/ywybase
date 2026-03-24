@@ -218,13 +218,13 @@ function StoryCard({ story }: StoryCardProps): ReactElement {
   )
 }
 
-export function Mui7PhoneInputDemo(): ReactElement {
+export function Mui7PhoneNumberDemo(): ReactElement {
   return (
     <Container maxWidth="lg" sx={{ py: { xs: 4, md: 6 } }}>
       <Stack spacing={4}>
         <Stack spacing={2}>
           <Typography component="h1" variant="h3">
-            mui7-phone-input Demo
+            mui7-phone-number Demo
           </Typography>
 
           <Typography color="text.secondary" sx={{ maxWidth: 900 }} variant="body1">

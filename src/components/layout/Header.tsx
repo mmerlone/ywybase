@@ -35,7 +35,15 @@ export function Header({ supabaseEnabled = true }: HeaderProps): ReactElement {
   const navigationItems = filterNavItemsByRole(SITE_CONFIG.navigation, userRole)
 
   return (
-    <AppBar position={isFixed ? 'sticky' : 'static'} elevation={2}>
+    <AppBar
+      position={isFixed ? 'fixed' : 'static'}
+      elevation={2}
+      sx={{
+        width: isFixed ? '100%' : 'auto',
+        top: isFixed ? 0 : undefined,
+        left: isFixed ? 0 : undefined,
+        right: isFixed ? 0 : undefined,
+      }}>
       <Toolbar>
         <LogoIcon />
         <Typography
