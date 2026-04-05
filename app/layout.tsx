@@ -4,6 +4,7 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import React, { type ReactNode, type ReactElement } from 'react'
 import { headers } from 'next/headers'
+import { Analytics } from '@vercel/analytics/next'
 
 import { LayoutClient } from './LayoutClient'
 
@@ -39,6 +40,7 @@ export default async function RootLayout({ children }: { children: ReactNode }):
         <AppRouterCacheProvider options={{ enableCssLayer: true, key: 'mui', nonce }}>
           <InitColorSchemeScript attribute="class" nonce={nonce} />
           <LayoutClient supabaseStatus={supabaseStatus} isDev={isDev} initialFlash={initialFlash}>
+            <Analytics />
             {children}
           </LayoutClient>
         </AppRouterCacheProvider>
