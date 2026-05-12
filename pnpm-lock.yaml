@@ -5,7 +5,7 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
-  postcss: 8.5.14
+  next>postcss: 8.5.14
   happy-dom: 20.8.9
   lodash: 4.18.1
   lodash-es: 4.18.1
@@ -292,7 +292,7 @@ importers:
         specifier: ^1.58.2
         version: 1.58.2
       postcss:
-        specifier: 8.5.14
+        specifier: ^8.5.14
         version: 8.5.14
       prettier:
         specifier: ^3.8.1
@@ -2977,7 +2977,7 @@ packages:
     engines: { node: ^10 || ^12 || >=14 }
     hasBin: true
     peerDependencies:
-      postcss: 8.5.14
+      postcss: ^8.1.0
 
   available-typed-arrays@1.0.7:
     resolution:
