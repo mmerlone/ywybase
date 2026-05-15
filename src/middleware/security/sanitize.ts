@@ -156,6 +156,7 @@ function sanitizeNodes(nodes: AnyNode[], config: SanitizerConfig): string {
 }
 
 function sanitizeHtmlFragment(input: string, config: SanitizerConfig): string {
+  // Parse as an HTML fragment so we preserve only the provided markup, not an injected document shell.
   const $ = load(input, undefined, false)
   return sanitizeNodes($.root().contents().toArray(), config)
 }
