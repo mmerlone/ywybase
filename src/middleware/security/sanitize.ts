@@ -22,8 +22,28 @@ import type {
 } from '@/types/security.types'
 
 const logger = buildLogger('security-sanitize')
-const DISALLOWED_CONTENT_TAGS = new Set(['script', 'style', 'textarea', 'option', 'xmp', 'noscript'])
+const DISALLOWED_CONTENT_TAGS = new Set([
+  'base',
+  'embed',
+  'form',
+  'iframe',
+  'link',
+  'listing',
+  'math',
+  'meta',
+  'noembed',
+  'noscript',
+  'object',
+  'option',
+  'plaintext',
+  'script',
+  'style',
+  'svg',
+  'textarea',
+  'xmp',
+])
 const SELF_CLOSING_TAGS = new Set(['br'])
+const DANGEROUS_PROTOCOL_PREFIXES = ['data:', 'javascript:', 'vbscript:']
 const SAFE_LINK_PROTOCOLS = new Set(['http:', 'https:', 'mailto:'])
 
 interface SanitizerConfig {
@@ -59,7 +79,12 @@ function isElementNode(node: AnyNode): node is AnyNode & Element {
 
 function isSafeHref(value: string): boolean {
   const trimmedValue = value.trim()
-  if (!trimmedValue || trimmedValue.startsWith('//')) {
+  const lowercaseValue = trimmedValue.toLowerCase()
+  if (
+    !trimmedValue ||
+    trimmedValue.startsWith('//') ||
+    DANGEROUS_PROTOCOL_PREFIXES.some((prefix) => lowercaseValue.startsWith(prefix))
+  ) {
     return false
   }
 
@@ -86,7 +111,7 @@ function sanitizeAttributes(node: Element, config: SanitizerConfig): string {
   return Object.entries(node.attribs)
     .flatMap(([name, value]) => {
       const attributeName = name.toLowerCase()
-      if (!config.allowedAttributes.has(attributeName)) {
+      if (attributeName.startsWith('on') || attributeName === 'style' || !config.allowedAttributes.has(attributeName)) {
         return []
       }
 
