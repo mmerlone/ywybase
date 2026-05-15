@@ -6,7 +6,8 @@
  * src/config/security.ts for validation rules.
  */
 
-import sanitize from 'sanitize-html'
+import { load } from 'cheerio'
+import type { AnyNode, Element } from 'domhandler'
 
 import { SECURITY_CONFIG } from '@/config/security'
 import { buildLogger } from '@/lib/logger/client'
@@ -21,48 +22,33 @@ import type {
 } from '@/types/security.types'
 
 const logger = buildLogger('security-sanitize')
+const DISALLOWED_CONTENT_TAGS = new Set([
+  'base',
+  'embed',
+  'form',
+  'iframe',
+  'link',
+  'listing',
+  'math',
+  'meta',
+  'noembed',
+  'noscript',
+  'object',
+  'option',
+  'plaintext',
+  'script',
+  'style',
+  'svg',
+  'textarea',
+  'xmp',
+])
+const SELF_CLOSING_TAGS = new Set(['br'])
+const DANGEROUS_PROTOCOL_PREFIXES = ['data:', 'javascript:', 'vbscript:']
+const SAFE_LINK_PROTOCOLS = new Set(['http:', 'https:', 'mailto:'])
 
-/**
- * Sanitize HTML content to prevent XSS attacks
- */
-export function sanitizeHtml(input: string, options: HtmlSanitizeOptions = {}): string {
-  try {
-    const {
-      allowedTags = ['b', 'i', 'em', 'strong', 'p', 'br', 'ul', 'ol', 'li'],
-      allowedAttributes = ['href', 'title'],
-      stripTags = false,
-      allowLinks = false,
-    } = options
-
-    if (stripTags) {
-      return sanitize(input, { allowedTags: [], allowedAttributes: {} })
-    }
-
-    const tags = allowLinks ? [...allowedTags, 'a'] : allowedTags
-    const attrMap: Record<string, string[]> = allowedAttributes.length > 0 ? { '*': allowedAttributes } : {}
-    const sanitized = sanitize(input, {
-      allowedTags: tags,
-      allowedAttributes: attrMap,
-      allowedSchemes: ['http', 'https', 'mailto'],
-      allowProtocolRelative: false,
-    })
-
-    logger.debug(
-      {
-        inputLength: input.length,
-        outputLength: sanitized.length,
-        allowedTags: allowedTags.length,
-        stripped: input.length !== sanitized.length,
-      },
-      'HTML sanitized'
-    )
-
-    return sanitized
-  } catch (err) {
-    logger.error({ err, inputLength: input.length }, 'Error sanitizing HTML')
-    // Return empty string on error for security
-    return ''
-  }
+interface SanitizerConfig {
+  allowedAttributes: Set<string>
+  allowedTags: Set<string>
 }
 
 /**
@@ -81,6 +67,145 @@ export function escapeHtml(input: string): string {
   }
 
   return input.replace(/[&<>"'`=/]/g, (char) => entityMap[char] ?? char)
+}
+
+function isTextNode(node: AnyNode): node is AnyNode & { data: string } {
+  return 'data' in node && typeof node.data === 'string' && node.type === 'text'
+}
+
+function isElementNode(node: AnyNode): node is AnyNode & Element {
+  return 'name' in node && typeof node.name === 'string' && 'attribs' in node && node.attribs !== null
+}
+
+function isSafeHref(value: string): boolean {
+  const trimmedValue = value.trim()
+  const lowercaseValue = trimmedValue.toLowerCase()
+  if (
+    !trimmedValue ||
+    trimmedValue.startsWith('//') ||
+    DANGEROUS_PROTOCOL_PREFIXES.some((prefix) => lowercaseValue.startsWith(prefix))
+  ) {
+    return false
+  }
+
+  if (
+    trimmedValue.startsWith('#') ||
+    trimmedValue.startsWith('/') ||
+    trimmedValue.startsWith('./') ||
+    trimmedValue.startsWith('../') ||
+    trimmedValue.startsWith('?')
+  ) {
+    return true
+  }
+
+  try {
+    const parsed = new URL(trimmedValue, 'https://example.com')
+    const hasExplicitProtocol = /^[a-zA-Z][a-zA-Z\d+.-]*:/.test(trimmedValue)
+    return !hasExplicitProtocol || SAFE_LINK_PROTOCOLS.has(parsed.protocol.toLowerCase())
+  } catch {
+    return false
+  }
+}
+
+function sanitizeAttributes(node: Element, config: SanitizerConfig): string {
+  return Object.entries(node.attribs)
+    .flatMap(([name, value]) => {
+      const attributeName = name.toLowerCase()
+      if (attributeName.startsWith('on') || attributeName === 'style' || !config.allowedAttributes.has(attributeName)) {
+        return []
+      }
+
+      if (attributeName === 'href' && !isSafeHref(value)) {
+        return []
+      }
+
+      return [` ${attributeName}="${escapeHtml(value)}"`]
+    })
+    .join('')
+}
+
+function sanitizeNode(node: AnyNode, config: SanitizerConfig): string {
+  if (isTextNode(node)) {
+    return escapeHtml(node.data)
+  }
+
+  if (!isElementNode(node)) {
+    return ''
+  }
+
+  const tagName = node.name.toLowerCase()
+  if (!config.allowedTags.has(tagName)) {
+    return DISALLOWED_CONTENT_TAGS.has(tagName)
+      ? ''
+      : node.children.map((childNode) => sanitizeNode(childNode, config)).join('')
+  }
+
+  const attributes = sanitizeAttributes(node, config)
+  const children = node.children.map((childNode) => sanitizeNode(childNode, config)).join('')
+  const openTag = `<${tagName}${attributes}>`
+
+  if (SELF_CLOSING_TAGS.has(tagName)) {
+    return openTag
+  }
+
+  return `${openTag}${children}</${tagName}>`
+}
+
+function sanitizeNodes(nodes: AnyNode[], config: SanitizerConfig): string {
+  return nodes.map((node) => sanitizeNode(node, config)).join('')
+}
+
+function sanitizeHtmlFragment(input: string, config: SanitizerConfig): string {
+  // Parse as an HTML fragment so we preserve only the provided markup, not an injected document shell.
+  const $ = load(input, undefined, false)
+  return sanitizeNodes($.root().contents().toArray(), config)
+}
+
+function sanitizeToPlainText(input: string): string {
+  return sanitizeHtmlFragment(input, {
+    allowedTags: new Set(),
+    allowedAttributes: new Set(),
+  })
+}
+
+/**
+ * Sanitize HTML content to prevent XSS attacks
+ */
+export function sanitizeHtml(input: string, options: HtmlSanitizeOptions = {}): string {
+  try {
+    const {
+      allowedTags = ['b', 'i', 'em', 'strong', 'p', 'br', 'ul', 'ol', 'li'],
+      allowedAttributes = ['href', 'title'],
+      stripTags = false,
+      allowLinks = false,
+    } = options
+
+    if (stripTags) {
+      return sanitizeToPlainText(input)
+    }
+
+    const config: SanitizerConfig = {
+      allowedTags: new Set(allowLinks ? [...allowedTags, 'a'] : allowedTags),
+      allowedAttributes: new Set(allowedAttributes),
+    }
+    const sanitized = sanitizeHtmlFragment(input, config)
+
+    logger.debug(
+      {
+        inputLength: input.length,
+        outputLength: sanitized.length,
+        allowedTags: allowedTags.length,
+        stripped: input.length !== sanitized.length,
+      },
+      'HTML sanitized'
+    )
+
+    return sanitized
+  } catch (err) {
+    logger.error({ err, inputLength: input.length }, 'Error sanitizing HTML')
+    // Return empty string on error for security
+    return ''
+  }
 }
 
 /**
