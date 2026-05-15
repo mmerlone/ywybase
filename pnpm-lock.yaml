@@ -161,9 +161,6 @@ importers:
       redis:
         specifier: ^5.11.0
         version: 5.11.0
-      sanitize-html:
-        specifier: ^2.17.3
-        version: 2.17.3
       tailwind-merge:
         specifier: ^2.6.1
         version: 2.6.1
@@ -228,9 +225,6 @@ importers:
       '@types/react-dom':
         specifier: ^19.2.3
         version: 19.2.3(@types/react@19.2.14)
-      '@types/sanitize-html':
-        specifier: ^2.16.1
-        version: 2.16.1
       '@types/topojson-client':
         specifier: ^3.1.5
         version: 3.1.5
@@ -2466,10 +2460,6 @@ packages:
     peerDependencies:
       '@types/react': '*'
 
-  '@types/sanitize-html@2.16.1':
-    resolution:
-      { integrity: sha512-n9wjs8bCOTyN/ynwD8s/nTcTreIHB1vf31vhLMGqUPNHaweKC4/fAl4Dj+hUlCTKYgm4P3k83fmiFfzkZ6sgMA== }
-
   '@types/stack-utils@2.0.3':
     resolution:
       { integrity: sha512-9aEbYZ3TbYMznPdcdr3SmIrLXwC/AKZXQeCf9Pgao5CKb8CyHuEX5jzWPTkvregvhRJHcpRO6BFoGW9ycaOkYw== }
@@ -4387,11 +4377,6 @@ packages:
       { integrity: sha512-h5PpgXkWitc38BBMYawTYMWJHFZJVnBquFE57xFpjB8pJFiF6gZ+bU+WyI/yqXiFR5mdLsgYNaPe8uao6Uv9Og== }
     engines: { node: '>=0.10.0' }
 
-  is-plain-object@5.0.0:
-    resolution:
-      { integrity: sha512-VRSzKkbMm5jMDoKLbltAkFQ5Qr7VDiTFGXxYFXXowVj387GeGNOCsOH6Msy00SGZ3Fp84b1Naa1psqgcCIEP5Q== }
-    engines: { node: '>=0.10.0' }
-
   is-reference@1.2.1:
     resolution:
       { integrity: sha512-U82MsXXiFIrjCK4otLT+o2NA2Cd2g5MLoOVXUZjIOhLurrRxpEXzI8O0KZHr3IjLvlAH1kTPYSuqer5T9ZVBKQ== }
@@ -5222,10 +5207,6 @@ packages:
       { integrity: sha512-ayCKvm/phCGxOkYRSCM82iDwct8/EonSEgCSxWxD7ve6jHggsFl4fZVQBPRNgQoKiuV/odhFrGzQXZwbifC8Rg== }
     engines: { node: '>=8' }
 
-  parse-srcset@1.0.2:
-    resolution:
-      { integrity: sha512-/2qh0lav6CmI15FzA3i/2Bzk2zCgQhGMkvhOhKNcBVQ1ldgpbfiNTVslmooUmWJcADi1f1kIeynbDRVzNlfR6Q== }
-
   parse5-htmlparser2-tree-adapter@7.1.0:
     resolution:
       { integrity: sha512-ruw5xyKs6lrpo9x9rCZqZZnIUntICjQAd0Wsmp396Ul9lN/h+ifgVV1x1gZHi8euej6wTfpqX8j+BFQxF0NS/g== }
@@ -5625,10 +5606,6 @@ packages:
   safer-buffer@2.1.2:
     resolution:
       { integrity: sha512-YZo3K82SD7Riyi0E1EQPojLz7kpepnSQI9IyPbHHg1XXXevb5dJI7tpyN2ADxGcQbHG7vcyRHk0cbwqcQriUtg== }
-
-  sanitize-html@2.17.3:
-    resolution:
-      { integrity: sha512-Kn4srCAo2+wZyvCNKCSyB2g8RQ8IkX/gQs2uqoSRNu5t9I2qvUyAVvRDiFUVAiX3N3PNuwStY0eNr+ooBHVWEg== }
 
   scheduler@0.27.0:
     resolution:
@@ -8298,10 +8275,6 @@ snapshots:
     dependencies:
       '@types/react': 19.2.14
 
-  '@types/sanitize-html@2.16.1':
-    dependencies:
-      htmlparser2: 10.1.0
-
   '@types/stack-utils@2.0.3': {}
 
   '@types/tedious@4.0.14':
@@ -10128,8 +10101,6 @@ snapshots:
     dependencies:
       isobject: 3.0.1
 
-  is-plain-object@5.0.0: {}
-
   is-reference@1.2.1:
     dependencies:
       '@types/estree': 1.0.9
@@ -10959,8 +10930,6 @@ snapshots:
       json-parse-even-better-errors: 2.3.1
       lines-and-columns: 1.2.4
 
-  parse-srcset@1.0.2: {}
-
   parse5-htmlparser2-tree-adapter@7.1.0:
     dependencies:
       domhandler: 5.0.3
@@ -11323,15 +11292,6 @@ snapshots:
   safe-stable-stringify@2.5.0: {}
 
   safer-buffer@2.1.2: {}
-
-  sanitize-html@2.17.3:
-    dependencies:
-      deepmerge: 4.3.1
-      escape-string-regexp: 4.0.0
-      htmlparser2: 10.1.0
-      is-plain-object: 5.0.0
-      parse-srcset: 1.0.2
-      postcss: 8.5.14
 
   scheduler@0.27.0: {}
 
