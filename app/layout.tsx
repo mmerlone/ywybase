@@ -1,4 +1,3 @@
-import InitColorSchemeScript from '@mui/material/InitColorSchemeScript'
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter'
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
@@ -38,7 +37,6 @@ export default async function RootLayout({ children }: { children: ReactNode }):
     <html lang="en">
       <body className={`${inter.className} font-sans`}>
         <AppRouterCacheProvider options={{ enableCssLayer: true, key: 'mui', nonce }}>
-          <InitColorSchemeScript attribute="class" nonce={nonce} />
           <LayoutClient supabaseStatus={supabaseStatus} isDev={isDev} initialFlash={initialFlash}>
             <Analytics />
             {children}

@@ -52,6 +52,8 @@ export const CSP_CONFIG = {
     "'nonce-{NONCE}'",
     // Supabase domains
     'https://*.supabase.co',
+    // Vercel Analytics debug script in local development
+    ...(isDevelopment ? ['https://va.vercel-scripts.com'] : []),
     // Development only: allow unsafe-eval for hot reloading
     ...(isDevelopment ? ["'unsafe-eval'"] : []),
   ],
