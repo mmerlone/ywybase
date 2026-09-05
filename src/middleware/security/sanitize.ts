@@ -7,7 +7,6 @@
  */
 
 import { load } from 'cheerio'
-import type { AnyNode, Element } from 'domhandler'
 
 import { SECURITY_CONFIG } from '@/config/security'
 import { buildLogger } from '@/lib/logger/client'
@@ -51,6 +50,17 @@ interface SanitizerConfig {
   allowedTags: Set<string>
 }
 
+interface SanitizerElementNode {
+  attribs: Record<string, string>
+  children?: unknown[]
+  name: string
+}
+
+interface SanitizerTextNode {
+  data: string
+  type: 'text'
+}
+
 /**
  * Escape HTML entities to prevent XSS
  */
@@ -69,12 +79,16 @@ export function escapeHtml(input: string): string {
   return input.replace(/[&<>"'`=/]/g, (char) => entityMap[char] ?? char)
 }
 
-function isTextNode(node: AnyNode): node is AnyNode & { data: string } {
-  return 'data' in node && typeof node.data === 'string' && node.type === 'text'
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null
 }
 
-function isElementNode(node: AnyNode): node is AnyNode & Element {
-  return 'name' in node && typeof node.name === 'string' && 'attribs' in node && node.attribs !== null
+function isTextNode(node: unknown): node is SanitizerTextNode {
+  return isRecord(node) && typeof node.data === 'string' && node.type === 'text'
+}
+
+function isElementNode(node: unknown): node is SanitizerElementNode {
+  return isRecord(node) && typeof node.name === 'string' && isRecord(node.attribs)
 }
 
 function isSafeHref(value: string): boolean {
@@ -107,7 +121,7 @@ function isSafeHref(value: string): boolean {
   }
 }
 
-function sanitizeAttributes(node: Element, config: SanitizerConfig): string {
+function sanitizeAttributes(node: SanitizerElementNode, config: SanitizerConfig): string {
   return Object.entries(node.attribs)
     .flatMap(([name, value]) => {
       const attributeName = name.toLowerCase()
@@ -124,7 +138,7 @@ function sanitizeAttributes(node: Element, config: SanitizerConfig): string {
     .join('')
 }
 
-function sanitizeNode(node: AnyNode, config: SanitizerConfig): string {
+function sanitizeNode(node: unknown, config: SanitizerConfig): string {
   if (isTextNode(node)) {
     return escapeHtml(node.data)
   }
@@ -134,14 +148,15 @@ function sanitizeNode(node: AnyNode, config: SanitizerConfig): string {
   }
 
   const tagName = node.name.toLowerCase()
+  const childNodes = node.children ?? []
   if (!config.allowedTags.has(tagName)) {
     return DISALLOWED_CONTENT_TAGS.has(tagName)
       ? ''
-      : node.children.map((childNode) => sanitizeNode(childNode, config)).join('')
+      : childNodes.map((childNode) => sanitizeNode(childNode, config)).join('')
   }
 
   const attributes = sanitizeAttributes(node, config)
-  const children = node.children.map((childNode) => sanitizeNode(childNode, config)).join('')
+  const children = childNodes.map((childNode) => sanitizeNode(childNode, config)).join('')
   const openTag = `<${tagName}${attributes}>`
 
   if (SELF_CLOSING_TAGS.has(tagName)) {
@@ -151,7 +166,7 @@ function sanitizeNode(node: AnyNode, config: SanitizerConfig): string {
   return `${openTag}${children}</${tagName}>`
 }
 
-function sanitizeNodes(nodes: AnyNode[], config: SanitizerConfig): string {
+function sanitizeNodes(nodes: unknown[], config: SanitizerConfig): string {
   return nodes.map((node) => sanitizeNode(node, config)).join('')
 }
 
