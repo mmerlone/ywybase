@@ -1,6 +1,6 @@
 import type React from 'react'
 import type { ReactElement } from 'react'
-import { Box, Chip, Container, Grid, Paper, Typography } from '@mui/material'
+import { Box, Chip, Container, Grid, Link, Paper, Typography } from '@mui/material'
 import type { Metadata } from 'next'
 import { Ywy } from '@/components/marketing/ywy/Ywy'
 
@@ -105,6 +105,13 @@ export default function AboutPage(): ReactElement {
                 The application features a complete authentication system powered by Supabase, including user
                 registration, login, password recovery, and profile management. The UI is built with Material UI
                 components and supports both light and dark themes.
+              </Typography>
+              <Typography variant="body1">
+                YwyBase is created and maintained by{' '}
+                <Link href="https://mmerlone.dev.br/" target="_blank" rel="noopener noreferrer" underline="hover">
+                  Marcio Merlone
+                </Link>
+                .
               </Typography>
             </Paper>
 

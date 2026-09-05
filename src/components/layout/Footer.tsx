@@ -114,6 +114,12 @@ export function Footer(): ReactElement {
             </Typography>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1.5 }}>
               <Typography variant="body2">Built with ❤️ using Next.js, Material UI, and Supabase.</Typography>
+              <Typography variant="body2">
+                Created by{' '}
+                <Link href="https://mmerlone.dev.br/" target="_blank" rel="noopener noreferrer" underline="hover">
+                  Marcio Merlone
+                </Link>
+              </Typography>
               <BrazilBadge />
             </Box>
           </Grid>
