@@ -10,7 +10,7 @@ import { Footer } from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
 import { NavigationProgress } from '@/components/layout/NavigationProgress'
 import { PageBreadcrumbs } from '@/components/layout/PageBreadcrumbs'
-import { AuthProvider } from '@/components/providers/AuthProvider'
+import { AuthProvider, useAuthContext } from '@/components/providers/AuthProvider'
 import { FlashMessageHandler } from '@/components/providers/FlashMessageHandler'
 import { QueryProvider } from '@/components/providers/QueryProvider'
 import { ThemeProvider } from '@/components/providers/ThemeProvider'
@@ -18,6 +18,8 @@ import { SnackbarProvider } from '@/contexts/SnackbarContext'
 import { SITE_CONFIG } from '@/config/site'
 import type { SupabaseEnvStatus } from '@/config/supabase-public'
 import type { FlashMessage } from '@/lib/utils/flash-messages.client'
+import { useProfile } from '@/hooks/useProfile'
+import { useThemeSync } from '@/hooks/useThemeSync'
 
 interface LayoutClientProps {
   children: ReactNode
@@ -64,6 +66,20 @@ function MainContent({
   )
 }
 
+/**
+ * Internal component that syncs theme preference from user profile.
+ * Must be placed inside AuthProvider to access auth context and profile data.
+ */
+function LayoutThemeSync({ children }: { children: ReactNode }): ReactElement {
+  const { authUser } = useAuthContext()
+  const { profile } = useProfile(authUser?.id)
+
+  // Sync theme preference from profile database to UI
+  useThemeSync(profile)
+
+  return <>{children}</>
+}
+
 export function LayoutClient({ children, supabaseStatus, isDev, initialFlash }: LayoutClientProps): ReactElement {
   const supabaseEnabled = supabaseStatus.isConfigured
   const theme = useTheme()
@@ -74,23 +90,25 @@ export function LayoutClient({ children, supabaseStatus, isDev, initialFlash }: 
     <GlobalErrorBoundary>
       <ThemeProvider>
         <SnackbarProvider>
-          <NavigationProgress />
-          <FlashMessageHandler initialFlash={initialFlash} />
-          <Box
-            id="layout-client-container"
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              minHeight: '100vh',
-              '--header-height': `${headerHeight}px`,
-            }}>
-            <Header supabaseEnabled={supabaseEnabled} />
-            <MainContent supabaseEnabled={supabaseEnabled} isDev={isDev}>
-              {children}
-            </MainContent>
-            <Footer />
-            <CookieBanner />
-          </Box>
+          <LayoutThemeSync>
+            <NavigationProgress />
+            <FlashMessageHandler initialFlash={initialFlash} />
+            <Box
+              id="layout-client-container"
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                minHeight: '100vh',
+                '--header-height': `${headerHeight}px`,
+              }}>
+              <Header supabaseEnabled={supabaseEnabled} />
+              <MainContent supabaseEnabled={supabaseEnabled} isDev={isDev}>
+                {children}
+              </MainContent>
+              <Footer />
+              <CookieBanner />
+            </Box>
+          </LayoutThemeSync>
         </SnackbarProvider>
       </ThemeProvider>
     </GlobalErrorBoundary>
