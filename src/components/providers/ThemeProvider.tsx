@@ -32,13 +32,20 @@ interface ThemeProviderProps {
  * theme throughout the component tree. Includes CssBaseline for consistent baseline
  * styles and supports theme mode persistence via localStorage.
  *
+ * **Key Features**:
+ * - Theme configured with `cssVariables: true` for automatic CSS variable generation
+ * - `InitColorSchemeScript` in app/layout.tsx prevents flash of unstyled content (FOUC)
+ * - Color scheme class applied to <html element for light/dark mode switching
+ * - Theme mode persists via localStorage (key: 'mui-mode')
+ * - System preference automatically detected when mode is 'system'
+ * - Supports light/dark mode switching with no hydration mismatches
+ *
  * @param {ThemeProviderProps} props - Component props
  * @param {ReactNode} props.children - Child components to wrap
  * @returns {ReactElement} Theme provider with CssBaseline
  *
  * @example
  * ```tsx
- * // In app layout or root component
  * function App() {
  *   return (
  *     <ThemeProvider>
@@ -49,12 +56,15 @@ interface ThemeProviderProps {
  * ```
  *
  * @remarks
- * **Features**:
- * - Applies configured Material-UI theme
- * - CssBaseline for consistent baseline styles
- * - Theme mode persistence via localStorage (key: 'mui-mode')
- * - Force theme re-render on mode changes
- * - Supports light/dark mode switching
+ * **Architecture**:
+ * - ThemeProvider: Provides theme object and color scheme context
+ * - CssBaseline: Normalizes default browser styles
+ * - InitColorSchemeScript (in app/layout.tsx): Runs before React hydration to prevent FOUC
+ *
+ * **CSS Variables**:
+ * - Generated automatically from theme palette
+ * - Scoped within .light and .dark class selectors
+ * - Prevents hydration mismatches between server and client
  *
  * **CssBaseline Effects**:
  * - Removes default margins
@@ -64,7 +74,7 @@ interface ThemeProviderProps {
  */
 export function ThemeProvider({ children }: ThemeProviderProps): ReactElement {
   return (
-    <MuiThemeProvider theme={theme} modeStorageKey="mui-mode" forceThemeRerender>
+    <MuiThemeProvider theme={theme}>
       <CssBaseline />
       {children}
     </MuiThemeProvider>

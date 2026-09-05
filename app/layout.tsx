@@ -1,4 +1,5 @@
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter'
+import InitColorSchemeScript from '@mui/material/InitColorSchemeScript'
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import React, { type ReactNode, type ReactElement } from 'react'
@@ -34,7 +35,10 @@ export default async function RootLayout({ children }: { children: ReactNode }):
 
   const isDev = process.env.NODE_ENV === 'development'
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <InitColorSchemeScript attribute="class" modeStorageKey="mui-mode" />
+      </head>
       <body className={`${inter.className} font-sans`}>
         <AppRouterCacheProvider options={{ enableCssLayer: true, key: 'mui', nonce }}>
           <LayoutClient supabaseStatus={supabaseStatus} isDev={isDev} initialFlash={initialFlash}>
