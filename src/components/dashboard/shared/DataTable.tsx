@@ -94,19 +94,15 @@ export function DataTable<T>({
           </TableHead>
           <TableBody>
             {loading ? (
-              Array.from(new Array(5)).map(
-                (_, index): ReactElement => (
-                  <TableRow key={index}>
-                    {columns.map(
-                      (column): ReactElement => (
-                        <TableCell key={column.id as string}>
-                          <Skeleton variant="text" />
-                        </TableCell>
-                      )
-                    )}
-                  </TableRow>
-                )
-              )
+              Array.from(new Array(5)).map((_, index): ReactElement => (
+                <TableRow key={index}>
+                  {columns.map((column): ReactElement => (
+                    <TableCell key={column.id as string}>
+                      <Skeleton variant="text" />
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
             ) : rows.length > 0 ? (
               rows.map((row, index): ReactElement => {
                 const rowId = getRowId ? getRowId(row) : ((row as { id?: string | number }).id ?? index)
@@ -143,7 +139,7 @@ export function DataTable<T>({
         </Table>
       </TableContainer>
       <TablePagination
-        rowsPerPageOptions={allowedSizes as number[]}
+        rowsPerPageOptions={allowedSizes}
         component="div"
         count={totalCount}
         rowsPerPage={safePageSize}

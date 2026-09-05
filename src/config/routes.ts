@@ -147,7 +147,7 @@ export const isAuthRoute = (routeKey: RouteKey): routeKey is AuthRouteKey => {
 }
 
 export const getRouteByKey = (key: RouteKey): RouteConfig => {
-  return ROUTES[key] as RouteConfig
+  return ROUTES[key]
 }
 
 export const getRouteByPath = (path: string): RouteConfig | null => {

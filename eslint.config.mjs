@@ -17,6 +17,11 @@ export default defineConfig([
   /* Base config (safe for ALL files) */
   /* ------------------------------------------------ */
   {
+    settings: {
+      react: {
+        version: '19.2.8',
+      },
+    },
     rules: {
       'no-unused-vars': 'off',
       'no-use-before-define': 'off',

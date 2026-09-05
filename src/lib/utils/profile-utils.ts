@@ -378,7 +378,7 @@ const convertAppUserRole = (role?: UserRole | null): DbUserRole | undefined => {
 
   // Validate against database role enum values
   const validDbRoles: string[] = Object.values(DbUserRoleEnum)
-  return validDbRoles.includes(role) ? (role as DbUserRole) : undefined
+  return validDbRoles.includes(role) ? role : undefined
 }
 
 /**

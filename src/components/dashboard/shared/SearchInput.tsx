@@ -17,11 +17,13 @@ export function SearchInput({
   onChange,
   debounceTime = 500,
 }: SearchInputProps): ReactElement {
-  const [localValue, setLocalValue] = useState(value)
+  const [inputState, setInputState] = useState({ externalValue: value, localValue: value })
 
-  useEffect((): void => {
-    setLocalValue(value)
-  }, [value])
+  if (value !== inputState.externalValue) {
+    setInputState({ externalValue: value, localValue: value })
+  }
+
+  const { localValue } = inputState
 
   useEffect((): (() => void) => {
     const timer = setTimeout((): void => {
@@ -34,7 +36,7 @@ export function SearchInput({
   }, [localValue, onChange, value, debounceTime])
 
   const handleClear = (): void => {
-    setLocalValue('')
+    setInputState((currentState) => ({ ...currentState, localValue: '' }))
     onChange('')
   }
 
@@ -45,7 +47,9 @@ export function SearchInput({
       size="small"
       placeholder={placeholder}
       value={localValue}
-      onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setLocalValue(e.target.value)}
+      onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+        setInputState((currentState) => ({ ...currentState, localValue: e.target.value }))
+      }
       slotProps={{
         input: {
           startAdornment: (

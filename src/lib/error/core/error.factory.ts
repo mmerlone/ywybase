@@ -467,7 +467,7 @@ export function reconstructError(json: AppErrorJSON): AppError {
     case ErrorTypeEnum.AUTH_ERROR:
       return new AuthError(options)
     case ErrorTypeEnum.VALIDATION_ERROR:
-      return new ValidationError(message, context as ValidationErrorContext)
+      return new ValidationError(message, context)
     case ErrorTypeEnum.DATABASE_ERROR:
       return new DatabaseError(options)
     case ErrorTypeEnum.NETWORK_ERROR:

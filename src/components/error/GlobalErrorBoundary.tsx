@@ -100,10 +100,6 @@ export class GlobalErrorBoundary extends Component<Props, State> {
     this.setState({ hasError: false, error: undefined, errorInfo: undefined })
   }
 
-  handleGoHome = (): void => {
-    window.location.href = '/'
-  }
-
   override render(): React.ReactNode {
     if (this.state.hasError) {
       if (this.props.fallback !== undefined && this.props.fallback !== null) {
@@ -185,7 +181,7 @@ export class GlobalErrorBoundary extends Component<Props, State> {
                 <Button variant="contained" startIcon={<RefreshIcon />} onClick={this.handleReset}>
                   Try Again
                 </Button>
-                <Button variant="outlined" startIcon={<HomeIcon />} onClick={this.handleGoHome}>
+                <Button variant="outlined" startIcon={<HomeIcon />} href="/">
                   Go Home
                 </Button>
               </Box>

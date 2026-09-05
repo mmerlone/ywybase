@@ -75,7 +75,7 @@ export class BaseAppError<TContext extends BaseErrorContext = BaseErrorContext>
 
   constructor(options: AppErrorOptions<TContext>) {
     super(options.message)
-    this.errorType = ErrorTypeEnum.APP_ERROR as ErrorType
+    this.errorType = ErrorTypeEnum.APP_ERROR
     this.code = options.code
     this.context = (options.context ?? {}) as TContext
     this.isOperational = options.isOperational ?? true
@@ -123,7 +123,7 @@ export class AuthError extends BaseAppError<AuthErrorContext> {
   constructor(options: Omit<AppErrorOptions<AuthErrorContext>, 'isOperational'>) {
     super({ ...options, isOperational: true })
     Object.defineProperty(this, 'errorType', {
-      value: ErrorTypeEnum.AUTH_ERROR as ErrorType,
+      value: ErrorTypeEnum.AUTH_ERROR,
       writable: false,
       enumerable: true,
       configurable: false,
@@ -157,7 +157,7 @@ export class ValidationError extends BaseAppError<ValidationErrorContext> {
       statusCode: 400,
     })
     Object.defineProperty(this, 'errorType', {
-      value: ErrorTypeEnum.VALIDATION_ERROR as ErrorType,
+      value: ErrorTypeEnum.VALIDATION_ERROR,
       writable: false,
       enumerable: true,
       configurable: false,
@@ -190,7 +190,7 @@ export class DatabaseError extends BaseAppError<DatabaseErrorContext> {
   constructor(options: Omit<AppErrorOptions<DatabaseErrorContext>, 'isOperational'>) {
     super({ ...options, isOperational: false })
     Object.defineProperty(this, 'errorType', {
-      value: ErrorTypeEnum.DATABASE_ERROR as ErrorType,
+      value: ErrorTypeEnum.DATABASE_ERROR,
       writable: false,
       enumerable: true,
       configurable: false,
@@ -225,7 +225,7 @@ export class NetworkError extends BaseAppError<NetworkErrorContext> {
   constructor(options: Omit<AppErrorOptions<NetworkErrorContext>, 'isOperational'>) {
     super({ ...options, isOperational: true })
     Object.defineProperty(this, 'errorType', {
-      value: ErrorTypeEnum.NETWORK_ERROR as ErrorType,
+      value: ErrorTypeEnum.NETWORK_ERROR,
       writable: false,
       enumerable: true,
       configurable: false,
@@ -259,7 +259,7 @@ export class PermissionError extends BaseAppError<BaseErrorContext> {
   constructor(options: Omit<AppErrorOptions<BaseErrorContext>, 'isOperational'>) {
     super({ ...options, isOperational: true })
     Object.defineProperty(this, 'errorType', {
-      value: ErrorTypeEnum.PERMISSION_ERROR as ErrorType,
+      value: ErrorTypeEnum.PERMISSION_ERROR,
       writable: false,
       enumerable: true,
       configurable: false,
@@ -292,7 +292,7 @@ export class ConfigurationError extends BaseAppError<BaseErrorContext> {
   constructor(options: Omit<AppErrorOptions<BaseErrorContext>, 'isOperational'>) {
     super({ ...options, isOperational: false })
     Object.defineProperty(this, 'errorType', {
-      value: ErrorTypeEnum.CONFIGURATION_ERROR as ErrorType,
+      value: ErrorTypeEnum.CONFIGURATION_ERROR,
       writable: false,
       enumerable: true,
       configurable: false,
@@ -326,7 +326,7 @@ export class BusinessError extends BaseAppError<BaseErrorContext> {
   constructor(options: Omit<AppErrorOptions<BaseErrorContext>, 'isOperational'>) {
     super({ ...options, isOperational: true })
     Object.defineProperty(this, 'errorType', {
-      value: ErrorTypeEnum.BUSINESS_ERROR as ErrorType,
+      value: ErrorTypeEnum.BUSINESS_ERROR,
       writable: false,
       enumerable: true,
       configurable: false,

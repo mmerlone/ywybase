@@ -83,7 +83,7 @@ export function useAdminProfiles(
     totalPages: data?.pageCount ?? 0,
     isLoading,
     isFetching,
-    error: toErrorOrNull(error as unknown),
+    error: toErrorOrNull(error),
     refetch: (): void => {
       void queryRefetch().catch(() => {})
     },

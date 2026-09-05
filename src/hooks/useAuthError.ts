@@ -88,7 +88,7 @@ export const useAuthError = ({
     return {
       message: error.message,
       code: error.code,
-      context: error.context as AuthErrorContext | undefined,
+      context: error.context,
       isOperational: error.isOperational ?? false,
       statusCode: error.statusCode,
     }

@@ -151,7 +151,7 @@ export function SocialLinkForm({
                     disabled={isSubmitting}
                     onChange={(e) => {
                       field.onChange(e)
-                      handlePlatformChange(e.target.value as SocialProvider)
+                      handlePlatformChange(e.target.value)
                     }}>
                     {availablePlatforms.map((platform) => (
                       <MenuItem key={platform.key} value={platform.key}>

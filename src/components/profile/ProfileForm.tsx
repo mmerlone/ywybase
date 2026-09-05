@@ -17,7 +17,7 @@ import { logger } from '@/lib/logger/client'
 import { formatBoolean, formatDate, normalizeString } from '@/lib/utils/string-utils'
 import { createSafeResolver } from '@/lib/utils/forms'
 import { type ProfileFormValues, profileFormSchema } from '@/lib/validators/profile'
-import type { GenderPreference, Profile, ProfileUpdate } from '@/types/profile.types'
+import type { Profile, ProfileUpdate } from '@/types/profile.types'
 import { ThemePreferenceEnum } from '@/types/theme.types'
 
 /**
@@ -47,7 +47,7 @@ function transformToFormValues(profileData: Profile | null, userEmail: string): 
     city: normalizeString(profileData.city),
     locale: normalizeString(profileData.locale),
     birth_date: profileData.birth_date ?? null,
-    gender: (profileData.gender as GenderPreference) ?? null,
+    gender: profileData.gender ?? null,
     theme: profileData.theme,
   }
 }
@@ -82,7 +82,7 @@ export function ProfileForm({ profile: initialProfile }: ProfileFormProps): Reac
           city: normalizeString(initialProfile.city),
           locale: normalizeString(initialProfile.locale),
           birth_date: initialProfile.birth_date ?? null,
-          gender: (initialProfile.gender as GenderPreference) ?? null,
+          gender: initialProfile.gender ?? null,
           theme: initialProfile.theme,
         }
       : {

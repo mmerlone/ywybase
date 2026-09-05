@@ -19,7 +19,7 @@ import LockOutlinedIcon from '@mui/icons-material/LockOutlined'
 import DownloadIcon from '@mui/icons-material/Download'
 import DeleteIcon from '@mui/icons-material/Delete'
 import { Visibility, VisibilityOff } from '@mui/icons-material'
-import { FormProvider, useForm } from 'react-hook-form'
+import { FormProvider, useForm, useWatch } from 'react-hook-form'
 import React, { useState, type ReactElement } from 'react'
 
 import { AuthFormFields } from '../auth/AuthForm/AuthFormFields'
@@ -75,8 +75,10 @@ export function TabAccount(): ReactElement {
     },
   })
 
-  const { handleSubmit, formState, reset, watch } = form
+  const { handleSubmit, formState, reset } = form
   const { isSubmitting } = formState
+  const newPassword = useWatch({ control: form.control, name: 'newPassword' }) ?? ''
+  const confirmPassword = useWatch({ control: form.control, name: 'confirmPassword' }) ?? ''
 
   // Form for adding a password (OAuth users)
   const addPasswordForm = useForm<PasswordFormInput>({
@@ -92,9 +94,10 @@ export function TabAccount(): ReactElement {
     handleSubmit: handleAddPasswordSubmit,
     formState: addPasswordFormState,
     reset: resetAddPassword,
-    watch: watchAddPassword,
   } = addPasswordForm
   const { isSubmitting: isAddPasswordSubmitting } = addPasswordFormState
+  const addPasswordValue = useWatch({ control: addPasswordForm.control, name: 'password' }) ?? ''
+  const addConfirmPassword = useWatch({ control: addPasswordForm.control, name: 'confirmPassword' }) ?? ''
 
   const handleChangePassword = async (data: UpdatePasswordFormInput): Promise<void> => {
     try {
@@ -268,8 +271,8 @@ export function TabAccount(): ReactElement {
                 <AuthFormFields operation={AuthOperationsEnum.UPDATE_PASSWORD} isLoading={isSubmitting} />
 
                 <PasswordMeter
-                  password={watch('newPassword') ?? ''}
-                  confirmPassword={watch('confirmPassword') ?? ''}
+                  password={newPassword}
+                  confirmPassword={confirmPassword}
                   onValidationChange={setIsPasswordValid}
                 />
 
@@ -313,8 +316,8 @@ export function TabAccount(): ReactElement {
                 <AuthFormFields operation={AuthOperationsEnum.ADD_PASSWORD} isLoading={isAddPasswordSubmitting} />
 
                 <PasswordMeter
-                  password={watchAddPassword('password') ?? ''}
-                  confirmPassword={watchAddPassword('confirmPassword') ?? ''}
+                  password={addPasswordValue}
+                  confirmPassword={addConfirmPassword}
                   onValidationChange={setIsAddPasswordValid}
                 />
 

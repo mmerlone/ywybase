@@ -61,7 +61,7 @@ export function UserFilters({
             id="status-filter"
             value={status}
             label="Status"
-            onChange={(e) => onStatusChange(e.target.value as UserStatusFilter)}>
+            onChange={(e) => onStatusChange(e.target.value)}>
             {Object.values(UserStatusFilterEnum).map((value) => {
               const label =
                 value === UserStatusFilterEnum.ALL ? 'All Statuses' : value.charAt(0).toUpperCase() + value.slice(1)
@@ -81,7 +81,7 @@ export function UserFilters({
             id="role-filter"
             value={role}
             label="Role"
-            onChange={(e) => onRoleChange(e.target.value as UserRoleFilter)}>
+            onChange={(e) => onRoleChange(e.target.value)}>
             {Object.values(UserRoleFilterEnum).map((value) => {
               const label =
                 value === UserRoleFilterEnum.ALL ? 'All Roles' : value.charAt(0).toUpperCase() + value.slice(1)

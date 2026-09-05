@@ -89,7 +89,7 @@ export function PersonalInfo({ errors, disabled = false, isLoading = false }: Pe
                   error={Boolean(errors.gender)}
                   helperText={errors.gender?.message}
                   disabled={disabled}
-                  value={(value ?? '') as string}
+                  value={value ?? ''}
                   onChange={(e) => onChange((e.target as HTMLInputElement).value || null)}>
                   <MenuItem value="private">
                     <em>Prefer not to say</em>

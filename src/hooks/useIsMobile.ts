@@ -9,6 +9,24 @@ import * as React from 'react'
  * @default 768
  */
 const MOBILE_BREAKPOINT = 768
+const MOBILE_MEDIA_QUERY = `(max-width: ${MOBILE_BREAKPOINT - 1}px)`
+
+function getMobileSnapshot(): boolean {
+  return window.matchMedia(MOBILE_MEDIA_QUERY).matches
+}
+
+function getServerSnapshot(): boolean {
+  return false
+}
+
+function subscribeToMobileChange(onStoreChange: () => void): () => void {
+  const mql = window.matchMedia(MOBILE_MEDIA_QUERY)
+  mql.addEventListener('change', onStoreChange)
+
+  return (): void => {
+    mql.removeEventListener('change', onStoreChange)
+  }
+}
 
 /**
  * Mobile viewport detection hook using matchMedia API.
@@ -51,20 +69,5 @@ const MOBILE_BREAKPOINT = 768
  * - Server-side rendering safe
  */
 export function useIsMobile(): boolean {
-  const [isMobile, setIsMobile] = React.useState<boolean | undefined>(undefined)
-
-  React.useEffect(() => {
-    const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`)
-    const onChange = (): void => {
-      setIsMobile(mql.matches)
-    }
-    mql.addEventListener('change', onChange)
-    setIsMobile(mql.matches)
-    const cleanup = (): void => {
-      mql.removeEventListener('change', onChange)
-    }
-    return cleanup
-  }, [])
-
-  return Boolean(isMobile)
+  return React.useSyncExternalStore(subscribeToMobileChange, getMobileSnapshot, getServerSnapshot)
 }

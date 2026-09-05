@@ -13,7 +13,7 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "jsx": "preserve",
+    "jsx": "react-jsx",
     "incremental": true,
     "types": ["node"],
     "useDefineForClassFields": true,
@@ -29,6 +29,14 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "*.config.ts", ".next/types/**/*.ts", "tailwind.config.ts.bkp"],
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    "*.config.ts",
+    ".next/types/**/*.ts",
+    "tailwind.config.ts.bkp",
+    ".next/dev/types/**/*.ts"
+  ],
   "exclude": ["node_modules", "**/dist/**", "**/.next/**", "**/eslint.config.*"]
 }

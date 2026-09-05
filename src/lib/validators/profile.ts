@@ -181,11 +181,11 @@ export const profileFormSchema = z.object({
     })
     .transform((val): GenderPreference | null => {
       if (val === null || val === undefined) return null
-      return val as GenderPreference
+      return val
     })
     .nullable()
     .optional(),
-  theme: z.enum(ThemePreferenceEnum).default(ThemePreferenceEnum.SYSTEM) as z.ZodType<ThemePreference>,
+  theme: z.enum(ThemePreferenceEnum).default(ThemePreferenceEnum.SYSTEM),
   privacy_settings: privacySettingsSchema.nullable().optional(),
 } as const) satisfies z.ZodType<ProfileFormFields & { theme?: ThemePreference }>
 

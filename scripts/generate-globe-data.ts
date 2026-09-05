@@ -63,7 +63,7 @@ function simplifyTopology(topology: Topology, quantileVal = 0.05): Topology {
   const minWeight = topojsonSimplify.quantile(presimplified, quantileVal)
   const simplified = topojsonSimplify.simplify(presimplified, minWeight)
   // Cast back to our original Topology type
-  return simplified as Topology
+  return simplified
 }
 
 // ── Main ──────────────────────────────────────────────────────────

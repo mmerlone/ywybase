@@ -830,7 +830,7 @@ export const updateSocialLinks = withServerActionErrorHandling(
     const { data, error } = await supabase
       .from('profiles')
       .update({
-        social_links: validated.data as Database['public']['Tables']['profiles']['Update']['social_links'],
+        social_links: validated.data,
       })
       .eq('id', userId)
       .select()
