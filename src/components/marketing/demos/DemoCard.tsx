@@ -1,5 +1,4 @@
 import type { ReactElement } from 'react'
-import Link from 'next/link'
 import { Card, CardContent, CardActions, Button, Typography } from '@mui/material'
 
 export type Demo = {
@@ -24,7 +23,7 @@ export function DemoCard({ demo }: DemoCardProps): ReactElement {
         </Typography>
       </CardContent>
       <CardActions>
-        <Button component={Link} href={demo.href} variant="contained">
+        <Button href={demo.href} variant="contained">
           Open Demo
         </Button>
       </CardActions>

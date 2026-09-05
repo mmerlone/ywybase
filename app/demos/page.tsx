@@ -25,7 +25,7 @@ const DEMOS: Demo[] = [
     title: 'Sentry Error Testing',
     description:
       'Test error reporting and monitoring by triggering various types of errors to verify Sentry integration.',
-    href: '/demos/sentry',
+    href: '/demos/sentry-example-page',
   },
 ]
 

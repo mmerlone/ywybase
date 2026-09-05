@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "type": "module",
   "private": true,
+  "engines": {
+    "node": ">=24.20.0"
+  },
   "scripts": {
     "generate:i18n-types": "echo 'not implemented tsx scripts/generate-i18n-types.ts'",
     "dev": "next dev | pino-pretty",
@@ -103,7 +106,7 @@
     "@types/d3-selection": "^3.0.11",
     "@types/geojson": "^7946.0.16",
     "@types/jest": "^30.0.0",
-    "@types/node": "^22.19.15",
+    "@types/node": "^24.13.3",
     "@types/react": "^19.2.18",
     "@types/react-color": "^3.0.13",
     "@types/react-dom": "^19.2.7",
