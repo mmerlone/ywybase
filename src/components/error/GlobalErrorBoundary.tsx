@@ -3,6 +3,7 @@
 import { ErrorOutline as ErrorIcon, Home as HomeIcon, Refresh as RefreshIcon } from '@mui/icons-material'
 import { Alert, Box, Button, Container, Paper, Typography } from '@mui/material'
 import { Component, type ReactNode, type ErrorInfo } from 'react'
+import NextLink from 'next/link'
 
 import { ErrorCodes } from '@/lib/error/codes'
 import { logger } from '@/lib/logger/client'
@@ -181,7 +182,7 @@ export class GlobalErrorBoundary extends Component<Props, State> {
                 <Button variant="contained" startIcon={<RefreshIcon />} onClick={this.handleReset}>
                   Try Again
                 </Button>
-                <Button variant="outlined" startIcon={<HomeIcon />} href="/">
+                <Button variant="outlined" startIcon={<HomeIcon />} component={NextLink} href="/">
                   Go Home
                 </Button>
               </Box>

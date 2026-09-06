@@ -4,6 +4,7 @@ import type { ReactElement } from 'react'
 
 import { Breadcrumbs, Link, Typography, Box, Container } from '@mui/material'
 import NavigateNextIcon from '@mui/icons-material/NavigateNext'
+import NextLink from 'next/link'
 
 import { useBreadcrumbs } from '@/hooks/useBreadcrumbs'
 
@@ -32,7 +33,13 @@ export function PageBreadcrumbs(): ReactElement | null {
             }
 
             return (
-              <Link key={item.href} href={item.href} underline="hover" color="primary" sx={{ cursor: 'pointer' }}>
+              <Link
+                key={item.href}
+                component={NextLink}
+                href={item.href}
+                underline="hover"
+                color="primary"
+                sx={{ cursor: 'pointer' }}>
                 {item.label}
               </Link>
             )

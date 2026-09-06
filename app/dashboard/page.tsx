@@ -28,9 +28,11 @@ export default async function DashboardPage(): Promise<ReactElement> {
           </Typography>
         </Box>
         <Stack direction="row" spacing={2}>
-          <Button component={NextLink} href={ROUTES.DASHBOARD_USERS.path} variant="outlined" startIcon={<People />}>
-            Manage Users
-          </Button>
+          <NextLink href={ROUTES.DASHBOARD_USERS.path} style={{ textDecoration: 'none' }}>
+            <Button component="span" variant="outlined" startIcon={<People />}>
+              Manage Users
+            </Button>
+          </NextLink>
         </Stack>
       </Box>
 
@@ -104,15 +106,16 @@ export default async function DashboardPage(): Promise<ReactElement> {
               Quick Links
             </Typography>
             <Stack spacing={2}>
-              <Button
-                component={NextLink}
-                href={ROUTES.DASHBOARD_USERS.path}
-                fullWidth
-                variant="text"
-                sx={{ justifyContent: 'flex-start', py: 1.5 }}
-                startIcon={<People />}>
-                View All Users
-              </Button>
+              <NextLink href={ROUTES.DASHBOARD_USERS.path} style={{ textDecoration: 'none' }}>
+                <Button
+                  component="span"
+                  fullWidth
+                  variant="text"
+                  sx={{ justifyContent: 'flex-start', py: 1.5 }}
+                  startIcon={<People />}>
+                  View All Users
+                </Button>
+              </NextLink>
             </Stack>
           </Paper>
         </Grid>

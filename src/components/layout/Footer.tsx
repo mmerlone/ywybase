@@ -1,6 +1,7 @@
 import type React from 'react'
 import type { ReactElement } from 'react'
-import { Box, Container, Grid, Link, Typography } from '@mui/material'
+import { Box, Container, Grid, Typography } from '@mui/material'
+import NextLink from 'next/link'
 import { SITE_CONFIG } from '@/config/site'
 
 function BrazilBadge(): ReactElement {
@@ -68,15 +69,9 @@ export function Footer(): ReactElement {
             </Typography>
             <BrazilBadge />
             <Box sx={{ display: 'flex', gap: 2 }}>
-              <Link href="/terms" underline="hover" variant="body2">
-                Terms
-              </Link>
-              <Link href="/privacy" underline="hover" variant="body2">
-                Privacy
-              </Link>
-              <Link href="/cookies" underline="hover" variant="body2">
-                Cookies
-              </Link>
+              <NextLink href="/terms">Terms</NextLink>
+              <NextLink href="/privacy">Privacy</NextLink>
+              <NextLink href="/cookies">Cookies</NextLink>
             </Box>
           </Box>
         </Container>
@@ -116,9 +111,9 @@ export function Footer(): ReactElement {
               <Typography variant="body2">Built with ❤️ using Next.js, Material UI, and Supabase.</Typography>
               <Typography variant="body2">
                 Created by{' '}
-                <Link href="https://mmerlone.dev.br/" target="_blank" rel="noopener noreferrer" underline="hover">
+                <a href="https://mmerlone.dev.br/" target="_blank" rel="noopener noreferrer">
                   Marcio Merlone
-                </Link>
+                </a>
               </Typography>
               <BrazilBadge />
             </Box>
@@ -128,15 +123,9 @@ export function Footer(): ReactElement {
               <Typography variant="subtitle2" gutterBottom>
                 Legal
               </Typography>
-              <Link href="/terms" underline="hover" variant="body2">
-                Terms of Service
-              </Link>
-              <Link href="/privacy" underline="hover" variant="body2">
-                Privacy Policy
-              </Link>
-              <Link href="/cookies" underline="hover" variant="body2">
-                Cookie Policy
-              </Link>
+              <NextLink href="/terms">Terms of Service</NextLink>
+              <NextLink href="/privacy">Privacy Policy</NextLink>
+              <NextLink href="/cookies">Cookie Policy</NextLink>
             </Box>
             <Box sx={{ mt: 2 }}>
               <Typography variant="body2">
