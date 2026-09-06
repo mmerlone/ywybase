@@ -26,10 +26,8 @@ For contribution guidelines, see [CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ### Development Resources
 
-Essential resources for contributors:
-
-- **`.windsurf/rules/`** - Comprehensive development guidelines and coding standards
-- **`.cascade/ai-context.md`** - Core development patterns and architectural context
+See [AGENTS.md](../AGENTS.md) for the repository's development guidelines and
+engineering conventions.
 
 When adding new documentation:
 

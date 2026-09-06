@@ -14,23 +14,8 @@ Before contributing, please review these essential development resources:
 
 ### Development Rules & Standards
 
-The **`.windsurf/rules/`** directory contains extensive development guidelines including:
-
-- Coding standards and conventions
-- Architecture guidelines and patterns
-- Best practices specific to this project
-- Code review criteria and quality standards
-
-### AI Development Context
-
-The **`.cascade/ai-context.md`** file provides important development patterns including:
-
-- Core architectural decisions and rationale
-- Implementation guidelines and conventions
-- Context for AI-assisted development
-- Project-specific development philosophy
-
-> **💡 Important**: These resources are essential for maintaining code consistency and understanding the project's design principles.
+Review [AGENTS.md](./AGENTS.md) for the repository's development guidelines,
+architecture patterns, and code review expectations.
 
 ## Code Quality
 
