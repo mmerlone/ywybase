@@ -12,3 +12,5 @@ All previous `@babel/core`, `@humanfs/node`, `brace-expansion`, `eslint-plugin-r
 
 - `pnpm audit` reports `0` vulnerabilities.
 - `pnpm run lint` and `pnpm run type-check` pass after applying overrides.
+
+**Last Updated**: September 6, 2026

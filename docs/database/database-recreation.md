@@ -18,7 +18,7 @@ The database is managed entirely through Supabase migrations.
    SUPABASE_DB_PASSWORD=your_database_password
    ```
 
-2. Supabase CLI installed (globally or via `npx`)
+2. Supabase CLI available through `pnpm exec supabase`
 3. `psql` available if you plan to replay dumps manually
 
 ## 🔐 Build a Database URL
@@ -33,10 +33,10 @@ export SUPABASE_DB_URL="postgresql://postgres:${SUPABASE_DB_PASSWORD}@db.${SUPAB
 
 ```bash
 mkdir -p backups
-npx supabase db dump --schema public --db-url "$SUPABASE_DB_URL" > backups/$(date +%Y%m%d%H%M%S)_schema.sql
+pnpm exec supabase db dump --schema public --db-url "$SUPABASE_DB_URL" > backups/$(date +%Y%m%d%H%M%S)_schema.sql
 
 # Include data if required
-npx supabase db dump --db-url "$SUPABASE_DB_URL" > backups/$(date +%Y%m%d%H%M%S)_full.sql
+pnpm exec supabase db dump --db-url "$SUPABASE_DB_URL" > backups/$(date +%Y%m%d%H%M%S)_full.sql
 ```
 
 Store backups securely (Git-ignored) and verify their contents.
@@ -45,7 +45,7 @@ Store backups securely (Git-ignored) and verify their contents.
 
 ```bash
 # Danger: this drops every table
-npx supabase db reset --db-url "$SUPABASE_DB_URL"
+pnpm exec supabase db reset --db-url "$SUPABASE_DB_URL"
 ```
 
 If your Supabase plan does not allow CLI resets, use the Supabase dashboard → Database Settings → **Reset Database**.

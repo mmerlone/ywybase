@@ -6,8 +6,8 @@ This comprehensive guide will help you set up YwyBase for development and deploy
 
 Before you begin, ensure you have the following installed:
 
-- **Node.js**: Version 18.17 or later
-- **pnpm**: Latest version (recommended package manager)
+- **Node.js**: Version 24.20 or later
+- **pnpm**: Package manager used by the project
 - **Git**: For version control
 - **Supabase Account**: For database and authentication services
 - **Code Editor**: VS Code recommended with extensions
@@ -82,11 +82,8 @@ pnpm db:init --status
 ### 4. Start Development
 
 ```bash
-# Start development server with logging
+# Start development server
 pnpm dev
-
-# Or start without pretty logging
-pnpm dev:raw
 ```
 
 Visit [http://localhost:3000](http://localhost:3000) to see your application.
@@ -297,11 +294,6 @@ export function YourComponent({ prop }: YourComponentProps) {
 # Run all tests
 pnpm test
 
-# Run tests in watch mode
-pnpm test:watch
-
-# Run tests with coverage
-pnpm test:coverage
 ```
 
 ### Test Structure

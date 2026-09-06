@@ -2,7 +2,7 @@
 
 ## Status
 
-Comparison against [supabase/migrations/20250105000000_initial_schema.sql](../../supabase/migrations/20250105000000_initial_schema.sql) shows that the core sync layer already exists:
+Comparison against [supabase/migrations/20250105000000_initial_schema.sql](/supabase/migrations/20250105000000_initial_schema.sql) shows that the core sync layer already exists:
 
 - `report_profile_auth_sync()`
 - `get_sync_summary()`

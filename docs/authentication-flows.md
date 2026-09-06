@@ -224,7 +224,7 @@ This flow allows users to reset their password if they forgot it.
 Both endpoints use the `emailVerification` rate limit:
 
 - Prevents brute force attacks
-- Configurable limits via security configuration
+- Limits are configured centrally in `src/config/security.ts`
 - Shared between both flows for consistency
 
 ### Security Event Logging

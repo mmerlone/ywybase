@@ -56,7 +56,7 @@ _Priority 5 — Metadata proxy / worker_
 
 An internal Cloudflare Metadata Proxy worker (`workers/metadata-worker`) is available and recommended for safe HTML extraction; it implements SSRF protections, edge caching, and rate limiting. Evaluating third-party providers (Microlink/OpenGraph/Iframely) remains optional if you prefer a managed service over the internal worker.
 
-**Story Points (remaining for Social Metadata)**: 1  
+**Story Points (remaining for Social Metadata)**: 1
 (main remaining task: optional platform endpoint additions)
 
 ---
@@ -70,7 +70,6 @@ An internal Cloudflare Metadata Proxy worker (`workers/metadata-worker`) is avai
 - Middleware (`src/middleware/security/index.ts`) applies an additional `api` or `auth` limiter to all `/api/*` and `/auth` paths for defense in depth.
 - `validateRateLimitConfig()` is called at Node.js startup via `instrumentation.ts`, surfacing warnings without crashing.
 - Rate limiting documentation (`docs/rate-limiting.md`) matches the runtime implementation.
-- AI-facing docs (`llms.txt`, `AGENTS.md`, `.github/copilot-instructions.md`) reflect the current store contract and route inventory.
 
 **Endpoint coverage** (6 of 6):
 
@@ -189,7 +188,7 @@ _Priority 2 — Enhancement_
 
 **Implementation plan**
 
-- See [docs/plan-profileAuthSyncEnhancement.prompt.md](./plan-profileAuthSyncEnhancement.prompt.md) for the detailed split-migration and dashboard rollout plan.
+- The detailed split-migration and dashboard rollout plan is not currently included in this repository.
 
 ---
 

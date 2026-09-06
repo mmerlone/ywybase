@@ -1,10 +1,10 @@
 # Project Structure
 
-Canonical structure for the Next.js 15.5.x App Router application. Follow this structure for consistency.
+Canonical structure for the Next.js App Router application. Follow this structure for consistency.
 
 ## 🏗️ **Core Principles**
 
-1. **App Router First** - All routes under `/app` using Next.js 15 App Router
+1. **App Router First** - All routes under `/app` using the Next.js App Router
 2. **React Server Components** - Default to Server Components with `async/await`
 3. **Type Safety** - Full TypeScript with generated types from Supabase
 4. **Performance** - Built with MUI 7.3.x and optimized for speed
@@ -37,7 +37,13 @@ Canonical structure for the Next.js 15.5.x App Router application. Follow this s
 │   ├── error/                   # Error display page
 │   ├── privacy/                 # Privacy policy
 │   ├── profile/                 # Profile management
-│   ├── sentry-example-page/     # Sentry error testing page
+│   ├── dashboard/               # Dashboard
+│   ├── demos/                   # Component demonstrations
+│   │   ├── mui7-phone-number/
+│   │   ├── react-tz-globepicker/
+│   │   └── sentry-example-page/
+│   ├── test/                    # Test pages
+│   │   └── usercard/
 │   └── terms/                   # Terms of service
 │
 ├── src/
@@ -195,10 +201,10 @@ export * from './apiTypes'
 
 ### **Frontend Layer**
 
-- **Next.js 15.5.x** - Framework
-- **React 18.3.x** - UI library
-- **Material UI 7.3.x** - Components (verified current minor)
-- **TypeScript 5.x** - Type safety
+- **Next.js** - Framework
+- **React** - UI library
+- **Material UI** - Components
+- **TypeScript** - Type safety
 
 ### **Data Layer**
 

@@ -11,9 +11,9 @@ The avatar system provides comprehensive profile picture management with a clean
 The avatar functionality is implemented as two separate components:
 
 ```
-src/components/auth/
-├── UserAvatar.tsx          # Read-only display component (119 lines)
-└── UserAvatarForm.tsx       # Editable form component (245 lines)
+src/components/profile/
+├── UserAvatar.tsx          # Read-only display component
+└── UserAvatarForm.tsx       # Editable form component
 ```
 
 ### Data Flow
@@ -27,7 +27,7 @@ UserCard (Layout)
 
 ### UserAvatar (Read-Only Display)
 
-**Location**: `src/components/auth/UserAvatar.tsx`
+**Location**: `src/components/profile/UserAvatar.tsx`
 
 **Purpose**: Display user profile picture with optimized loading and fallback hierarchy.
 
@@ -63,7 +63,7 @@ interface UserAvatarProps {
 
 ### UserAvatarForm (Editable Form)
 
-**Location**: `src/components/auth/UserAvatarForm.tsx`
+**Location**: `src/components/profile/UserAvatarForm.tsx`
 
 **Purpose**: Complete avatar management interface with upload, delete, and editing capabilities.
 

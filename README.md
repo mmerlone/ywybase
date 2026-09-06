@@ -1,21 +1,17 @@
 # YwyBase
 
-[![Next.js](https://img.shields.io/badge/Next.js-15.5.x-000000?style=flat&logo=next.js)](https://nextjs.org/)
-[![React](https://img.shields.io/badge/React-18.3.x-61DAFB?style=flat&logo=react)](https://react.dev/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.3.x-3178C6?style=flat&logo=typescript)](https://www.typescriptlang.org/)
-[![MUI](https://img.shields.io/badge/MUI-7.3.x-007FFF?style=flat&logo=mui)](https://mui.com/)
-[![Supabase](https://img.shields.io/badge/@supabase/ssr-0.7.x-3ECF8E?style=flat&logo=supabase)](https://supabase.com/)
+[![Next.js](https://img.shields.io/badge/Next.js-App%20Router-000000?style=flat&logo=next.js)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React-Server%20Components-61DAFB?style=flat&logo=react)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-Strict-3178C6?style=flat&logo=typescript)](https://www.typescriptlang.org/)
+[![MUI](https://img.shields.io/badge/MUI-7-007FFF?style=flat&logo=mui)](https://mui.com/)
+[![Supabase](https://img.shields.io/badge/Supabase-Auth%20%26%20Database-3ECF8E?style=flat&logo=supabase)](https://supabase.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## 🌐 Live Demo
 
 **Experience YwyBase instantly:** Explore the running project at [https://ywybase.vercel.app/](https://ywybase.vercel.app/)
 
-YwyBase - A Solid Ground to Scale. A production-ready Next.js 15 application template with **clean architecture**, authentication, Material UI, and TypeScript. Built for developers who want to ship fast with best practices.
-
-This is a solo project born from experimenting with a myriad of AI-assisted coding tools, primarily using the free tiers of Copilot, Cursor, WindSurf, CodeRabbit, and others. As a solo endeavor spanning engineering, QA, and DevOps, developed in my free time with AI collaboration, bugs are inevitable.
-
-While I originally created this project for my own use, fun, amusement, study and exercise, I decided to share it with the community. Use at your own risk, and if you do, contributions are more than welcome!
+YwyBase - A Solid Ground to Scale. A production-ready Next.js application template with **clean architecture**, authentication, Material UI, and TypeScript. Built for developers who want to ship with a practical foundation.
 
 ## 📑 **Table of Contents**
 
@@ -60,7 +56,7 @@ While I originally created this project for my own use, fun, amusement, study an
 
 ### **⚡ Performance**
 
-- Next.js 15 App Router
+- Next.js App Router
 - React Server Components
 - Code splitting and lazy loading
 - Optimized builds
@@ -76,8 +72,8 @@ While I originally created this project for my own use, fun, amusement, study an
 
 ### **Prerequisites**
 
-- Node.js 18+
-- pnpm 8+
+- Node.js 24.20 or later
+- pnpm
 - Supabase account
 
 ### **🏗️ Architecture Pattern**
@@ -170,9 +166,9 @@ git clone https://github.com/mmerlone/ywybase.git your-project
 cd your-project
 
 # Update package.json with your project info
-npm pkg set name="your-project-name"
-npm pkg set description="Your project description"
-npm pkg set repository="https://github.com/your-name/your-project"
+pnpm pkg set name="your-project-name"
+pnpm pkg set description="Your project description"
+pnpm pkg set repository="https://github.com/your-name/your-project"
 
 # Install dependencies
 pnpm install
@@ -211,7 +207,7 @@ nano .env.local  # or use your preferred editor
 1. **Initialize Sentry Plugin**
 
    ```bash
-   npx @sentry/wizard@latest -i nextjs
+   pnpm dlx @sentry/wizard@latest -i nextjs
    ```
 
    This will create `.env.sentry-build-plugin` file and configure Sentry for your project. After running the wizard, ensure you set the `NEXT_PUBLIC_SENTRY_DSN` environment variable in your `.env.local` file.
@@ -437,10 +433,10 @@ pnpm build
 
 ### **Frontend**
 
-- **Next.js 15.5.x** - React framework
-- **React 18.3.x** - UI library
-- **Material UI 7.3.x** - Component library
-- **TypeScript 5.x** - Type safety
+- **Next.js** - React framework
+- **React** - UI library
+- **Material UI** - Component library
+- **TypeScript** - Type safety
 
 ### **Backend & Data**
 
@@ -530,8 +526,6 @@ pnpm format:check     # Check code formatting without modifying files
 
 # Type Generation
 pnpm gen:types        # Generate Supabase database types (auto-runs inside pnpm db:init)
-pnpm generate:i18n-types  # Generate i18n translation types
-pnpm watch:i18n       # Watch i18n files and auto-generate types
 
 # Database Management
 pnpm db:init              # Apply migrations to remote database
@@ -580,32 +574,6 @@ pnpm run gen:themes
 # export { myCustomTheme } from './my-custom-theme'
 ```
 
-#### **i18n Types**
-
-```bash
-pnpm run generate:i18n-types
-```
-
-> **⚠️ Note**: This script is currently not implemented and is a placeholder for future functionality.
-
-> **📋 Status**: Internationalization (i18n) features are **not yet implemented** in this project. The i18n infrastructure exists but is not actively used. Translation files and i18n configuration are placeholders for future implementation.
-
-Generates TypeScript types from translation files. Run this after:
-
-- Adding new translation keys
-- Modifying translation structure
-- Adding new languages
-
-#### **i18n Watcher**
-
-```bash
-pnpm run watch:i18n
-```
-
-> **⚠️ Note**: i18n features are not yet implemented. This script is a placeholder.
-
-Watches for changes in translation files and auto-generates types. Use during development when working on translations.
-
 ### **Database Initialization**
 
 #### **Apply Migrations**
@@ -619,7 +587,7 @@ Applies pending migrations to your remote Supabase database using Supabase CLI. 
 - **Uses Supabase migrations**: Applies all pending migrations from `supabase/migrations/`
 - **Incremental and safe**: Only applies migrations that haven't been run yet
 - **Version controlled**: Migrations are tracked in your codebase
-- **Official tooling**: Uses `npx supabase db push` under the hood
+- **Official tooling**: Uses the Supabase CLI for database pushes
 
 **Check Migration Status**:
 
@@ -639,7 +607,7 @@ pnpm run db:init --reset
 
 **Requirements**:
 
-- Supabase CLI (installed automatically via npx)
+- Supabase CLI available through `pnpm exec supabase`
 - Environment variables: `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_PROJECT_ID`, `SUPABASE_DB_PASSWORD`
 - Migration files in `supabase/migrations/`
 
@@ -657,7 +625,7 @@ pnpm run db:init --status
 
 ```bash
 # Create a new migration file
-npx supabase migration new add_user_preferences
+pnpm exec supabase migration new add_user_preferences
 
 # Edit the generated file in supabase/migrations/
 # Then apply it
@@ -679,13 +647,13 @@ export SUPABASE_DB_URL="postgresql://postgres:${SUPABASE_DB_PASSWORD}@db.${SUPAB
 ```bash
 # Dumps the public schema to a timestamped file
 mkdir -p backups
-npx supabase db dump --schema public --db-url "$SUPABASE_DB_URL" > backups/$(date +%Y%m%d%H%M%S)_schema.sql
+pnpm exec supabase db dump --schema public --db-url "$SUPABASE_DB_URL" > backups/$(date +%Y%m%d%H%M%S)_schema.sql
 ```
 
 #### **Create a Full Backup**
 
 ```bash
-npx supabase db dump --db-url "$SUPABASE_DB_URL" > backups/$(date +%Y%m%d%H%M%S)_full.sql
+pnpm exec supabase db dump --db-url "$SUPABASE_DB_URL" > backups/$(date +%Y%m%d%H%M%S)_full.sql
 ```
 
 > Supabase CLI streams SQL to stdout. Redirect output to a file (as shown above) or pipe it to cloud storage. Refer to [Supabase db dump docs](https://supabase.com/docs/guides/cli/local-development#dump-the-database) for additional flags (e.g., excluding schemas or data-only dumps).
@@ -694,7 +662,7 @@ npx supabase db dump --db-url "$SUPABASE_DB_URL" > backups/$(date +%Y%m%d%H%M%S)
 
 ```bash
 # Danger: drops all data in the remote database
-npx supabase db reset --db-url "$SUPABASE_DB_URL"
+pnpm exec supabase db reset --db-url "$SUPABASE_DB_URL"
 
 # Re-apply your schema via migrations (automatically regenerates Supabase types)
 pnpm run db:init

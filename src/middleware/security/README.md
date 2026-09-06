@@ -255,11 +255,11 @@ Each utility module includes comprehensive tests:
 
 ```bash
 # Run security utility tests
-npm test src/middleware/security/
+pnpm test src/middleware/security/
 
 # Run specific module tests
-npm test src/middleware/security/headers.test.ts
-npm test src/middleware/security/sanitize.test.ts
+pnpm test src/middleware/security/headers.test.ts
+pnpm test src/middleware/security/sanitize.test.ts
 ```
 
 ## Best Practices

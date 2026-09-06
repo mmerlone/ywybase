@@ -60,7 +60,7 @@ const updateResult = await updatePassword({ currentPassword, newPassword, confir
 
 - `getSession()` - Get current session
 - `getUser()` - Get current user
-- `loginWithProvider(provider)` - Login with OAuth provider (Google, GitHub, Facebook)
+- `signInWithProvider(provider)` - Login with OAuth provider (Google, GitHub, Facebook)
 - `refreshSession()` - Refresh current session
 - `onAuthStateChange(callback)` - Subscribe to auth state changes
 

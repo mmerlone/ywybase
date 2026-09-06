@@ -91,7 +91,11 @@ export function middleware(request: NextRequest) {
 
 ## Configuration
 
-Flash messages are configured in `src/lib/utils/flash-messages.ts`:
+Flash messages are implemented across these files:
+
+- `src/lib/utils/flash-messages.constants.ts`
+- `src/lib/utils/flash-messages.server.ts`
+- `src/lib/utils/flash-messages.client.ts`
 
 - **Cookie name**: `flash_message`
 - **Max age**: 60 seconds (enough time for redirect)
@@ -146,10 +150,10 @@ return response
 
 ## Best Practices
 
-1. **Keep messages concise** - Users only see them for 6 seconds
+1. **Keep messages concise** - The snackbar displays them briefly
 2. **Use appropriate severity** - Match the message importance
 3. **Don't rely on them for critical info** - They disappear after being shown once
-4. **Test redirect timing** - 60 second max age is usually enough
+4. **Test redirect timing** - The flash cookie is temporary and intended for redirects
 5. **Use for user feedback only** - Not for data transmission
 
 ## Troubleshooting

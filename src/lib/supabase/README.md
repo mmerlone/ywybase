@@ -337,7 +337,7 @@ const { data } = await supabase
 Generate types from your Supabase schema:
 
 ```bash
-npx supabase gen types typescript --project-id YOUR_PROJECT_ID --schema public > types/supabase.ts
+pnpm exec supabase gen types typescript --project-id YOUR_PROJECT_ID --schema public > types/supabase.ts
 ```
 
 ## Best Practices
@@ -690,8 +690,9 @@ export class ProfileService extends BaseService {
    - Ensure proper cookie settings in production
 
 3. **Type errors with database operations**
-   - Generate updated types: `npx supabase gen types...`
-   - Check that your schema matches the types
+
+- Generate updated types: `pnpm exec supabase gen types...`
+- Check that your schema matches the types
 
 4. **Performance issues**
    - Use service layer for connection management

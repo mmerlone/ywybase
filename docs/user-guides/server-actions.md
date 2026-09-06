@@ -43,7 +43,7 @@ interface LoginCredentials {
 }
 ```
 
-**Returns:** `AuthResponse<{ user: User; session: Session }>`
+**Returns:** `AuthResponse<{ userId: string }>`
 
 **Example:**
 
@@ -56,8 +56,7 @@ const result = await loginWithEmail({
 })
 
 if (result.success) {
-  const { user, session } = result.data
-  console.log('User logged in:', user.email)
+  console.log('User logged in:', result.data.userId)
 } else {
   console.error('Login failed:', result.error)
 }
@@ -78,7 +77,7 @@ interface SignUpCredentials {
 }
 ```
 
-**Returns:** `AuthResponse<{ user: User; session: Session }>`
+**Returns:** `AuthResponse<{ userId: string }>`
 
 **Example:**
 
@@ -93,7 +92,7 @@ const result = await signUpWithEmail({
 })
 
 if (result.success) {
-  console.log('User signed up:', result.data.user.email)
+  console.log('User signed up:', result.data.userId)
 } else {
   console.error('Sign up failed:', result.error)
 }

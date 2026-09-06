@@ -20,13 +20,13 @@ Updates `supabase/config.toml` when the Supabase CLI version changes.
 
 ```bash
 # Check if config needs update
-npx tsx scripts/generate-supabase-config.ts
+pnpm exec tsx scripts/generate-supabase-config.ts
 
 # Force update even if versions match
-npx tsx scripts/generate-supabase-config.ts --force
+pnpm exec tsx scripts/generate-supabase-config.ts --force
 
 # Check only (exit code 1 if update needed)
-npx tsx scripts/generate-supabase-config.ts --check
+pnpm exec tsx scripts/generate-supabase-config.ts --check
 ```
 
 **What it does:**
@@ -61,7 +61,7 @@ pnpm run db:init --status
 
 - Validates environment variables
 - Ensures the `supabase/migrations` directory exists
-- Delegates to `npx supabase db push` and `supabase migration list`
+- Delegates to the Supabase CLI for database push and migration status commands
 - Provides helpful messaging for resets and linking new migrations
 
 **Advanced Operations:**
@@ -73,10 +73,10 @@ Backup, restore, and wipe functionality now rely on the Supabase CLI or dashboar
 export SUPABASE_DB_URL="postgresql://postgres:${SUPABASE_DB_PASSWORD}@db.${SUPABASE_PROJECT_ID}.supabase.co:5432/postgres"
 
 # Schema-only backup
-npx supabase db dump --schema public --db-url "$SUPABASE_DB_URL" > backups/$(date +%Y%m%d%H%M%S)_schema.sql
+pnpm exec supabase db dump --schema public --db-url "$SUPABASE_DB_URL" > backups/$(date +%Y%m%d%H%M%S)_schema.sql
 
 # Full backup
-npx supabase db dump --db-url "$SUPABASE_DB_URL" > backups/$(date +%Y%m%d%H%M%S)_full.sql
+pnpm exec supabase db dump --db-url "$SUPABASE_DB_URL" > backups/$(date +%Y%m%d%H%M%S)_full.sql
 
 # Reset database (DANGER)
 - Valid schema backup file in backups/ directory
@@ -88,39 +88,6 @@ psql "$SUPABASE_DB_URL" < backups/20250101000000_full.sql
 
 Refer to the [Supabase CLI docs](https://supabase.com/docs/guides/cli) for option details and additional workflows.
 
-#### **sync-migrations.ts**
-
-Synchronizes migration history with actual migration files.
-
-```bash
-# Sync migration history
-pnpm run db:migrations:sync
-
-# Or run directly
-npx ts-node scripts/sync-migrations.ts
-```
-
-**What it does:**
-
-- Ensures migration history table exists
-- Syncs migrations from `supabase/migrations/` directory
-- Updates database to match codebase
-- Handles missing/outdated migrations
-- Provides verification of sync status
-
-**Use Cases:**
-
-- After database restoration from backup
-- After manual database changes
-- When migration history gets out of sync
-- Before generating new types
-
-**Requirements:**
-
-- Same as backup-database.ts
-- PostgreSQL client tools (psql)
-- Migration files in `supabase/migrations/` directory
-
 ### **PostgreSQL Version Compatibility**
 
 ⚠️ **Important**: Your pg_dump version must match your Supabase PostgreSQL server version.
@@ -131,12 +98,8 @@ pg_dump --version
 
 # Check your Supabase server version in Dashboard > Settings > Database
 
-# Common version mismatches and solutions:
-# - Supabase server 17.x + pg_dump 16.x = ❌ Version mismatch
-# - Solutions:
-#   1. Upgrade PostgreSQL client tools (if available)
-#   2. Use Supabase Dashboard SQL Editor for manual backups
-#   3. Use Supabase CLI with Docker (requires Docker installation)
+# If versions do not match, use a compatible PostgreSQL client or the Supabase
+# Dashboard SQL editor for the backup.
 ```
 
 **Backup Organization:**
@@ -175,28 +138,16 @@ supabase db shell
    pnpm run gen:types
    ```
 
-2. **Generate i18n Types**
-   ```bash
-   pnpm run generate:i18n-types
-   ```
-
 ### **During Development**
 
-1. **Start i18n Watcher** (for translation work)
-
-   ```bash
-   # Terminal 1
-   pnpm run watch:i18n
-   ```
-
-2. **Regenerate Supabase Types** (after schema changes)
+1. **Regenerate Supabase Types** (after schema changes)
 
    ```bash
    # Terminal 2 (run as needed)
    pnpm run gen:types
    ```
 
-3. **Database Maintenance**
+2. **Database Maintenance**
 
 > Use the Supabase CLI directly for backups, restores, and resets.
 
@@ -204,13 +155,13 @@ supabase db shell
 export SUPABASE_DB_URL="postgresql://postgres:${SUPABASE_DB_PASSWORD}@db.${SUPABASE_PROJECT_ID}.supabase.co:5432/postgres"
 
 # Schema backup
-npx supabase db dump --schema public --db-url "$SUPABASE_DB_URL" > backups/$(date +%Y%m%d%H%M%S)_schema.sql
+pnpm exec supabase db dump --schema public --db-url "$SUPABASE_DB_URL" > backups/$(date +%Y%m%d%H%M%S)_schema.sql
 
 # Full backup
-npx supabase db dump --db-url "$SUPABASE_DB_URL" > backups/$(date +%Y%m%d%H%M%S)_full.sql
+pnpm exec supabase db dump --db-url "$SUPABASE_DB_URL" > backups/$(date +%Y%m%d%H%M%S)_full.sql
 
 # Reset database (DANGER)
-npx supabase db reset --db-url "$SUPABASE_DB_URL"
+pnpm exec supabase db reset --db-url "$SUPABASE_DB_URL"
 pnpm run db:init   # Automatically regenerates Supabase types
 ```
 
@@ -219,11 +170,10 @@ pnpm run db:init   # Automatically regenerates Supabase types
 ```bash
 # Ensure all types are up to date
 pnpm run gen:types
-pnpm run generate:i18n-types
 pnpm run type-check
 
 # Optional: Create a schema backup before major changes
-npx supabase db dump --schema public --db-url "$SUPABASE_DB_URL" > backups/$(date +%Y%m%d%H%M%S)_schema.sql
+pnpm exec supabase db dump --schema public --db-url "$SUPABASE_DB_URL" > backups/$(date +%Y%m%d%H%M%S)_schema.sql
 ```
 
 ## 📋 **Environment Requirements**
@@ -235,7 +185,7 @@ npx supabase db dump --schema public --db-url "$SUPABASE_DB_URL" > backups/$(dat
 NEXT_PUBLIC_SUPABASE_PROJECT_ID=your_project_id
 
 # Required tools
-npm install -g supabase
+pnpm exec supabase --version
 ```
 
 ### **Database Backups / Resets**
@@ -249,21 +199,8 @@ SUPABASE_DB_PASSWORD=your_database_password
 echo "postgresql://postgres:${SUPABASE_DB_PASSWORD}@db.${SUPABASE_PROJECT_ID}.supabase.co:5432/postgres"
 
 # Required tools
-npm install -g supabase  # or use npx supabase ...
+pnpm exec supabase --version
 psql --version          # Needed only for manual restore commands
-```
-
-### **i18n Type Generation**
-
-```bash
-# Required file structure
-src/
-├── locales/
-│   └── en/
-│       └── common.json
-└── types/
-    └── generated/
-        └── i18n.types.ts
 ```
 
 ## 🔧 **Adding New Scripts**
@@ -321,7 +258,7 @@ mainFunction().catch(console.error)
 ```json
 {
   "scripts": {
-    "script-name": "npx ts-node scripts/your-script.ts"
+    "script-name": "pnpm exec tsx scripts/your-script.ts"
   }
 }
 ```
