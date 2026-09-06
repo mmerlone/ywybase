@@ -74,7 +74,7 @@ interface ThemeProviderProps {
  */
 export function ThemeProvider({ children }: ThemeProviderProps): ReactElement {
   return (
-    <MuiThemeProvider theme={theme}>
+    <MuiThemeProvider theme={theme} defaultMode="system">
       <CssBaseline />
       {children}
     </MuiThemeProvider>

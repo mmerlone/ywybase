@@ -2,7 +2,6 @@
 
 import type { ReactElement } from 'react'
 import { Grid, Container, Paper, Stack, Typography } from '@mui/material'
-import { alpha } from '@mui/material/styles'
 
 import { SectionHeading } from '@/components/marketing/shared/SectionHeading'
 
@@ -31,7 +30,7 @@ const valuePillars: readonly ValuePillar[] = [
 
 export function ValuePropsSection(): ReactElement {
   return (
-    <Container component="section" maxWidth="lg" sx={{ py: { xs: 9, md: 12 } }}>
+    <Container component="section" maxWidth="lg" className="value-props-section" sx={{ py: { xs: 9, md: 12 } }}>
       <SectionHeading
         eyebrow="Why teams reach for it"
         title="A starter that respects both speed and maintainability."
@@ -47,12 +46,9 @@ export function ValuePropsSection(): ReactElement {
                 height: '100%',
                 p: 3.5,
                 borderRadius: 5,
-                border: (theme) => `1px solid ${alpha(theme.palette.divider, 0.8)}`,
+                border: (theme) => `1px solid color-mix(in srgb, ${theme.vars.palette.divider} 80%, transparent)`,
                 background: (theme) =>
-                  `linear-gradient(180deg, ${alpha(theme.palette.background.paper, 0.94)} 0%, ${alpha(
-                    theme.palette.primary.main,
-                    0.04
-                  )} 100%)`,
+                  `linear-gradient(180deg, color-mix(in srgb, ${theme.vars.palette.background.paper} 94%, transparent) 0%, rgb(${theme.vars.palette.primary.mainChannel} / 0.04) 100%)`,
               }}>
               <Stack spacing={2}>
                 <Typography variant="h5" component="h3" sx={{ fontWeight: 800, textWrap: 'balance' }}>

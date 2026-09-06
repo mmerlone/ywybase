@@ -2,7 +2,7 @@
 import type React from 'react'
 import type { ReactElement } from 'react'
 
-import { Avatar, alpha } from '@mui/material'
+import { Avatar } from '@mui/material'
 
 import { useOptimizedAvatar } from '@/hooks/useOptimizedAvatar'
 import { AVATAR_SIZES } from '@/lib/utils/image-utils'
@@ -119,8 +119,8 @@ export function UserAvatar({ avatarUrl, email, displayName, size = 'medium' }: U
         fontSize: sizeConfig.fontSize,
         bgcolor: 'primary.main',
         color: 'primary.contrastText',
-        border: `2px solid ${alpha(theme.palette.divider, 0.8)}`,
-        boxShadow: `0 4px 12px ${alpha(theme.palette.common.black, 0.15)}, 0 0 0 1px ${alpha(theme.palette.divider, 0.5)}`,
+        border: `2px solid color-mix(in srgb, ${theme.vars.palette.divider} 80%, transparent)`,
+        boxShadow: `0 4px 12px rgb(0 0 0 / 0.15), 0 0 0 1px color-mix(in srgb, ${theme.vars.palette.divider} 50%, transparent)`,
       })}
       slotProps={{
         img: {

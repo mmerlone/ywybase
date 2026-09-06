@@ -3,7 +3,6 @@
 import type { ReactElement } from 'react'
 import { Speed } from '@mui/icons-material'
 import { Container, Divider, Grid, Paper, Stack, Typography } from '@mui/material'
-import { alpha } from '@mui/material/styles'
 
 import { SectionHeading } from '@/components/marketing/shared/SectionHeading'
 
@@ -31,12 +30,9 @@ export function MotivationSection(): ReactElement {
               height: '100%',
               p: { xs: 3, md: 4 },
               borderRadius: 6,
-              border: (theme) => `1px solid ${alpha(theme.palette.divider, 0.82)}`,
+              border: (theme) => `1px solid color-mix(in srgb, ${theme.vars.palette.divider} 82%, transparent)`,
               background: (theme) =>
-                `linear-gradient(135deg, ${alpha(theme.palette.warning.main, 0.12)} 0%, ${alpha(
-                  theme.palette.primary.main,
-                  0.08
-                )} 100%)`,
+                `linear-gradient(135deg, rgb(${theme.vars.palette.warning.mainChannel} / 0.12) 0%, rgb(${theme.vars.palette.primary.mainChannel} / 0.08) 100%)`,
             }}>
             <Stack spacing={3}>
               <Typography

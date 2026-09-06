@@ -10,7 +10,7 @@
 
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { useColorScheme } from '@mui/material/styles'
 import { logger } from '@/lib/logger/client'
 import type { Profile } from '@/types/profile.types'
@@ -54,30 +54,36 @@ import type { Profile } from '@/types/profile.types'
  * - No component re-renders triggered (theme update is internal to MUI)
  */
 export function useThemeSync(profile: Profile | null | undefined): void {
-  const { mode, setMode } = useColorScheme()
+  const { setMode } = useColorScheme()
+  const lastSyncedThemeRef = useRef<Profile['theme'] | null | undefined>(undefined)
+  const hadProfileRef = useRef(false)
 
   useEffect(() => {
     if (!profile) {
+      if (!hadProfileRef.current) return
+      if (lastSyncedThemeRef.current === null) return
+
       // User logged out: reset to system preference (secure default)
-      if (mode !== 'system') {
-        logger.debug({ currentMode: mode }, 'Resetting theme to system preference on logout')
-        setMode('system')
-      }
+      logger.debug({}, 'Resetting theme to system preference on logout')
+      setMode('system')
+      lastSyncedThemeRef.current = null
       return
     }
 
     // User logged in and profile loaded: sync their saved theme preference
     const savedTheme = profile.theme
-    if (savedTheme && mode !== savedTheme) {
-      logger.debug(
-        {
-          savedTheme,
-          currentMode: mode,
-          operation: 'syncThemePreference',
-        },
-        'Syncing theme preference from profile'
-      )
-      setMode(savedTheme)
-    }
-  }, [profile, mode, setMode])
+    if (!savedTheme || lastSyncedThemeRef.current === savedTheme) return
+
+    hadProfileRef.current = true
+
+    logger.debug(
+      {
+        savedTheme,
+        operation: 'syncThemePreference',
+      },
+      'Syncing theme preference from profile'
+    )
+    setMode(savedTheme)
+    lastSyncedThemeRef.current = savedTheme
+  }, [profile, setMode])
 }

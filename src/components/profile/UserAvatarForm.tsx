@@ -194,7 +194,7 @@ export function UserAvatarForm({
       {canEdit && isHovered && (
         <Box
           className="avatar-overlay"
-          sx={(theme) => ({
+          sx={{
             position: 'absolute',
             top: 0,
             left: 0,
@@ -204,11 +204,11 @@ export function UserAvatarForm({
             alignItems: 'flex-end',
             justifyContent: 'space-between',
             gap: 2,
-            backgroundColor: theme.palette.mode === 'dark' ? 'rgba(0, 0, 0, 0.5)' : 'rgba(0, 0, 0, 0.3)',
+            backgroundColor: 'rgba(0, 0, 0, 0.4)',
             borderRadius: '50%',
             opacity: 1,
             transition: 'opacity 0.3s ease',
-          })}>
+          }}>
           <Tooltip title="Change photo">
             <IconButton
               color="primary"

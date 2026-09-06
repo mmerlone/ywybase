@@ -8,7 +8,7 @@ import {
   Security as ModeratorIcon,
   Star as RootIcon,
 } from '@mui/icons-material'
-import { Chip, type ChipProps, alpha } from '@mui/material'
+import { Chip, type ChipProps } from '@mui/material'
 
 import { UserRoleEnum } from '@/types/admin.types'
 import { type Profile } from '@/types/profile.types'
@@ -49,23 +49,18 @@ export function UserRoleBadge({ role, variant = 'default' }: UserRoleBadgeProps)
         sx={(theme) => ({
           backgroundColor:
             info.color === 'default'
-              ? alpha(theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.common.black, 0.15)
+              ? `color-mix(in srgb, ${theme.vars.palette.text.primary} 15%, transparent)`
               : `rgba(var(--mui-palette-${info.color}-mainChannel), 0.2)`,
-          color:
-            info.color === 'default'
-              ? theme.palette.mode === 'dark'
-                ? 'rgba(255, 255, 255, 0.9)'
-                : 'rgba(0, 0, 0, 0.87)'
-              : `var(--mui-palette-${info.color}-main)`,
+          color: info.color === 'default' ? theme.vars.palette.text.primary : `var(--mui-palette-${info.color}-main)`,
           fontWeight: 600,
-          border: `1px solid ${alpha(theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.common.black, 0.1)}`,
+          border: `1px solid color-mix(in srgb, ${theme.vars.palette.text.primary} 10%, transparent)`,
           '& .MuiChip-icon': {
             color: 'inherit',
           },
           '&:hover': {
             backgroundColor:
               info.color === 'default'
-                ? alpha(theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.common.black, 0.25)
+                ? `color-mix(in srgb, ${theme.vars.palette.text.primary} 25%, transparent)`
                 : `rgba(var(--mui-palette-${info.color}-mainChannel), 0.3)`,
           },
         })}

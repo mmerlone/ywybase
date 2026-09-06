@@ -3,7 +3,6 @@
 import type { ReactElement } from 'react'
 import { ArrowOutward, GitHub } from '@mui/icons-material'
 import { Button, Container, Grid, Paper, Stack, Typography } from '@mui/material'
-import { alpha } from '@mui/material/styles'
 import Link from 'next/link'
 
 import { SITE_CONFIG } from '@/config/site'
@@ -18,12 +17,9 @@ export function CTASection(): ReactElement {
         sx={{
           p: { xs: 4, md: 6 },
           borderRadius: 6,
-          border: (theme) => `1px solid ${alpha(theme.palette.divider, 0.82)}`,
+          border: (theme) => `1px solid color-mix(in srgb, ${theme.vars.palette.divider} 82%, transparent)`,
           background: (theme) =>
-            `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.14)} 0%, ${alpha(
-              theme.palette.background.paper,
-              0.95
-            )} 48%, ${alpha(theme.palette.warning.main, 0.12)} 100%)`,
+            `linear-gradient(135deg, rgb(${theme.vars.palette.primary.mainChannel} / 0.14) 0%, color-mix(in srgb, ${theme.vars.palette.background.paper} 95%, transparent) 48%, rgb(${theme.vars.palette.warning.mainChannel} / 0.12) 100%)`,
         }}>
         <Grid container spacing={4} alignItems="center">
           <Grid size={{ xs: 12, md: 8 }}>

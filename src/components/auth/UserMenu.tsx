@@ -20,6 +20,7 @@ import {
 } from '@mui/material'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { useColorScheme } from '@mui/material/styles'
 import React, { useState, type ReactElement } from 'react'
 
 import { useAuthContext, useCurrentUser } from '@/components/providers/AuthProvider'
@@ -34,6 +35,7 @@ import { SignOutReasonEnum } from '@/types/auth.types'
 export function UserMenu(): ReactElement {
   const { user: authUser, isLoading: authLoading } = useCurrentUser()
   const { signOut } = useAuthContext()
+  const { setMode } = useColorScheme()
   const { profile, isLoading: isProfileLoading } = useProfile(authUser?.id)
   const isLoading = authLoading || isProfileLoading
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
@@ -57,6 +59,8 @@ export function UserMenu(): ReactElement {
         logger.error({ error }, 'Error signing out')
         return
       }
+      // Persist the signed-out default before the route refresh/remount begins.
+      setMode('system')
       router.refresh()
       router.push('/')
     } catch (error) {
@@ -94,9 +98,7 @@ export function UserMenu(): ReactElement {
           color="primary"
           size="small"
           startIcon={<PersonAddIcon />}
-          sx={{
-            color: (theme) => theme.palette.primary.contrastText,
-          }}>
+          sx={{ color: 'primary.contrastText' }}>
           Sign Up
         </Button>
       </Box>

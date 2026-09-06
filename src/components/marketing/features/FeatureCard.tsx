@@ -3,7 +3,6 @@
 import type { ReactElement } from 'react'
 import { Star } from '@mui/icons-material'
 import { Box, Card, CardContent, Typography } from '@mui/material'
-import { alpha } from '@mui/material/styles'
 
 export type Feature = {
   icon: ReactElement
@@ -25,16 +24,14 @@ export function FeatureCard({ feature }: FeatureCardProps): ReactElement {
         position: 'relative',
         overflow: 'hidden',
         borderRadius: 5,
-        border: (theme) => `1px solid ${alpha(theme.palette.divider, feature.isHighlighted === true ? 0.9 : 0.78)}`,
+        border: (theme) =>
+          `1px solid color-mix(in srgb, ${theme.vars.palette.divider} ${feature.isHighlighted === true ? 90 : 78}%, transparent)`,
         background: (theme) =>
-          `linear-gradient(180deg, ${alpha(theme.palette.background.paper, 0.95)} 0%, ${alpha(
-            theme.palette.background.paper,
-            0.84
-          )} 100%)`,
+          `linear-gradient(180deg, color-mix(in srgb, ${theme.vars.palette.background.paper} 95%, transparent) 0%, color-mix(in srgb, ${theme.vars.palette.background.paper} 84%, transparent) 100%)`,
         transition: 'transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease',
         '&:hover': {
           transform: 'translateY(-3px)',
-          boxShadow: (theme) => `0 18px 48px ${alpha(theme.palette.common.black, 0.12)}`,
+          boxShadow: '0 18px 48px rgb(0 0 0 / 0.12)',
         },
         ...(feature.isHighlighted === true && {
           '&:before': {
@@ -45,7 +42,7 @@ export function FeatureCard({ feature }: FeatureCardProps): ReactElement {
             right: 0,
             height: 4,
             background: (theme) =>
-              `linear-gradient(90deg, ${theme.palette.primary.main} 0%, ${theme.palette.warning.main} 100%)`,
+              `linear-gradient(90deg, ${theme.vars.palette.primary.main} 0%, ${theme.vars.palette.warning.main} 100%)`,
           },
         }),
       }}>
@@ -59,7 +56,7 @@ export function FeatureCard({ feature }: FeatureCardProps): ReactElement {
             width: 54,
             height: 54,
             borderRadius: 3,
-            bgcolor: (theme) => alpha(theme.palette.primary.main, 0.1),
+            bgcolor: (theme) => `rgb(${theme.vars.palette.primary.mainChannel} / 0.1)`,
             color: 'primary.main',
             '& svg': {
               width: 26,

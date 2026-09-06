@@ -1,7 +1,7 @@
 'use client'
 import type React from 'react'
 import type { ReactElement } from 'react'
-import { Box, Card, Stack, Typography, Divider, Link, alpha } from '@mui/material'
+import { Box, Card, Stack, Typography, Divider, Link } from '@mui/material'
 
 import { ProviderBadge } from '@/components/auth/ProviderBadge'
 import { UserRoleBadge } from '@/components/common/UserRoleBadge'
@@ -79,22 +79,13 @@ export function UserCard({
         p: 3,
         borderRadius: 3,
         height: '100%',
-        background:
-          theme.palette.mode === 'light'
-            ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.8)} 0%, ${alpha(theme.palette.primary.main, 0.04)} 100%)`
-            : 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)',
-        border: `1px solid ${alpha(theme.palette.divider, 0.8)}`,
-        boxShadow:
-          theme.palette.mode === 'dark'
-            ? '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
-            : `0 8px 32px ${alpha(theme.palette.common.black, 0.08)}`,
+        background: `linear-gradient(135deg, color-mix(in srgb, ${theme.vars.palette.background.paper} 80%, transparent) 0%, rgb(${theme.vars.palette.primary.mainChannel} / 0.04) 100%)`,
+        border: `1px solid color-mix(in srgb, ${theme.vars.palette.divider} 80%, transparent)`,
+        boxShadow: '0 8px 32px rgb(0 0 0 / 0.12)',
         backdropFilter: 'blur(10px)',
         '&:hover': {
           transform: 'translateY(-2px)',
-          boxShadow:
-            theme.palette.mode === 'dark'
-              ? '0 12px 40px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.15)'
-              : `0 12px 40px ${alpha(theme.palette.common.black, 0.12)}`,
+          boxShadow: '0 12px 40px rgb(0 0 0 / 0.18)',
           transition: 'all 0.3s ease-in-out',
         },
         transition: 'all 0.3s ease-in-out',
@@ -119,27 +110,27 @@ export function UserCard({
           )}
           <Typography
             variant="h6"
-            sx={(theme) => ({
+            sx={{
               fontWeight: 700,
               color: 'text.primary',
               textAlign: 'center',
-              textShadow: theme.palette.mode === 'dark' ? '0 2px 4px rgba(0,0,0,0.5)' : 'none',
-            })}>
+            }}>
             {profile.display_name || 'Unnamed User'}
           </Typography>
-          <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.8)', textAlign: 'center' }}>
+          <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center' }}>
             <Link
               href={`mailto:${profile.email}`}
               sx={{
                 display: 'flex',
+                textShadow: '0 2px 4px rgba(0, 0, 0, 0.25)',
                 alignItems: 'center',
                 gap: 1,
-                color: 'rgba(255, 255, 255, 0.9)',
+                color: 'primary.main',
                 textDecoration: 'none',
                 justifyContent: 'center',
                 '&:hover': {
                   textDecoration: 'underline',
-                  color: 'white',
+                  color: 'primary.dark',
                 },
               }}>
               <EmailIcon sx={{ fontSize: 16 }} />
@@ -152,12 +143,12 @@ export function UserCard({
                   display: 'flex',
                   alignItems: 'center',
                   gap: 1,
-                  color: 'rgba(255, 255, 255, 0.9)',
+                  color: 'primary.main',
                   textDecoration: 'none',
                   justifyContent: 'center',
                   '&:hover': {
                     textDecoration: 'underline',
-                    color: 'white',
+                    color: 'primary.dark',
                   },
                 }}
                 target="_blank"
@@ -178,12 +169,12 @@ export function UserCard({
         <Stack spacing={2}>
           <Divider
             sx={{
-              borderColor: 'rgba(255, 255, 255, 0.2)',
+              borderColor: 'divider',
               '&::before, &::after': {
-                borderColor: 'rgba(255, 255, 255, 0.2)',
+                borderColor: 'divider',
               },
             }}>
-            <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)', fontWeight: 500 }}>
+            <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
               Identities
             </Typography>
           </Divider>
@@ -191,30 +182,28 @@ export function UserCard({
             {profile.providers && profile.providers.length > 0 ? (
               profile.providers.map((provider) => <ProviderBadge provider={provider} key={provider} />)
             ) : (
-              <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.6)' }}>
+              <Typography variant="body2" color="text.secondary">
                 No linked identities
               </Typography>
             )}
           </Box>
           <Divider
             sx={{
-              borderColor: 'rgba(255, 255, 255, 0.2)',
+              borderColor: 'divider',
               '&::before, &::after': {
-                borderColor: 'rgba(255, 255, 255, 0.2)',
+                borderColor: 'divider',
               },
             }}>
-            <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)', fontWeight: 500 }}>
+            <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
               Metadata
             </Typography>
           </Divider>
           {metadataItems.map((item) => (
             <Box key={item.label} sx={{ display: 'flex', justifyContent: 'space-between' }}>
-              <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '0.5rem' }}>
+              <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.5rem' }}>
                 {item.label}
               </Typography>
-              <Typography
-                variant="body2"
-                sx={{ fontWeight: 600, color: 'rgba(255, 255, 255, 0.9)', fontSize: '0.5rem' }}>
+              <Typography variant="body2" color="text.primary" sx={{ fontWeight: 600, fontSize: '0.5rem' }}>
                 {item.value}
               </Typography>
             </Box>

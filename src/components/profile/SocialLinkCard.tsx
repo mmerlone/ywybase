@@ -78,10 +78,7 @@ export function SocialLinkCard({
           left: 0,
           right: 0,
           bottom: 0,
-          background:
-            theme.palette.mode === 'light'
-              ? 'linear-gradient(135deg, #b3ceec 0%, #c7d2fe 100%)'
-              : 'linear-gradient(135deg, #1e293b 0%, #243955 100%)',
+          background: `linear-gradient(135deg, ${theme.vars.palette.primary.light} 0%, ${theme.vars.palette.secondary.light} 100%)`,
           opacity: 0.9,
         })}
       />

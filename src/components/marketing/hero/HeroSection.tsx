@@ -3,7 +3,6 @@
 import type { ReactElement } from 'react'
 import { ArrowOutward, AutoAwesome, Bolt, GitHub, RocketLaunch } from '@mui/icons-material'
 import { Box, Button, Chip, Container, Divider, Grid, Paper, Stack, Typography } from '@mui/material'
-import { alpha } from '@mui/material/styles'
 import Link from 'next/link'
 
 import { SITE_CONFIG } from '@/config/site'
@@ -77,20 +76,18 @@ export function HeroSection(): ReactElement {
 
   return (
     <Box
+      className="hero-section"
       component="section"
-      sx={{
+      sx={(theme) => ({
         position: 'relative',
         overflow: 'hidden',
-        pt: { xs: 14, md: 18 },
-        pb: { xs: 10, md: 14 },
-        backgroundImage: (theme) =>
-          [
-            `radial-gradient(circle at top left, ${alpha(theme.palette.primary.main, 0.16)}, transparent 28%)`,
-            `radial-gradient(circle at top right, ${alpha(theme.palette.warning.main, 0.14)}, transparent 24%)`,
-            `linear-gradient(180deg, ${alpha(theme.palette.background.paper, 0.92)} 0%, ${theme.palette.background.default} 28%)`,
-          ].join(','),
-      }}>
-      <Container maxWidth="lg">
+        backgroundImage: [
+          `radial-gradient(circle at top left, rgb(${theme.vars.palette.primary.mainChannel} / 0.16), transparent 28%)`,
+          `radial-gradient(circle at top right, rgb(${theme.vars.palette.warning.mainChannel} / 0.14), transparent 24%)`,
+          `linear-gradient(180deg, color-mix(in srgb, ${theme.vars.palette.background.paper} 92%, transparent) 0%, ${theme.vars.palette.background.default} 28%)`,
+        ].join(','),
+      })}>
+      <Container maxWidth="lg" component="div" sx={{ py: { xs: 9, md: 12 } }}>
         <Grid container spacing={{ xs: 6, md: 8 }} alignItems="center">
           <Grid size={{ xs: 12, md: 7 }}>
             <Stack spacing={4}>
@@ -103,8 +100,8 @@ export function HeroSection(): ReactElement {
                   alignSelf: 'flex-start',
                   px: 1,
                   borderRadius: 999,
-                  borderColor: (theme) => alpha(theme.palette.primary.main, 0.35),
-                  bgcolor: (theme) => alpha(theme.palette.primary.main, 0.08),
+                  borderColor: (theme) => `rgb(${theme.vars.palette.primary.mainChannel} / 0.35)`,
+                  bgcolor: (theme) => `rgb(${theme.vars.palette.primary.mainChannel} / 0.08)`,
                 }}
               />
 
@@ -143,8 +140,8 @@ export function HeroSection(): ReactElement {
                     variant="filled"
                     sx={{
                       borderRadius: 999,
-                      bgcolor: (theme) => alpha(theme.palette.background.paper, 0.84),
-                      border: (theme) => `1px solid ${alpha(theme.palette.divider, 0.8)}`,
+                      bgcolor: (theme) => `color-mix(in srgb, ${theme.vars.palette.background.paper} 84%, transparent)`,
+                      border: (theme) => `1px solid color-mix(in srgb, ${theme.vars.palette.divider} 80%, transparent)`,
                       fontWeight: 600,
                     }}
                   />
@@ -162,7 +159,7 @@ export function HeroSection(): ReactElement {
                     minWidth: 190,
                     py: 1.5,
                     borderRadius: 999,
-                    boxShadow: (theme) => `0 16px 40px ${alpha(theme.palette.primary.main, 0.28)}`,
+                    boxShadow: (theme) => `0 16px 40px rgb(${theme.vars.palette.primary.mainChannel} / 0.28)`,
                     whiteSpace: 'nowrap',
                   }}>
                   Explore the demos
@@ -193,12 +190,9 @@ export function HeroSection(): ReactElement {
                 sx={{
                   p: { xs: 3, md: 4 },
                   borderRadius: 6,
-                  border: (theme) => `1px solid ${alpha(theme.palette.divider, 0.75)}`,
+                  border: (theme) => `1px solid color-mix(in srgb, ${theme.vars.palette.divider} 75%, transparent)`,
                   background: (theme) =>
-                    `linear-gradient(180deg, ${alpha(theme.palette.background.paper, 0.94)} 0%, ${alpha(
-                      theme.palette.background.paper,
-                      0.8
-                    )} 100%)`,
+                    `linear-gradient(180deg, color-mix(in srgb, ${theme.vars.palette.background.paper} 94%, transparent) 0%, color-mix(in srgb, ${theme.vars.palette.background.paper} 80%, transparent) 100%)`,
                   backdropFilter: 'blur(16px)',
                 }}>
                 <Stack spacing={2.5}>
@@ -216,8 +210,8 @@ export function HeroSection(): ReactElement {
                           px: 2,
                           py: 1.5,
                           borderRadius: 3,
-                          bgcolor: (theme) => alpha(theme.palette.primary.main, 0.06),
-                          border: (theme) => `1px solid ${alpha(theme.palette.primary.main, 0.14)}`,
+                          bgcolor: (theme) => `rgb(${theme.vars.palette.primary.mainChannel} / 0.06)`,
+                          border: (theme) => `1px solid rgb(${theme.vars.palette.primary.mainChannel} / 0.14)`,
                         }}>
                         <Typography variant="body2" sx={{ lineHeight: 1.65 }}>
                           {item}
@@ -233,8 +227,8 @@ export function HeroSection(): ReactElement {
                 sx={{
                   p: { xs: 3, md: 4 },
                   borderRadius: 6,
-                  border: (theme) => `1px solid ${alpha(theme.palette.divider, 0.75)}`,
-                  bgcolor: (theme) => alpha(theme.palette.background.paper, 0.82),
+                  border: (theme) => `1px solid color-mix(in srgb, ${theme.vars.palette.divider} 75%, transparent)`,
+                  bgcolor: (theme) => `color-mix(in srgb, ${theme.vars.palette.background.paper} 82%, transparent)`,
                 }}>
                 <Stack spacing={2.5}>
                   <Typography variant="h6" fontWeight={800}>
@@ -270,8 +264,8 @@ export function HeroSection(): ReactElement {
                   height: '100%',
                   p: 3,
                   borderRadius: 4,
-                  border: (theme) => `1px solid ${alpha(theme.palette.divider, 0.7)}`,
-                  bgcolor: (theme) => alpha(theme.palette.background.paper, 0.72),
+                  border: (theme) => `1px solid color-mix(in srgb, ${theme.vars.palette.divider} 70%, transparent)`,
+                  bgcolor: (theme) => `color-mix(in srgb, ${theme.vars.palette.background.paper} 72%, transparent)`,
                 }}>
                 <Typography
                   sx={{
