@@ -2,7 +2,7 @@
 import type React from 'react'
 import type { ReactElement } from 'react'
 
-import { Avatar } from '@mui/material'
+import { Avatar, alpha } from '@mui/material'
 
 import { useOptimizedAvatar } from '@/hooks/useOptimizedAvatar'
 import { AVATAR_SIZES } from '@/lib/utils/image-utils'
@@ -113,15 +113,15 @@ export function UserAvatar({ avatarUrl, email, displayName, size = 'medium' }: U
     <Avatar
       src={avatarUrls.getUrl(sizeConfig.optimizedSize) ?? undefined}
       alt={displayName ?? email ?? 'User'}
-      sx={{
+      sx={(theme) => ({
         width: sizeConfig.width,
         height: sizeConfig.height,
         fontSize: sizeConfig.fontSize,
         bgcolor: 'primary.main',
         color: 'primary.contrastText',
-        border: '2px solid rgba(255, 255, 255, 0.2)',
-        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1)',
-      }}
+        border: `2px solid ${alpha(theme.palette.divider, 0.8)}`,
+        boxShadow: `0 4px 12px ${alpha(theme.palette.common.black, 0.15)}, 0 0 0 1px ${alpha(theme.palette.divider, 0.5)}`,
+      })}
       slotProps={{
         img: {
           loading: 'lazy',

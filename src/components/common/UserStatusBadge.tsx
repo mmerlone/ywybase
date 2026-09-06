@@ -9,7 +9,7 @@ import {
   HelpOutline as UnknownIcon,
   RemoveCircleOutline as InactiveIcon,
 } from '@mui/icons-material'
-import { Chip, type ChipProps } from '@mui/material'
+import { Chip, type ChipProps, alpha } from '@mui/material'
 
 import { type Profile, UserStatusEnum } from '@/types/profile.types'
 
@@ -47,22 +47,30 @@ export function UserStatusBadge({ status, variant = 'default' }: UserStatusBadge
         label={info.label}
         size="small"
         variant="outlined"
-        sx={{
+        sx={(theme) => ({
           fontWeight: 600,
           textTransform: 'capitalize',
-          borderColor: info.color === 'default' ? 'rgba(255, 255, 255, 0.3)' : `var(--mui-palette-${info.color}-main)`,
-          color: info.color === 'default' ? 'rgba(255, 255, 255, 0.8)' : `var(--mui-palette-${info.color}-main)`,
+          borderColor:
+            info.color === 'default'
+              ? alpha(theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.common.black, 0.3)
+              : `var(--mui-palette-${info.color}-main)`,
+          color:
+            info.color === 'default'
+              ? theme.palette.mode === 'dark'
+                ? 'rgba(255, 255, 255, 0.8)'
+                : 'rgba(0, 0, 0, 0.87)'
+              : `var(--mui-palette-${info.color}-main)`,
           backgroundColor:
             info.color === 'default'
-              ? 'rgba(255, 255, 255, 0.05)'
+              ? alpha(theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.common.black, 0.05)
               : `rgba(var(--mui-palette-${info.color}-mainChannel), 0.1)`,
           '&:hover': {
             backgroundColor:
               info.color === 'default'
-                ? 'rgba(255, 255, 255, 0.1)'
+                ? alpha(theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.common.black, 0.1)
                 : `rgba(var(--mui-palette-${info.color}-mainChannel), 0.2)`,
           },
-        }}
+        })}
       />
     )
   }

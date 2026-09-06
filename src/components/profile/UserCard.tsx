@@ -1,7 +1,7 @@
 'use client'
 import type React from 'react'
 import type { ReactElement } from 'react'
-import { Box, Card, Stack, Typography, Divider, Link } from '@mui/material'
+import { Box, Card, Stack, Typography, Divider, Link, alpha } from '@mui/material'
 
 import { ProviderBadge } from '@/components/auth/ProviderBadge'
 import { UserRoleBadge } from '@/components/common/UserRoleBadge'
@@ -74,22 +74,31 @@ export function UserCard({
 
   return (
     <Card
-      sx={{
+      sx={(theme) => ({
         position: 'relative',
         p: 3,
         borderRadius: 3,
         height: '100%',
-        background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
-        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+        background:
+          theme.palette.mode === 'light'
+            ? `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.8)} 0%, ${alpha(theme.palette.primary.main, 0.04)} 100%)`
+            : 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)',
+        border: `1px solid ${alpha(theme.palette.divider, 0.8)}`,
+        boxShadow:
+          theme.palette.mode === 'dark'
+            ? '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+            : `0 8px 32px ${alpha(theme.palette.common.black, 0.08)}`,
         backdropFilter: 'blur(10px)',
         '&:hover': {
           transform: 'translateY(-2px)',
-          boxShadow: '0 12px 40px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.15)',
+          boxShadow:
+            theme.palette.mode === 'dark'
+              ? '0 12px 40px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.15)'
+              : `0 12px 40px ${alpha(theme.palette.common.black, 0.12)}`,
           transition: 'all 0.3s ease-in-out',
         },
         transition: 'all 0.3s ease-in-out',
-      }}>
+      })}>
       <Stack spacing={3}>
         <Stack spacing={2} alignItems="center">
           {canEditAvatar ? (
@@ -110,12 +119,12 @@ export function UserCard({
           )}
           <Typography
             variant="h6"
-            sx={{
+            sx={(theme) => ({
               fontWeight: 700,
-              color: 'white',
+              color: 'text.primary',
               textAlign: 'center',
-              textShadow: '0 2px 4px rgba(0,0,0,0.5)',
-            }}>
+              textShadow: theme.palette.mode === 'dark' ? '0 2px 4px rgba(0,0,0,0.5)' : 'none',
+            })}>
             {profile.display_name || 'Unnamed User'}
           </Typography>
           <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.8)', textAlign: 'center' }}>
