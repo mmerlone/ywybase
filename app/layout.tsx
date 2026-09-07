@@ -5,6 +5,7 @@ import { Inter } from 'next/font/google'
 import React, { type ReactNode, type ReactElement } from 'react'
 import { headers } from 'next/headers'
 import { Analytics } from '@vercel/analytics/next'
+import { GoogleAnalytics } from '@next/third-parties/google'
 
 import { LayoutClient } from './LayoutClient'
 
@@ -18,6 +19,8 @@ const inter = Inter({
   display: 'swap',
   variable: '--font-inter',
 })
+
+const gaId = process.env.NEXT_PUBLIC_GA_ID
 
 export async function generateMetadata(): Promise<Metadata> {
   return getSiteMetadata()
@@ -36,6 +39,7 @@ export default async function RootLayout({ children }: { children: ReactNode }):
   const isDev = process.env.NODE_ENV === 'development'
   return (
     <html lang="en" suppressHydrationWarning>
+      {gaId ? <GoogleAnalytics gaId={gaId} /> : null}
       <head>
         <InitColorSchemeScript attribute="class" modeStorageKey="mui-mode" nonce={nonce} />
       </head>
