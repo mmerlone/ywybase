@@ -1,7 +1,7 @@
 /**
  * Supabase Middleware Session Management
  *
- * Handles session refresh and cookie management in Next.js middleware.
+ * Handles session refresh and cookie management for the Next.js request proxy.
  * Ensures authentication state is maintained across requests.
  */
 
@@ -15,7 +15,7 @@ import { buildLogger } from '@/lib/logger/server'
 const logger = buildLogger('supabase-middleware')
 
 /**
- * Update and refresh Supabase session in middleware.
+ * Update and refresh the Supabase session for the request proxy.
  * Manages authentication cookies and user session state.
  *
  * @param request - The incoming Next.js request
@@ -36,7 +36,7 @@ const logger = buildLogger('supabase-middleware')
  *
  * @example
  * ```typescript
- * // In middleware.ts
+ * // In src/middleware/index.ts
  * export async function middleware(request: NextRequest) {
  *   // Pass no response to create new one
  *   let response = await updateSession(request)

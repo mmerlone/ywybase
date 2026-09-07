@@ -110,8 +110,8 @@ export async function getFlashMessage(): Promise<FlashMessage | null> {
 }
 
 /**
- * Set a flash message within Next.js middleware.
- * Uses the middleware-specific NextRequest/NextResponse pattern.
+ * Set a flash message within the Next.js request proxy.
+ * Uses the request proxy's NextRequest/NextResponse pattern.
  *
  * @param request - NextRequest object from middleware
  * @param response - NextResponse object to attach the cookie to
@@ -120,7 +120,7 @@ export async function getFlashMessage(): Promise<FlashMessage | null> {
  *
  * @example
  * ```typescript
- * // In middleware.ts
+ * // In proxy.ts
  * const response = NextResponse.redirect('/login');
  * setFlashMessageInMiddleware(
  *   request,

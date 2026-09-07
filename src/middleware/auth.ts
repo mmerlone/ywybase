@@ -1,5 +1,5 @@
 /**
- * Authentication Middleware
+ * Request Proxy Authentication
  *
  * Handles authentication and authorization checks using centralized route configuration.
  * Uses flash messages for cross-page notifications instead of URL parameters.
@@ -16,7 +16,7 @@ import { setFlashMessageInMiddleware } from '@/lib/utils/flash-messages.server'
 import { isSameOrSubpath } from '@/lib/utils/paths'
 import { AuthOperationsEnum, type AuthOperations } from '@/types/auth.types'
 
-const logger = buildLogger('middleware-auth')
+const logger = buildLogger('proxy-auth')
 
 /**
  * List of authentication operations that should redirect to home if user is already authenticated.
@@ -70,7 +70,7 @@ export async function authenticateRequest(request: NextRequest): Promise<{
   if (!supabaseEnv.isConfigured) {
     logger.warn(
       { pathname, missingEnv: supabaseEnv.missing },
-      'AUTH MIDDLEWARE: Supabase config missing, skipping auth checks'
+      'AUTH PROXY: Supabase config missing, skipping auth checks'
     )
 
     if (
@@ -91,14 +91,14 @@ export async function authenticateRequest(request: NextRequest): Promise<{
     supabase = created
   } catch (error) {
     if (error instanceof ConfigurationError) {
-      logger.error({ pathname, error }, 'AUTH MIDDLEWARE: Supabase configuration error')
+      logger.error({ pathname, error }, 'AUTH PROXY: Supabase configuration error')
       const redirectUrl = new URL('/error?code=configuration_error', request.url)
       return { user: null, session: null, response: NextResponse.redirect(redirectUrl) }
     }
     throw error
   }
 
-  logger.info({ pathname, url: request.url }, 'AUTH MIDDLEWARE: Starting authentication check')
+  logger.info({ pathname, url: request.url }, 'AUTH PROXY: Starting authentication check')
 
   // 1. Get user (authenticates with Supabase Auth server for security)
   // Note: Using getUser() instead of getSession() because getSession() reads from
@@ -109,18 +109,18 @@ export async function authenticateRequest(request: NextRequest): Promise<{
     error: userError,
   } = await supabase.auth.getUser()
 
-  logger.debug({ user, userError }, 'AUTH MIDDLEWARE: User retrieved')
-  // [2026-02-18T00:49:20.318Z] debug AUTH MIDDLEWARE: User retrieved module="middleware-auth" user=null userError={"__isAuthError":true,"name":"AuthSessionMissingError","status":400}
+  logger.debug({ user, userError }, 'AUTH PROXY: User retrieved')
+  // [2026-02-18T00:49:20.318Z] debug AUTH PROXY: User retrieved module="proxy-auth" user=null userError={"__isAuthError":true,"name":"AuthSessionMissingError","status":400}
 
   if (userError) {
     // AuthSessionMissingError is expected for unauthenticated users - not a real error
     const isSessionMissing = userError.name === 'AuthSessionMissingError'
 
     if (isSessionMissing) {
-      logger.debug({ pathname }, 'AUTH MIDDLEWARE: No session (unauthenticated user)')
+      logger.debug({ pathname }, 'AUTH PROXY: No session (unauthenticated user)')
     } else {
       // Log actual errors (e.g., network issues, invalid tokens)
-      logger.error({ err: userError, path: pathname }, 'AUTH MIDDLEWARE: Failed to get authenticated user')
+      logger.error({ err: userError, path: pathname }, 'AUTH PROXY: Failed to get authenticated user')
     }
 
     // For invalid JWT tokens or other auth errors, clear the session
@@ -128,14 +128,14 @@ export async function authenticateRequest(request: NextRequest): Promise<{
       try {
         await supabase.auth.signOut({ scope: 'local' })
         logger.info(
-          { pathname, module: 'middleware-auth', action: 'clear-invalid-session' },
-          'AUTH MIDDLEWARE: Cleared invalid session'
+          { pathname, module: 'proxy-auth', action: 'clear-invalid-session' },
+          'AUTH PROXY: Cleared invalid session'
         )
       } catch (signOutError) {
         // Don't fail if signOut fails, just log it
         logger.warn(
-          { err: signOutError, pathname, module: 'middleware-auth', action: 'clear-invalid-session-failed' },
-          'AUTH MIDDLEWARE: Failed to clear invalid session'
+          { err: signOutError, pathname, module: 'proxy-auth', action: 'clear-invalid-session-failed' },
+          'AUTH PROXY: Failed to clear invalid session'
         )
       }
     }
@@ -160,7 +160,7 @@ export async function authenticateRequest(request: NextRequest): Promise<{
       hasUser: Boolean(user),
       userId: user?.id,
     },
-    'AUTH MIDDLEWARE: Session retrieved'
+    'AUTH PROXY: Session retrieved'
   )
 
   const routeConfig = getRouteByPath(pathname)
@@ -184,7 +184,7 @@ export async function authenticateRequest(request: NextRequest): Promise<{
         authOperation,
         shouldRedirectIfAuthenticated,
       },
-      'AUTH MIDDLEWARE: Checking auth route redirect'
+      'AUTH PROXY: Checking auth route redirect'
     )
 
     // For auth routes, always check if user should be redirected
@@ -202,7 +202,7 @@ export async function authenticateRequest(request: NextRequest): Promise<{
     ) {
       logger.info(
         { pathname, redirectTo: routeConfig.redirectIfAuthenticated },
-        'AUTH MIDDLEWARE: ⚠️ REDIRECTING authenticated user from auth page'
+        'AUTH PROXY: Redirecting authenticated user from auth page'
       )
       const redirectUrl = new URL(routeConfig.redirectIfAuthenticated, request.url)
       return { user, session, response: NextResponse.redirect(redirectUrl) }
@@ -221,7 +221,7 @@ export async function authenticateRequest(request: NextRequest): Promise<{
             routeConfig.redirectIfAuthenticated !== undefined &&
             isUnauthenticatedOnlyRoute,
         },
-        'AUTH MIDDLEWARE: Not redirecting - conditions not met'
+        'AUTH PROXY: Not redirecting - conditions not met'
       )
     }
   }
@@ -304,7 +304,7 @@ function validateRedirectPath(path: string): string | null {
  *
  * @example
  * ```typescript
- * // In middleware.ts
+ * // In src/middleware/index.ts
  * export async function middleware(request: NextRequest) {
  *   return requireAuth(request)
  * }
@@ -349,7 +349,7 @@ export async function requireAuth(request: NextRequest): Promise<NextResponse> {
   } catch (error: unknown) {
     logger.error(
       { err: error instanceof Error ? error : new Error(String(error)), path: pathname },
-      'Error in auth middleware'
+      'Error in auth proxy'
     )
 
     // Fail-closed for protected paths

@@ -1,7 +1,7 @@
 /**
  * Middleware Types
  *
- * Type definitions for Next.js middleware chain implementation.
+ * Type definitions for the Next.js request proxy chain implementation.
  * Provides types for middleware handlers, responses, and configuration.
  */
 

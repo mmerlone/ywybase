@@ -24,7 +24,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function RootLayout({ children }: { children: ReactNode }): Promise<ReactElement> {
-  // Get the CSP nonce from headers set by middleware
+  // Get the CSP nonce from headers set by the request proxy
   const headersList = await headers()
   const nonce = headersList.get('x-nonce') ?? undefined
 

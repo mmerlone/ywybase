@@ -7,7 +7,7 @@ const logger = buildLogger('session-middleware')
 
 /**
  * Get the current session from the request
- * @param request Optional NextRequest object (required in middleware)
+ * @param request Optional NextRequest object (required in the request proxy)
  * @returns MiddlewareSession or null if no valid session
  */
 export async function getSession(): Promise<MiddlewareSession | null> {

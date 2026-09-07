@@ -14,14 +14,14 @@ import { isSameOrSubpath } from '@/lib/utils/paths'
 import { forbidden } from './utils/responses'
 import { handleMiddlewareError } from './utils/errors'
 
-const logger = buildLogger('middleware')
+const logger = buildLogger('proxy')
 
 /**
- * Modular Middleware Composition
+ * Modular Request Proxy Composition
  */
 export async function middleware(request: NextRequest): Promise<NextResponse> {
   const { pathname } = request.nextUrl
-  logger.info({ pathname, url: request.url }, 'middleware.start')
+  logger.info({ pathname, url: request.url }, 'proxy.start')
 
   // 1. Create request context (initially null/undefined until inside try block)
   // Context creation moved inside try block for performance and error handling safety
@@ -42,7 +42,7 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     response = securityResult.response
 
     if (securityResult.shortCircuitResponse) {
-      logger.warn({ pathname, status: securityResult.shortCircuitResponse.status }, 'middleware.security.short-circuit')
+      logger.warn({ pathname, status: securityResult.shortCircuitResponse.status }, 'proxy.security.short-circuit')
       return securityResult.shortCircuitResponse
     }
 
@@ -67,11 +67,11 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     // 5. Authentication
     const auth = await authenticateRequest(request)
 
-    logger.info({ pathname, authenticated: Boolean(auth.user) }, 'middleware.auth.completed')
+    logger.info({ pathname, authenticated: Boolean(auth.user) }, 'proxy.auth.completed')
 
     // Handle authentication redirects/short-circuits
     if (auth.response) {
-      logger.info({ pathname }, 'middleware.auth.short-circuit')
+      logger.info({ pathname }, 'proxy.auth.short-circuit')
       return auth.response
     }
 
@@ -79,7 +79,7 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     const authz = await authorizeRequest(request, auth.user, routeConfig)
 
     if (authz.redirect !== undefined) {
-      logger.info({ pathname, redirect: authz.redirect }, 'middleware.authz.redirect')
+      logger.info({ pathname, redirect: authz.redirect }, 'proxy.authz.redirect')
       return NextResponse.redirect(new URL(authz.redirect, request.url))
     }
 
@@ -93,11 +93,11 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
           'You do not have permission to access that page.',
           'warning'
         )
-        logger.info({ pathname, redirect: '/', reason: 'unauthorized' }, 'middleware.authz.redirect')
+        logger.info({ pathname, redirect: '/', reason: 'unauthorized' }, 'proxy.authz.redirect')
         return authzResponse
       }
 
-      logger.warn({ pathname }, 'middleware.authz.forbidden')
+      logger.warn({ pathname }, 'proxy.authz.forbidden')
       return forbidden(authz.error?.message ?? 'Access Denied')
     }
 
@@ -106,7 +106,7 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     response.headers.set('x-request-id', ctx.requestId)
     return response
   } catch (err: unknown) {
-    logger.error({ err, pathname }, 'middleware.failed')
+    logger.error({ err, pathname }, 'proxy.failed')
     return handleMiddlewareError(err, { pathname })
   }
 }
