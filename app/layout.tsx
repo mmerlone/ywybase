@@ -39,7 +39,7 @@ export default async function RootLayout({ children }: { children: ReactNode }):
   const isDev = process.env.NODE_ENV === 'development'
   return (
     <html lang="en" suppressHydrationWarning>
-      {gaId ? <GoogleAnalytics gaId={gaId} /> : null}
+      {gaId ? <GoogleAnalytics gaId={gaId} nonce={nonce} /> : null}
       <head>
         <InitColorSchemeScript attribute="class" modeStorageKey="mui-mode" nonce={nonce} />
       </head>
