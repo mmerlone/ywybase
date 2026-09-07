@@ -37,7 +37,7 @@ export default async function RootLayout({ children }: { children: ReactNode }):
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <InitColorSchemeScript attribute="class" modeStorageKey="mui-mode" />
+        <InitColorSchemeScript attribute="class" modeStorageKey="mui-mode" nonce={nonce} />
       </head>
       <body className={`${inter.className} font-sans`}>
         <AppRouterCacheProvider options={{ enableCssLayer: true, key: 'mui', nonce }}>

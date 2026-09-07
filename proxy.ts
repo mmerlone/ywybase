@@ -8,7 +8,7 @@
  */
 import { middleware as appMiddleware } from './src/middleware/index'
 
-export const middleware = appMiddleware
+export const proxy = appMiddleware
 
 /**
  * Configure which routes the middleware should run on.
