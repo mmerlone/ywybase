@@ -15,5 +15,5 @@ export const middleware = appMiddleware
  * Match all request paths except static files, image optimization, favicon, public folder, and healthcheck.
  */
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|public/|healthcheck).*)'],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|public/|healthcheck|monitoring(?:/|$)).*)'],
 }

@@ -1,5 +1,5 @@
 /** @type {import('next').NextConfig} */
-import { withSentryConfig } from '@sentry/nextjs'
+import { withSentryConfig } from '@sentry/nextjs/config'
 import path from 'path'
 import { fileURLToPath } from 'url'
 
@@ -86,7 +86,10 @@ const sentryConfig = {
   authToken: process.env.SENTRY_AUTH_TOKEN,
   silent: !process.env.CI,
   widenClientFileUpload: true,
-  tunnelRoute: '/monitoring',
+  // The Next.js development proxy can accumulate response close listeners
+  // while forwarding Sentry tunnel requests. Use the tunnel in production,
+  // where it provides its intended same-origin transport behavior.
+  tunnelRoute: process.env.NODE_ENV === 'production' ? '/monitoring' : undefined,
   sourcemaps: {
     deleteSourcemapsAfterUpload: true,
     disable: process.env.NODE_ENV !== 'production',
