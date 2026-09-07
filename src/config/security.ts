@@ -88,6 +88,9 @@ export const CSP_CONFIG = {
     'wss://*.supabase.co',
     // Sentry error reporting
     'https://*.sentry.io',
+    // Google Analytics measurement transport
+    'https://www.google-analytics.com',
+    'https://www.google.com',
     // Development: allow localhost connections
     ...(isDevelopment ? ['http://localhost:*', 'ws://localhost:*'] : []),
   ],
