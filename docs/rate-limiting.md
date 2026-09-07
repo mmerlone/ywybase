@@ -92,7 +92,7 @@ the Vercel project (see [Production Setup](#production-setup) below).
 **How the implementation uses these variables:**
 
 `@upstash/redis` communicates over HTTPS (REST), not TCP. This makes it compatible
-with Next.js Edge Runtime (used by middleware) and serverless functions. The SDK is
+with the Next.js request proxy runtime and serverless functions. The SDK is
 initialized explicitly with the injected vars:
 
 ```typescript
@@ -142,10 +142,10 @@ if (!validation.isValid) {
 
 ## Usage Examples
 
-### Middleware Integration
+### Request Proxy Integration
 
 ```typescript
-// src/middleware.ts
+// src/middleware/index.ts
 import { rateLimiters } from '@/middleware/security/rate-limit'
 
 export async function middleware(request: NextRequest) {

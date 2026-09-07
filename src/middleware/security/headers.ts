@@ -198,7 +198,7 @@ export function applyCorsHeaders(response: NextResponse, origin?: string): NextR
 }
 
 /**
- * Security headers middleware for Next.js middleware
+ * Security headers middleware for the Next.js request proxy
  */
 export const securityHeadersMiddleware: SecurityMiddleware<SecurityHeaderMiddlewareOptions> = async (
   request: NextRequest,

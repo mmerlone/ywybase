@@ -31,17 +31,17 @@ export async function GET(request: NextRequest) {
 ### In Server Actions
 
 Server Actions cannot attach cookies to a `NextResponse` directly. Prefer setting flash
-messages in **route handlers** or **middleware** where you can return a response. For
+messages in **route handlers** or the **request proxy** where you can return a response. For
 Server Actions, use the returned `successMessage` for UI feedback or redirect to a route
 that sets a flash message.
 
-### In Middleware
+### In the Request Proxy
 
 ```typescript
 import { NextRequest, NextResponse } from 'next/server'
 import { setFlashMessageInMiddleware } from '@/lib/utils/flash-messages.server'
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const response = NextResponse.redirect(new URL('/login', request.url))
 
   setFlashMessageInMiddleware(request, response, 'Please log in to continue', 'warning')

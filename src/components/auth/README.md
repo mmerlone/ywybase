@@ -34,6 +34,6 @@ src/components/auth/
 
 ## Notes
 
-- Route protection is handled by Next.js middleware and route config, not by a dedicated auth wrapper component in this directory.
+- Route protection is handled by the request proxy and route config, not by a dedicated auth wrapper component in this directory.
 - Auth mutations live in `src/lib/actions/auth/server.ts`.
 - Client-side auth reads and OAuth helpers live in `src/lib/actions/auth/client.ts`.

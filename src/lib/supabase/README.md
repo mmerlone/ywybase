@@ -17,7 +17,7 @@ This Supabase integration provides:
 src/lib/supabase/
 ├── client.ts              # Browser-side Supabase client
 ├── server.ts              # Server-side Supabase client
-├── middleware.ts          # Session management middleware
+├── middleware.ts          # Session management used by the request proxy
 └── index.ts               # Main exports and types
 ```
 
@@ -303,7 +303,7 @@ NODE_ENV=production
 
 ### Session Configuration
 
-Session management is configured in `middleware.ts`:
+Session management is configured in the request proxy pipeline:
 
 ```typescript
 const defaultConfig = {

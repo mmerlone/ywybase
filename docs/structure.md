@@ -84,7 +84,7 @@ Canonical structure for the Next.js App Router application. Follow this structur
 │   │   ├── utils/               # Utility functions
 │   │   └── validators/          # Validation schemas
 │   │
-│   ├── middleware/              # Application middleware
+│   ├── middleware/              # Request-processing modules used by the proxy
 │   │   ├── security/            # Security middleware (Headers, CSRF, etc.)
 │   │   ├── auth.ts              # Auth middleware
 │   │   ├── authorization.ts     # Authorization middleware

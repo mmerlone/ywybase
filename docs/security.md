@@ -27,7 +27,7 @@ YwyBase implements a **defense-in-depth** security strategy with multiple layers
 ├─────────────────────────────────────────────────────────────┤
 │  Security Headers | CSP | CORS | Cookie Security           │
 ├─────────────────────────────────────────────────────────────┤
-│                 Next.js Middleware                          │
+│                 Next.js Request Proxy                       │
 │  Rate Limiting | Session Management | CSRF Protection      │
 ├─────────────────────────────────────────────────────────────┤
 │                   API Routes                                │
@@ -70,7 +70,7 @@ const rateLimits = SECURITY_CONFIG.rateLimit.auth
 sequenceDiagram
     participant U as User
     participant C as Client
-    participant M as Middleware
+    participant P as Request Proxy
     participant S as Supabase
     participant D as Database
 
@@ -79,10 +79,10 @@ sequenceDiagram
     S->>D: Verify Credentials
     D-->>S: User Data
     S-->>C: JWT + Session
-    C->>M: Request with Session
-    M->>S: Validate Session
-    S-->>M: User Context
-    M-->>C: Authorized Response
+    C->>P: Request with Session
+    P->>S: Validate Session
+    S-->>P: User Context
+    P-->>C: Authorized Response
 ```
 
 ### Authentication Security Features
@@ -362,7 +362,7 @@ REDIS_PASSWORD=your_redis_password
 ```typescript
 import { rateLimiters } from '@/middleware/security/rate-limit'
 
-// Apply rate limiting in middleware
+// Apply rate limiting in the request-processing implementation
 export async function middleware(request: NextRequest) {
   if (request.nextUrl.pathname.startsWith('/api/auth/')) {
     const response = await rateLimiters.auth(request)

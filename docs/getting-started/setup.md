@@ -213,7 +213,8 @@ ywybase/
 │   ├── lib/              # Core libraries
 │   ├── hooks/            # Custom React hooks
 │   ├── types/            # TypeScript types
-│   └── middleware/       # Next.js middleware
+│   ├── middleware/       # Request-processing modules used by the proxy
+├── proxy.ts              # Next.js request proxy entry point
 ├── docs/                 # Documentation
 ├── public/               # Static assets
 ├── supabase/            # Database migrations

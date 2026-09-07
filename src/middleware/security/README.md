@@ -105,10 +105,10 @@ Security audit logging with PII sanitization and event categorization.
 - `auditUserAction()` - Audit user actions
 - `createAuditTrail()` - Create comprehensive audit trail
 
-## Integration with Middleware
+## Integration with the Request Proxy
 
 ```typescript
-// src/middleware.ts
+// src/middleware/index.ts
 import { applySecurityHeaders } from '@/middleware/security/headers'
 import { rateLimiter } from '@/middleware/security/rate-limit'
 import { csrfMiddleware } from '@/middleware/security/csrf'

@@ -77,7 +77,7 @@ logger.info('User logged in', { userId: 123 })
 
 - Server Components/Server Actions/API Routes: Use `await createClient()` from `@/lib/supabase/server`
 - Client Components: Use `createClient()` from `@/lib/supabase/client`
-- Middleware: Use middleware-specific client from `@/lib/supabase/middleware`
+- Request proxy: Use the proxy-specific client from `@/lib/supabase/middleware`
 - **Never mix client types** - each context has its own factory
 
 ### Database Operations
@@ -154,7 +154,7 @@ export const GET = withRateLimit(
 
 - **Error System**: `src/lib/error/` - Centralized error handling with domain-specific codes
 - **Validation**: `src/lib/validators/` - Zod schemas for all inputs
-- **Middleware**: `src/middleware/` - Auth, session, request logging, security headers
+- **Request proxy modules**: `src/middleware/` - Auth, session, request logging, security headers
 - **Config**: `src/config/` - Query config, routes, security settings, site config
 - **Server Actions**: `src/lib/actions/` - Type-safe server actions with error handling
 - **API Routes**: `app/api/` - PKCE auth handlers with error/rate-limit wrappers
