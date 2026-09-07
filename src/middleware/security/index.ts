@@ -38,7 +38,8 @@ export async function securityMiddleware(
   try {
     let response = await securityHeadersMiddleware(request, initialResponse, { nonce: options.nonce })
 
-    const shouldRateLimit = pathname.startsWith('/api') || pathname.startsWith('/auth')
+    const isAuthPageNavigation = pathname.startsWith('/auth') && ['GET', 'HEAD'].includes(request.method)
+    const shouldRateLimit = (pathname.startsWith('/api') || pathname.startsWith('/auth')) && !isAuthPageNavigation
     if (shouldRateLimit) {
       const rateLimitType = pathname.startsWith('/auth') || pathname.startsWith('/api/auth') ? 'auth' : 'api'
       response = await rateLimiter(request, response, rateLimitType)
